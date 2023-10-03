@@ -5,7 +5,7 @@ Requirement :
 2. Install PIP
 3. Install Django
 4. Install virtualenv (optional)
-5. intall mysqlclient
+5. install mysqlclient
 
 Steps :
 1. folder config/settings.py , follow the method below :
