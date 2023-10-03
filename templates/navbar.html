@@ -1,0 +1,53 @@
+    <nav id="sidebar" class="sidebar js-sidebar">
+        <div class="sidebar-content js-simplebar">
+            <a class="sidebar-brand" href="index.html">
+        <span class="align-middle">Network Automation</span>
+    </a>
+            <ul class="sidebar-nav">
+                <li class="sidebar-header">
+                    MENU
+                </li>
+
+                <!-- halaman home -->
+                <li class="sidebar-item {{active_home}}">
+                    <a class="sidebar-link" href="{% url 'home' %}">
+                    <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                    </a>
+                </li>
+
+                <!-- halaman user -->
+                <li class="sidebar-item  {{active_user}}">
+                    <a class="sidebar-link" href="{% url 'user' %}">
+                    <i class="align-middle" data-feather="user"></i> <span class="align-middle">User</span>
+                    </a>
+                </li>
+                
+                <!-- halaman node -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="pages-sign-in.html">
+                    <i class="align-middle" data-feather="hard-drive"></i> <span class="align-middle">Node</span>
+                    </a>
+                </li>
+
+                <!-- halaman cluster -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="pages-sign-up.html">
+                    <i class="align-middle" data-feather="server"></i> <span class="align-middle">Cluster</span>
+                    </a>
+                </li>
+
+                <!-- Monitor -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="pages-sign-up.html">
+                    <i class="align-middle" data-feather="airplay"></i> <span class="align-middle">Monitor</span>
+                    </a>
+                </li>
+    
+            <li class="sidebar-item">
+                    <a class="sidebar-link" href="{% url 'home' %}">
+            <i class="align-middle" data-feather="log-out"></i> <span class="align-middle">Logout</span>
+        </a>
+                
+            </ul>
+        </div>
+    </nav>

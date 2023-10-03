@@ -1,0 +1,77 @@
+<!-- load static file -->
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Automation</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="{% static 'img/icons/icon-48x48.png' %}" />
+
+	<link href="{% static 'css/app.css' %}" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Nepcha Analytics (nepcha.com) -->
+    <!-- Nepcha is a easy-to-use web analytics. No cookies and fully compliant with GDPR, CCPA and PECR. -->
+    <!-- <script defer data-site="YOUR_DOMAIN_HERE" src="https://api.nepcha.com/js/nepcha-analytics.js"></script> -->
+</head>
+
+
+<body>
+    <div class="wrapper">
+
+    <!-- navbar -->
+    {% include 'navbar.html' %}
+
+    <div class="main">
+    <!-- topbar -->
+    {% include 'topbar.html' %}
+    
+
+    <!-- konten -->
+
+        <main class="content">
+            <div class="container-fluid p-0">
+
+                <h1 class="h3 mb-3"><strong></strong>{{ title }}</h1>
+
+                <!-- membungkus konten -->
+                {% block content %}
+
+                {% endblock %}
+            </div>
+        </main>
+
+    <!-- end konten -->
+
+    <!-- footer -->
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row text-muted">
+                    <div class="col-6 text-start">
+                        <p class="mb-0">
+                            <a class="text-muted" href="#"><strong>Admin</strong></a> - <a class="text-muted" href="#" ><strong>Network Automation Proxmox</strong></a>&copy;
+                        </p>
+                    </div>
+                    <div class="col-6 text-end">
+                            <p class="mb-0">
+                            <strong>Tim Magang UPA TIK UNDIKSHA 2023</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- end footer -->
+    </div>
+</div>
+
+</body>
+    <!--   Core JS Files   -->
+    <script src="{% static 'js/app.js' %}"></script>
+
+
+</html>

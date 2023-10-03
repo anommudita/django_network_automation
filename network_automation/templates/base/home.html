@@ -1,0 +1,317 @@
+<!-- file dari config html -->
+{% extends 'main.html' %}
+
+
+<!-- wrapping content -->
+{% block content %}
+    <div class="row">
+
+        <!-- User -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                User</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Node -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Node</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cluster -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Cluster</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Monitor</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-comments fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- resource -->
+        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
+            <div class="card flex-fill w-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Resource DataCenter</h5>
+                </div>
+                <div class="card-body d-flex">
+                    <div class="align-self-center w-100">
+                        <div class="py-3">
+                            <div class="chart chart-xs">
+                                <canvas id="chartjs-dashboard-pie"></canvas>
+                            </div>
+                        </div>
+
+                        <table class="table mb-0">
+                            <tbody>
+                                <tr>
+                                    <td>CPU</td>
+                                    <td class="text-end">4306 %</td>
+                                </tr>
+                                <tr>
+                                    <td>Memori</td>
+                                    <td class="text-end">3801 Mib</td>
+                                </tr>
+                                <tr>
+                                    <td>Storage</td>
+                                    <td class="text-end">1689 GB</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+				</div>
+                
+            </div>
+        </div>
+        <!-- location -->
+        <div class="col-12 col-md-12 col-xxl-6 d-flex order-3 order-xxl-2">
+            <div class="card flex-fill w-100">
+                <div class="card-header">
+
+                    <h5 class="card-title mb-0">Real-Time</h5>
+                </div>
+                <div class="card-body px-4">
+                    <div id="world_map" style="height:350px;"></div>
+                </div>
+            </div>
+        </div>
+        <!-- calendar -->
+        <div class="col-12 col-md-6 col-xxl-3 d-flex order-1 order-xxl-1">
+            <div class="card flex-fill">
+                <div class="card-header">
+
+                    <h5 class="card-title mb-0">Calendar</h5>
+                </div>
+                <div class="card-body d-flex">
+                    <div class="align-self-center w-100">
+                        <div class="chart">
+                            <div id="datetimepicker-dashboard"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- log -->
+        <div class="col-12 col-lg-12 col-xxl-12 order-xxl-4">
+    <div class="card flex-fill">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Log Data Center</h5>
+        </div>
+        <table class="table table-hover my-0">
+            <thead>
+                <tr>
+                    <th>Start Time</th>
+                    <th class="d-none d-xl-table-cell">End Time</th>
+                    <th class="d-none d-xl-table-cell">Node</th>
+                    <th>User name</th>
+                    <th>Description</th>
+                    <th class="d-none d-md-table-cell">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Project Apollo</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                    <td class="d-none d-md-table-cell">Vanessa Tucker</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project Fireball</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-danger">Cancelled</span></td>
+                    <td class="d-none d-md-table-cell">William Harris</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project Hades</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                    <td class="d-none d-md-table-cell">Sharon Lessman</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project Nitro</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-warning">In progress</span></td>
+                    <td class="d-none d-md-table-cell">Vanessa Tucker</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project Phoenix</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                    <td class="d-none d-md-table-cell">William Harris</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project X</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                    <td class="d-none d-md-table-cell">Sharon Lessman</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project Romeo</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                    <td class="d-none d-md-table-cell">Christina Mason</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+                <tr>
+                    <td>Project Wombat</td>
+                    <td class="d-none d-xl-table-cell">01/01/2023</td>
+                    <td class="d-none d-xl-table-cell">31/06/2023</td>
+                    <td><span class="badge bg-warning">In progress</span></td>
+                    <td class="d-none d-md-table-cell">William Harris</td>
+                    <td><span class="badge bg-success">Done</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+        </div>
+    </div>
+
+    <!-- resource data center -->
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			// Pie chart
+			new Chart(document.getElementById("chartjs-dashboard-pie"), {
+				type: "pie",
+				data: {
+					labels: ["Chrome", "Firefox", "IE"],
+					datasets: [{
+						data: [4306, 3801, 1689],
+						backgroundColor: [
+							window.theme.primary,
+							window.theme.warning,
+							window.theme.danger
+						],
+						borderWidth: 5
+					}]
+				},
+				options: {
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					legend: {
+						display: false
+					},
+					cutoutPercentage: 75
+				}
+			});
+		});
+	</script>
+
+
+    <!-- lokasi -->
+	<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Menggunakan Geolocation API untuk mendapatkan koordinat GPS saat ini
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+
+            // Membuat marker dengan koordinat GPS saat ini
+            var markers = [{
+                coords: [latitude, longitude],
+                name: "Lokasi Anda"
+            }];
+
+            var map = new jsVectorMap({
+                map: "world",
+                selector: "#world_map",
+                zoomButtons: true,
+                markers: markers,
+                markerStyle: {
+                    initial: {
+                        r: 9,
+                        strokeWidth: 7,
+                        strokeOpacity: 0.4,
+                        fill: window.theme.primary
+                    },
+                    hover: {
+                        fill: window.theme.primary,
+                        stroke: window.theme.primary
+                    }
+                },
+                zoomOnScroll: false
+            });
+
+            window.addEventListener("resize", () => {
+                map.updateSize();
+            });
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var today = new Date();
+        var defaultDate = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, '0') + "-" + today.getDate().toString().padStart(2, '0');
+        document.getElementById("datetimepicker-dashboard").flatpickr({
+            inline: true,
+            prevArrow: "<span title=\"Previous month\">&laquo;</span>",
+            nextArrow: "<span title=\"Next month\">&raquo;</span>",
+            defaultDate: defaultDate
+        });
+    });
+</script>
+
+
+{% endblock content %}
