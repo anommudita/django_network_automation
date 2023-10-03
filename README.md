@@ -1,4 +1,4 @@
-# Network Automation Konfigurasi Cluster Ceph
+# Network Automation Configuration Cluster Ceph
 
 Requirement :
 1. Install Python Latest
