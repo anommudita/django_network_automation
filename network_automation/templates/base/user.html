@@ -5,6 +5,15 @@
 <!-- wrapping content -->
 {% block content %}
 
+    <h1>Daftar Pengguna Proxmox</h1>
+    <ul>
+        {% for user in proxmox_users %}
+            <li>{{ user.username }} - {{ user.userid }}</li>
+        {% empty %}
+            <li>Tidak ada pengguna Proxmox ditemukan.</li>
+        {% endfor %}
+    </ul>
+
 
     <!-- tombol tambah -->
     <div class="col-lg-6 col-5 text-right mb-4">
