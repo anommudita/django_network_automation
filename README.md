@@ -37,3 +37,5 @@ DATABASES = {
 ```
 5. table is automatically created in PHPmyadmin
 
+6. Done :v
+
