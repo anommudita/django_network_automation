@@ -17,13 +17,30 @@
     <!-- css bootstrap 5 -->
     <!-- <link href="{% static 'bootstrap_5/css/bootstrap.css' %}" rel="stylesheet"> -->
 
-
-    <!-- fontawesome icons -->
+    <!-- JS Bootstrap 5 -->
+    <script src="{% static 'bootstrap_5/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- <script src="{% static 'bootstrap_5/js/bootstrap.bundle.js' %}"></script> -->
+    
     <!-- Fontawesome Icon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/fontawesome.min.css" integrity="sha384-jLKHWM3JRmfMU0A5x5AkjWkw/EYfGUAGagvnfryNV3F9VqM98XiIH7VBGVoxVSc7" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" integrity="sha512-YWzhKL2whUzgiheMoBFwW8CKV4qpHQAEuvilg9FAn5VJUDwKZZxkJNuGM4XkWuk94WCrrwslk8yWNGmY1EduTA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+
+    <!-- <style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    td {
+        word-wrap: break-word;
+        white-space: normal;
+        border: 1px solid #ccc;
+    }
+    </style> -->
+
 </head>
+
 
 <body>
     
@@ -74,22 +91,32 @@
 
 </body>
 
-    <!-- JS Bootstrap 5 -->
-    <script src="{% static 'bootstrap_5/js/bootstrap.bundle.min.js' %}"></script>
-    
-
-
     <!--   Core JS Files   -->
     <script src="{% static 'js/app.js' %}"></script>
+    
+    <!-- plugin datatable -->
+    <script src="{% static 'plugins/datatable/datatables.js' %}"></script>
+    <!-- <link rel="stylesheet" href="{% static 'plugins/datatable/datatables.css'%}"> -->
 
-    <!-- sweetalert2 -->
-    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
-    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
-    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
-
-    <!-- datatable -->
-
-
-
+    <script>
+    $(document).ready(function($) {
+        $('#dataTable').DataTable({
+            "language": {
+                "search": "Cari:",
+                "lengthMenu": "Menampilkan _MENU_ data",
+                "info": "Menampilkan _START_ sampai _END_ data dari _TOTAL_ data",
+                "infoEmpty": "Tidak ada data yang ditampilkan",
+                "infoFiltered": "(dari total _MAX_ data)",
+                "zeroRecords": "Tidak ada hasil pencarian ditemukan",
+                "paginate": {
+                    "first": "&laquo;",
+                    "last": "&raquo;",
+                    "next": "&rsaquo;",
+                    "previous": "&lsaquo;"
+                }
+            }
+        });
+    });
+</script>
 
 </html>

@@ -1,0 +1,277 @@
+<!-- file dari config html -->
+{% extends 'main.html' %}
+
+
+<!-- wrapping content -->
+{% block content %}
+
+    <!-- tombol tambah -->
+    <div class="col-lg-6 col-5 text-right mb-4">
+        <a href="{% url 'user'%}" class="btn btn-primary fs-4">User</a>
+        <a href="{% url 'groups' %}"  class="btn btn-outline-success fs-4">Groups</a>
+        <a href="{% url 'permissions' %}" class="btn btn-outline-warning fs-4">Permissions</a>
+        <a href="{% url 'roles' %}" class="btn btn-outline-info fs-4">Roles</a>
+    </div>
+
+
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="row">
+        <div class="col">
+        <!-- DataTales Example -->
+            <div class="card flex-fill">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Data User</h5>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#addUser" class="btn btn-primary ml-auto">insert</a>
+                </div>
+                <table class="table table-hover my-0" id="dataTable" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-xl-table-cell" scope="col" width="8%">No</th>
+                            <th class="d-none d-xl-table-cell" scope="col" width="20%">Name</th>
+                            <th scope="col" width="15%">Username</th>
+                            <th scope="col" width="20%">Email</th>
+                            <th scope="col" width="10%">Role</th>
+                            <th scope="col" width="15%">Groups</th>
+                            <th scope="col" width="25%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}  
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ user.firstname }} {{ user.lastname }}</td>
+                                <td>{{ user.userid }}</td>  
+                                <td>{{ user.email }}</td>
+                                <td>@{{ user.realm}}</td>
+                                <td>{{ user.groups }}</td>    
+                                <td>
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#editUser{{ user.userid }}" class="btn btn-success">Edit</a>
+                                    <a href="/delete-user/{{ user.userid }}" class="btn btn-danger delete-user">Delete</a>
+                                </td>  
+                            </tr>
+                        {% endfor %} 
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- modal box edit data -->
+    {% for user in users %}  
+        <div class="modal fade" id="editUser{{ user.userid }}" tabindex="-1"  aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">Edit User</h2>
+                            </div>
+                            <div class="card-body">
+                                <form action="/update-user/{{user.userid}}" id="editFormUser" method="post">
+                                    {% csrf_token %}
+
+                                    <!-- Name-->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="name" id="name" placeholder="Enter Name" type="text" autocomplete="off" value="{{ user.firstname }} {{ user.lastname }}">
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Email -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="{{user.email}}">
+                                        </div>
+                                    </div>
+                                
+
+                                    <!-- Username -->   
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="{{user.userid}}">
+                                        </div>
+                                    </div>
+                                
+
+                                    <!-- Password -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="{{user.password}}">
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Role -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                            </div>
+                                            <select name="role" class="form-control" id="role">
+                                            {% if user.role == "@pam" %}
+                                                <option value="{{user.role}}" selected>PAM</option>
+                                                <option value="@pve">PVE</option>
+                                            {% else %} 
+                                                <option value="{{user.role}}" selected>PVE</option>
+                                                <option value="@pam">PAM</option>
+                                            {% endif %}
+                                        </select>
+                                        </div>
+                                    </div>
+                                
+                                    <br>
+                                    <div class="float-start">
+                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                        <div class="float-end">
+                                            <button type="submit" class="btn btn-primary " id="editButtonUser">Update</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+    {% endfor %} 
+    <!-- end modal box edit data -->
+
+
+
+    <!-- modalbox tambah -->
+    <div class="modal fade" id="addUser" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Add User</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="/adduser" id="addFormUser" method="post">
+                                {% csrf_token %}
+
+                                <!-- Name-->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="name" id="name" placeholder="Enter Name" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+
+                                <!-- Email -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+                            
+
+                                <!-- Username -->   
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+                            
+
+                                <!-- Password -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+
+                                <!-- Role -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                        </div>
+                                        <select name="role" class="form-control" id="role">
+                                        <option value="">Pilih..</option>
+                                        <option value="@pam">PAM</option>
+                                        <option value="@pve">PVE</option>
+                                    </select>
+                                    </div>
+                                </div>
+                            
+                                <br>
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>
+    <!-- end modalbox tambah -->
+
+    <!-- table ajax -->
+
+    <!-- ketika mengirim form maka tombol tambah akan disable -->
+    <script>
+        document.getElementById("addFormUser").addEventListener("submit", function() {
+            document.getElementById("addButtonUser").disabled = true;
+        });
+    </script>
+
+    <!-- ketika mengirim form maka tombol edit akan disable --> 
+    <script>
+        document.getElementById("editormUser").addEventListener("submit", function() {
+            document.getElementById("editButtonUser").disabled = true;
+        });
+    </script>
+
+
+{% endblock content %}
+
+

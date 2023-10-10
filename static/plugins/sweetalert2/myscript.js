@@ -1,5 +1,5 @@
 
-// tombol delete sekolah
+// tombol delete user
 $('.delete-user').on('click', function(e){
 
     // e = event
@@ -31,6 +31,38 @@ $('.delete-user').on('click', function(e){
 });
 
 
+// tombol delete groups
+$('.delete-group').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to delete this group data?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Delete Group!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Delete!',
+                'Data has been deleted.',
+                'success'
+            )
+        }
+    })
+
+});
+
+
 
 
 // $('.notif').on('click', function(e){
@@ -45,10 +77,11 @@ $('.delete-user').on('click', function(e){
 // });
 
 
+// let table = new DataTable('#myTable');
 
 
 // new DataTable('#dataTable');
-// $('#akunGuru').DataTable( {
+// $('#dataTable').DataTable( {
 //     // paging: false,
 //     // scrollY: 400
 // } );
