@@ -1,20 +1,27 @@
 <!-- file dari config html -->
 {% extends 'main.html' %}
-
-    
-
+{% load static %}
 <!-- wrapping content -->
 {% block content %}
 
     <style>
-    /* CSS tambahan */
-        td.wrap-text {
-        /* white-space: normal; */
-
-        word-wrap: break-word;
+        /* Z-Index untuk modal */
+        .modal {
+            z-index: 1041; /* Ubah sesuai kebutuhan */
         }
 
+        /* Z-Index untuk Select2 */
+        .select2-container {
+            z-index: 1051; /* Lebih tinggi dari modal */
+        }
+
+        /* Atur lebar form Select2 agar sama dengan input name */
+        /* .select2-container .select2-selection {
+            width: 100% !important;
+        } */
     </style>
+
+
 
     <!-- tombol tambah -->
     <div class="col-lg-6 col-5 text-right mb-4">
@@ -36,20 +43,20 @@
     </div>
     {% endfor %}
 
-        <div class="row">
+    <div class="row">
         <div class="col">
         <!-- DataTales Example -->
             <div class="card flex-fill">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Data Roles</h5>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#addUser" class="btn btn-primary ml-auto">insert</a>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#addRole" class="btn btn-primary ml-auto">insert</a>
                 </div>
 
                 <div class="table-responsive">
                 <table class="table table-hover my-0" id="dataTable" style="width: 100%">
                     <thead>
                         <tr>
-                            <th class="d-none d-xl-table-cell" scope="col" width="10%">No</th>
+                            <th class="d-none d-xl-table-cell" scope="col" width="5%">No</th>
                             <th class="d-none d-xl-table-cell" scope="col" width="30%">Name</th>
                             <th scope="col" width="30%">Privileges</th>
                             <th scope="col" width="15%">Aksi</th>
@@ -58,12 +65,12 @@
                     <tbody>
                             {% for row in roles %}  
                                 <tr>
-                                    <td>{{ forloop.counter }}</td>
+                                    <td class="no_urut">{{ forloop.counter }}</td>
                                     <td>{{ row.roleid }}</td>
-                                    <td class="text-wrap">{{ row.privs }}</td>  
+                                    <td><a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#privileges{{row.roleid}}"><i class="fa fa-info"></i></a></td>  
                                     <td>
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#editUser{{ row.groupid }}" class="btn btn-success">Edit</a>
-                                        <a href="/delete-user/{{ row.groupid }}" class="btn btn-danger delete-user">Delete</a>
+                                        <a href="#" class="btn btn-success btnEdit" data-id="{{row.roleid}}">Edit</a>
+                                        <a href="/delete-role/{{ row.roleid }}" class="btn btn-danger delete-role">Delete</a>
                                     </td>  
                                 </tr>
                             {% endfor %} 
@@ -75,13 +82,9 @@
         </div>
     </div>
 
-
-    
-
-
-    <!-- modal box edit data -->
-    {% for user in users %}  
-        <div class="modal fade" id="editUser{{ user.userid }}" tabindex="-1"  aria-hidden="true">
+    <!-- modal privileges -->
+    {% for row in roles %}
+        <div class="modal fade" id="privileges{{row.roleid}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -90,95 +93,23 @@
                     <div class="modal-body">
                         <div class="card bg-white border-0 mb-0">
                             <div class="card-header bg-transparent">
-                                <h2 class="card-heading text-center">Edit User</h2>
+                                <h2 class="card-heading text-center">Privileges</h2>
                             </div>
                             <div class="card-body">
-                                <form action="/update-user/{{user.userid}}" id="editFormUser" method="post">
-                                    {% csrf_token %}
-
-                                    <!-- Name-->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="name" id="name" placeholder="Enter Name" type="text" autocomplete="off" value="{{ user.firstname }} {{ user.lastname }}">
-                                        </div>
-                                    </div>
-
-
-                                    <!-- Email -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="{{user.email}}">
-                                        </div>
-                                    </div>
-                                
-
-                                    <!-- Username -->   
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="{{user.userid}}">
-                                        </div>
-                                    </div>
-                                
-
-                                    <!-- Password -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="{{user.password}}">
-                                        </div>
-                                    </div>
-
-
-                                    <!-- Role -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
-                                            </div>
-                                            <select name="role" class="form-control" id="role">
-                                            {% if user.role == "@pam" %}
-                                                <option value="{{user.role}}" selected>PAM</option>
-                                                <option value="@pve">PVE</option>
-                                            {% else %} 
-                                                <option value="{{user.role}}" selected>PVE</option>
-                                                <option value="@pam">PAM</option>
-                                            {% endif %}
-                                        </select>
-                                        </div>
-                                    </div>
-                                
-                                    <br>
-                                    <div class="float-start">
-                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                        <div class="float-end">
-                                            <button type="submit" class="btn btn-primary " id="editButtonUser">Update</button>
-                                    </div>
-                                </form>
+                                <div class="form-group">
+                                <textarea class="form-control" id="message-text" rows="12">{{row.privs}}</textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
-    </div>
-    {% endfor %} 
-    <!-- end modal box edit data -->
+    {% endfor %}
 
 
-
-    <!-- modalbox tambah -->
-    <div class="modal fade" id="addUser" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <!-- modalbox tambah role -->
+    <div class="modal fade" id="addRole" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -187,76 +118,93 @@
                 <div class="modal-body">
                     <div class="card bg-white border-0 mb-0">
                         <div class="card-header bg-transparent">
-                            <h2 class="card-heading text-center">Add User</h2>
+                            <h2 class="card-heading text-center">Add Role</h2>
                         </div>
                         <div class="card-body">
-                            <form action="/adduser" id="addFormUser" method="post">
+                            <form action="/addrole" id="addFormRole" method="post">
                                 {% csrf_token %}
 
-                                <!-- Name-->
+                                <!-- Name -->
                                 <div class="form-group mb-4">
                                     <div class="input-group input-group-merge input-group-alternative">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x"></i></span>
                                         </div>
-                                        <input class="form-control" name="name" id="name" placeholder="Enter Name" type="text" autocomplete="off" value="">
+                                        <input class="form-control" name="name" id="name" placeholder="Enter Role Name" type="text" autocomplete="off" value="">
                                     </div>
                                 </div>
 
-
-                                <!-- Email -->
-                                <div class="form-group mb-4">
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
-                                        </div>
-                                        <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
-                                    </div>
-                                </div>
-                            
-
-                                <!-- Username -->   
-                                <div class="form-group mb-4">
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
-                                        </div>
-                                        <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
-                                    </div>
-                                </div>
-                            
-
-                                <!-- Password -->
-                                <div class="form-group mb-4">
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
-                                        </div>
-                                        <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
-                                    </div>
-                                </div>
-
-
-                                <!-- Role -->
-                                <div class="form-group mb-4">
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
-                                        </div>
-                                        <select name="role" class="form-control" id="role">
+                                <!-- Privileges -->
+                                <div class="form-group" style="margin-bottom: 150px;">
+                                    <label for="privileges">Privileges:</label>
+                                    <select name="privileges" class="form-control" id="privileges" multiple="multiple">
                                         <option value="">Pilih..</option>
-                                        <option value="@pam">PAM</option>
-                                        <option value="@pve">PVE</option>
+                                        {% for row in privs %}
+                                            <option value="{{row}}">{{row}}</option>
+                                        {% endfor %}
                                     </select>
-                                    </div>
                                 </div>
                             
+                                <div class="float-start">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                                <div class="float-end">
+                                    <button type="submit" class="btn btn-primary" id="addButtonRole">Insert</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end modalbox tambah -->
+
+    <!-- modalbox edit role -->
+    <div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Edit Role</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="" id="editFormRole" method="post">
+                                {% csrf_token %}
+
+                                <input type="text" class="edit_id" hidden>
+
+                                    <!-- Name -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x"></i></span>
+                                            </div>
+                                            <input class="form-control" name="edit_name" id="edit_name" placeholder="Enter Role Name" type="text" autocomplete="off" value="" readonly>
+                                        </div>
+                                    </div>
+
+                                    <!-- Privileges -->
+                                    <div class="form-group" style="margin-bottom: 150px;">
+                                        <label for="edit_privileges">Privileges:</label>
+                                        <select name="edit_privileges" class="form-control" id="edit_privileges" multiple="multiple">
+                                            <option value="">Pilih..</option>
+                                            {% for row in privs %}
+                                                <option value="{{row}}">{{row}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                        
                                 <br>
                                 <div class="float-start">
                                         <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
                                     </div>
                                     <div class="float-end">
-                                        <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
+                                        <button type="submit" class="btn btn-success" id="editButtonRole">Edit</button>
                                 </div>
                             </form>
                         </div>
@@ -264,22 +212,157 @@
                 </div>
             </div>
     </div>
-</div>
-    <!-- end modalbox tambah -->
+    </div>
+    <!-- modalbox end edit role -->
+
+        
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
 
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Multi Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inisialisasi Select2 setelah modal terbuka
+            $('#addRole').on('shown.bs.modal', function () {
+                $('#privileges').select2({
+                    placeholder: "Select Privileges",
+                    allowClear: true
+                });
+            });
+
+            // Inisialisasi Select2 pada elemen dengan id "edit_privileges"
+            $('#editRoleModal').on('shown.bs.modal', function () {
+                $('#edit_privileges').select2({
+                    placeholder: "Select Privileges",
+                    allowClear: true
+                });
+            });
+
+            //  tanpa render namun tampilan kecil
+            // $('#privileges').select2({
+            //     placeholder: "Select Privileges",
+            //     allowClear: true
+            // });
+
+            // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
+            $('#addFormRole').submit(function() {
+                // Ambil nilai yang dipilih dari Select2
+                var selectedValues = $('#privileges').val();
+                
+                // Ubah nilai menjadi string dengan koma
+                var privilegesString = selectedValues.join(',');
+
+                // Assign nilai sebagai nilai dari input dengan name "privileges"
+                $('input[name="privileges"]').val(privilegesString);
+            });
+            
+            });
+
+    </script>
+
+    <script>
+        const myModal = new bootstrap.Modal('#editRoleModal');
+        $(document).ready(function($) {
+            // Inisialisasi elemen Select2
+            $('#edit_privileges').select2();
+
+            $(document).on('click', '.btnEdit', function() {
+                var id = $(this).data('id');
+
+                $.ajax({
+                    method: 'GET',
+                    url: '/data_api?action=view_data_role',
+                    data: {
+                        id: id
+                    },
+                    success: function(res) {
+                        $('#edit_name').val(id);
+                        $('.edit_id').val(id);
+                        if (res.data) {
+                            var d = res.data;
+
+                            // Mengambil data izin dari respons
+                            var privileges = JSON.stringify(d);
+
+                            // Menghapus ":1" dari setiap data
+                            privileges = privileges.replace(/":1/g, '');
+
+                            // Menghapus tanda kutip ganda awal dan akhir
+                            privileges = privileges.replace(/"/g, '');
+
+                            // Menghapus tanda kurung kurawal "{" dan "}"
+                            privileges = privileges.substring(1, privileges.length - 1);
+
+                            // Memasukkan data privileges ke dalam select2
+                            var editPrivileges = $('#edit_privileges');
+                            editPrivileges.empty();
+
+                            $.each(privileges.split(','), function(key, value) {
+                                var option = new Option(value, value);
+                                editPrivileges.append(option);
+                            });
+
+                            // Memperbarui Select2
+                            editPrivileges.trigger('change');
+
+                            // Memilih opsi yang sesuai dengan data yang diambil melalui AJAX
+                            $.each(privileges.split(','), function(key, value) {
+                                editPrivileges.find('option:contains(' + value + ')').prop('selected', true);
+                            });
+                            
+
+                            
+
+                            // Membuka modal setelah Select2 diperbarui
+                            myModal.show();
+                        }
+                    }
+                });
+            });
+        });
+
+        // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
+        $('#editFormRole').submit(function() {
+            // Ambil nilai yang dipilih dari Select2
+            var selectedValues = $('#edit_privileges').val();
+            
+            // Ubah nilai menjadi string dengan koma
+            var privilegesString = selectedValues.join(',');
+
+            // Assign nilai sebagai nilai dari input dengan name "privileges"
+            $('input[name="edit_privileges"]').val(privilegesString);
+        });
+
+        //  edit data role
+        document.getElementById("editFormRole").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var id = document.querySelector('.edit_id').value;
+            var editForm = document.getElementById("editFormRole");
+            editForm.action = '/edit-role/' + id; // Change the action URL
+            editForm.submit(); // Submit the form
+        });
+
+
+    </script>
+
+
     <!-- ketika mengirim form maka tombol tambah akan disable -->
     <script>
-        document.getElementById("addFormUser").addEventListener("submit", function() {
-            document.getElementById("addButtonUser").disabled = true;
+        document.getElementById("addFormRole").addEventListener("submit", function() {
+            document.getElementById("addButtonRole").disabled = true;
         });
     </script>
 
     <!-- ketika mengirim form maka tombol edit akan disable --> 
     <script>
-        document.getElementById("editormUser").addEventListener("submit", function() {
-            document.getElementById("editButtonUser").disabled = true;
+        document.getElementById("editFormRole").addEventListener("submit", function() {
+            document.getElementById("editButtonRole").disabled = true;
         });
     </script>
 

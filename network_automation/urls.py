@@ -8,19 +8,19 @@ urlpatterns = [
     # halaman utama
     path('', views.home, name="home"),
 
-
-    # route user
-    path('user', views.user, name="user"),
-
-
-    path('adduser', views.addUser, name="adduser"),
+    # route error
+    path('error', views.error_connection, name="error_connection"),
 
     # route data api
     path('data_api', views.data_api, name="data_api"),
 
 
-    # route error
-    path('error', views.error_connection, name="error_connection"),
+    # route user
+    path('user', views.user, name="user"),
+    path('adduser', views.addUser, name="adduser"),
+    path('edit-user/<str:id>', views.updateUser, name="edit-user"),
+    path('delete-user/<str:userid>', views.deleteUser, name="delete-user"),
+
 
     # route groups
     path('groups', views.groups, name="groups"),
@@ -30,17 +30,25 @@ urlpatterns = [
 
     # route permission
     path('permissions', views.permissions, name="permissions"),
+    path('delete-permissions/<path:path>/<str:roles>/<str:type>/<str:ugid>', views.deletePermissions, name="delete-permissions"),
+
+    # add permission group
+    path('add-permission-group', views.addPermissionGroup, name="add-permission-group"),
+
+    # add permission user
+    path('add-permission-user', views.addPermissionUser, name="add-permission-user"),
+
+    # add permissions api
+    path('add-permission-api', views.addPermissionAPI, name="add-permission-api"),
 
     # route roles
     path('roles', views.roles, name="roles"),
+    path('addrole', views.addRole, name="addrole"),
+    path('edit-role/<str:roleid>', views.updateRole, name="edit-role"),
+    path('delete-role/<str:roleid>', views.deleteRole, name="delete-role"),
 
 
-    # tampilan edit user
-    path('edit-user/<int:id>', views.editUser, name="edit-user"),
 
-    # logic update user
-    path('update-user/<int:id>', views.updateUser, name="update-user"),
 
-    # logic update user
-    path('delete-user/<str:userid>', views.deleteUser, name="delete-user"),
+
 ]
