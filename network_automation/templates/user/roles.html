@@ -142,6 +142,7 @@
                                         {% for row in privs %}
                                             <option value="{{row}}">{{row}}</option>
                                         {% endfor %}
+                                            <option value="test">test</option>
                                     </select>
                                 </div>
                             
@@ -299,25 +300,8 @@
                             // Menghapus tanda kurung kurawal "{" dan "}"
                             privileges = privileges.substring(1, privileges.length - 1);
 
-                            // Memasukkan data privileges ke dalam select2
-                            var editPrivileges = $('#edit_privileges');
-                            editPrivileges.empty();
-
-                            $.each(privileges.split(','), function(key, value) {
-                                var option = new Option(value, value);
-                                editPrivileges.append(option);
-                            });
-
-                            // Memperbarui Select2
-                            editPrivileges.trigger('change');
-
-                            // Memilih opsi yang sesuai dengan data yang diambil melalui AJAX
-                            $.each(privileges.split(','), function(key, value) {
-                                editPrivileges.find('option:contains(' + value + ')').prop('selected', true);
-                            });
-                            
-
-                            
+                            // Mengatur nilai dari edit_privileges
+                            $('#edit_privileges').val(privileges.split(',')).trigger('change');
 
                             // Membuka modal setelah Select2 diperbarui
                             myModal.show();
@@ -326,6 +310,12 @@
                 });
             });
         });
+
+
+
+        // menampilkan option pilihan melalui edit_privileges diselect 2
+        
+
 
         // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
         $('#editFormRole').submit(function() {

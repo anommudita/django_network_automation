@@ -51,38 +51,41 @@ def get_proxmox():
 def data_api(request):
     action = request.GET.get('action')
 
-    match action:
-        case 'view_data_group':
-            id = request.GET.get('id')
-            proxmox = get_proxmox()
-            group = proxmox.access.groups.get(id)
-            response = {
-                'status': 'success',
-                'message': 'Data successfully retrieved',
-                'data': group
-            }
-            return JsonResponse(response)
-        case 'view_data_user':
-            id = request.GET.get('id')
-            proxmox = get_proxmox()
-            user = proxmox.access.users.get(id)
-            response = {
-                'status': 'success',
-                'message': 'Data successfully retrieved',
-                'data': user
-            }
-            return JsonResponse(response)
-        case 'view_data_role':
-            roleid = request.GET.get('id')
-            proxmox = get_proxmox()
-            role = proxmox.access.roles.get(roleid)
-            response = {
-                'status': 'success',
-                'message': 'Data successfully retrieved',
-                'data': role
-            }
-            return JsonResponse(response)
-        
+    try:
+        match action:
+            case 'view_data_group':
+                id = request.GET.get('id')
+                proxmox = get_proxmox()
+                group = proxmox.access.groups.get(id)
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': group
+                }
+                return JsonResponse(response)
+            case 'view_data_user':
+                id = request.GET.get('id')
+                proxmox = get_proxmox()
+                user = proxmox.access.users.get(id)
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': user
+                }
+                return JsonResponse(response)
+            case 'view_data_role':
+                roleid = request.GET.get('id')
+                proxmox = get_proxmox()
+                role = proxmox.access.roles.get(roleid)
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': role
+                }
+                return JsonResponse(response)
+    except :
+            return redirect('error_connection')
+
 
 # halaman utama
 def home(request):
@@ -401,23 +404,28 @@ def roles(request):
 
     proxmox = get_proxmox()
 
-    roles = proxmox.access.roles.get()
+    if proxmox is not None :
+        roles = proxmox.access.roles.get()
 
-    privs = []
+        privs = []
 
-    # menampilkan data select option dari data list roles
-    for item in roles:
-        if item['roleid'] == 'Administrator':
-            privs_string = item['privs']
-            privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        # menampilkan data select option dari data list roles
+        for item in roles:
+            if item['roleid'] == 'Administrator':
+                privs_string = item['privs']
+                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        
+        context = {
+            'title': 'Roles',
+            'active_user': 'active',
+            'roles': roles,
+            'privs': privs,
+        }
+        return render(request, 'user/roles.html', context )
+    else :
+        return('error_connection')
+
     
-    context = {
-        'title': 'Roles',
-        'active_user': 'active',
-        'roles': roles,
-        'privs': privs,
-    }
-    return render(request, 'user/roles.html', context )
 
 
 # add roles
