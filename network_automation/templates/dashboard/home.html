@@ -6,6 +6,13 @@
 {% block content %}
     <div class="row">
 
+        
+        {{test}}
+
+
+        <h1>{{test.cpu}}</h1>
+        <!-- {{test2}} -->
+
         <!-- User -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
@@ -96,15 +103,18 @@
                             <tbody>
                                 <tr>
                                     <td>CPU</td>
-                                    <td class="text-end">4306 %</td>
+                                    <td class="text-end">{{test.cpu|floatformat:4}}%</td>
+
+                                    {{node1_cpu}}
                                 </tr>
                                 <tr>
                                     <td>Memori</td>
-                                    <td class="text-end">3801 Mib</td>
+                                    <td class="text-end">{{ node1_mem }} GB - {{ node1_maxmem }} GB</td>
+
                                 </tr>
                                 <tr>
                                     <td>Storage</td>
-                                    <td class="text-end">1689 GB</td>
+                                    <td class="text-end">{{node1_disk}} GB - {{node1_maxdisk}} GB</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -236,9 +246,9 @@
 			new Chart(document.getElementById("chartjs-dashboard-pie"), {
 				type: "pie",
 				data: {
-					labels: ["Chrome", "Firefox", "IE"],
+					labels: ["Storage", "Memori", "CPU"],
 					datasets: [{
-						data: [4306, 3801, 1689],
+						data: [{{node1_disk}}, {{node1_mem}}, 10.0],
 						backgroundColor: [
 							window.theme.primary,
 							window.theme.warning,
