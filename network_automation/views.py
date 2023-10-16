@@ -37,9 +37,9 @@ def get_proxmox():
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            '10.10.20.100',
+            '192.168.1.10',
             user='root@pam', 
-            password='123123123', 
+            password='12345', 
             verify_ssl=False)
         return proxmox
     except Exception as e:
@@ -107,50 +107,112 @@ def data_api(request):
             return redirect('error_connection')
 
 
-# halaman utama
+# # halaman utama
+# def home(request):
+
+#     test1 = get_proxmox_paramiko()
+    
+#     # Mengambil objek pertama dari hasil data
+#     if test1 and len(test1) > 0:
+#         test2 = test1[2]
+#     else:
+#         test2 = {}  # Jika tidak ada data, membuat objek kosong
+
+#     # komputer node1
+#     node1_cpu = test2['cpu']
+
+#     # memori = 1974128640
+#     # agar menjadi 1.97
+
+#     node1_mem = test2['mem']
+#     node1_disk = test2['disk']
+
+    
+#     node1_maxmem = test2['maxmem']
+#     node1_maxdisk = test2['maxdisk']
+
+#     node1_disk = round(node1_disk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+#     node1_mem = round(node1_mem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+
+#     node1_maxdisk = round(node1_maxdisk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+#     node1_maxmem = round(node1_maxmem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+
+
+#     context = {
+#         'title': 'Dashboard',
+#         'active_home': 'active',
+#         'test': test2,
+#         'test2' : test1,
+#         'node1_cpu': node1_cpu,
+#         'node1_mem': node1_mem,
+#         'node1_disk': node1_disk,
+#         'node1_maxmem': node1_maxmem,
+#         'node1_maxdisk': node1_maxdisk,
+#     }
+#     return render(request, 'dashboard/home.html', context )
+
 def home(request):
+    proxmox = get_proxmox()
 
-    test1 = get_proxmox_paramiko()
-    
-    # Mengambil objek pertama dari hasil data
-    if test1 and len(test1) > 0:
-        test2 = test1[2]
+    if proxmox is not None:
+        # Cluster Resources
+        clusters = proxmox.cluster.resources.get()
+
+        cpu_usage = 0
+        mem_usage = 0
+        disk_usage = 0
+        maxcpu = 0
+        maxmem = 0
+        maxdisk = 0
+
+        # Loop melalui data JSON
+        for item in clusters:
+            if "cpu" in item:
+                cpu_usage += item["cpu"]
+            if "mem" in item:
+                mem_usage += item["mem"]
+            if "disk" in item:
+                if "local" not in item["id"]:
+                    disk_usage += item["disk"]
+            if "maxcpu" in item:
+                maxcpu += item["maxcpu"]
+            if "maxmem" in item:
+                maxmem += item["maxmem"]
+            if "maxdisk" in item:
+                if "storage" in item["id"]:
+                    maxdisk += item["maxdisk"]
+
+        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+        
+        cpu_usage = round(cpu_usage / maxcpu * 100, 2)
+        mem_usage = round(mem_usage / 1073741824 , 2)
+        disk_usage = round(disk_usage / 1073741824 , 2)
+        maxmem = round(maxmem / 1073741824 , 2)
+        maxdisk = round(maxdisk / 1073741824 , 2)
+
+        mem_percent = round ((mem_usage / maxmem) * 100, 2)
+        disk_percent = round ((disk_usage / maxdisk) * 100, 2)
+
+        # Pastikan data tersedia sebelum mencoba mengaksesny
+
+        context = {
+            'title': 'Dashboard',
+            'active_home': 'active',
+            'cluster': clusters,  # Menggunakan indeks 0 karena data adalah list
+            'cluster_cpu': cpu_usage,
+            'cluster_mem': mem_usage,
+            'cluster_disk': disk_usage,
+            'cluster_maxcpu': maxcpu,
+            'cluster_maxmem': maxmem,
+            'cluster_maxdisk': maxdisk,
+            'cluster_mempercent': mem_percent,
+            'cluster_diskpercent': disk_percent,
+        }
+        return render(request, 'dashboard/home.html', context)
+        
     else:
-        test2 = {}  # Jika tidak ada data, membuat objek kosong
-
-    # komputer node1
-    node1_cpu = test2['cpu']
-
-    # memori = 1974128640
-    # agar menjadi 1.97
-
-    node1_mem = test2['mem']
-    node1_disk = test2['disk']
-
-    
-    node1_maxmem = test2['maxmem']
-    node1_maxdisk = test2['maxdisk']
-
-    node1_disk = round(node1_disk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-    node1_mem = round(node1_mem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-
-    node1_maxdisk = round(node1_maxdisk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-    node1_maxmem = round(node1_maxmem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-
-
-    context = {
-        'title': 'Dashboard',
-        'active_home': 'active',
-        'test': test2,
-        'test2' : test1,
-        'node1_cpu': node1_cpu,
-        'node1_mem': node1_mem,
-        'node1_disk': node1_disk,
-        'node1_maxmem': node1_maxmem,
-        'node1_maxdisk': node1_maxdisk,
-    }
-    return render(request, 'dashboard/home.html', context )
-
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
 
 #  halaman user
 def  user(request):

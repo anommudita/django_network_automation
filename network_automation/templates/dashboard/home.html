@@ -5,14 +5,6 @@
 <!-- wrapping content -->
 {% block content %}
     <div class="row">
-
-        
-        {{test}}
-
-
-        <h1>{{test.cpu}}</h1>
-        <!-- {{test2}} -->
-
         <!-- User -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
@@ -103,18 +95,16 @@
                             <tbody>
                                 <tr>
                                     <td>CPU</td>
-                                    <td class="text-end">{{test.cpu|floatformat:4}}%</td>
-
-                                    {{node1_cpu}}
+                                    <td class="text-end">{{cluster_cpu|floatformat:1}}% of {{cluster_maxcpu}} CPU</td>
                                 </tr>
                                 <tr>
                                     <td>Memori</td>
-                                    <td class="text-end">{{ node1_mem }} GB - {{ node1_maxmem }} GB</td>
+                                    <td class="text-end">{{ cluster_mem }} GB - {{ cluster_maxmem }} GB</td>
 
                                 </tr>
                                 <tr>
                                     <td>Storage</td>
-                                    <td class="text-end">{{node1_disk}} GB - {{node1_maxdisk}} GB</td>
+                                    <td class="text-end">{{cluster_disk}} GB - {{cluster_maxdisk}} GB</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -242,30 +232,38 @@
     <!-- resource data center -->
 	<script>
 		document.addEventListener("DOMContentLoaded", function() {
-			// Pie chart
 			new Chart(document.getElementById("chartjs-dashboard-pie"), {
-				type: "pie",
-				data: {
-					labels: ["Storage", "Memori", "CPU"],
-					datasets: [{
-						data: [{{node1_disk}}, {{node1_mem}}, 10.0],
-						backgroundColor: [
-							window.theme.primary,
-							window.theme.warning,
-							window.theme.danger
-						],
-						borderWidth: 5
-					}]
-				},
-				options: {
-					responsive: !window.MSInputMethodContext,
-					maintainAspectRatio: false,
-					legend: {
-						display: false
-					},
-					cutoutPercentage: 75
-				}
-			});
+                type: "pie",
+                data: {
+                    labels: ["Storage", "Memori", "CPU"],
+                    datasets: [{
+                        data: [{{cluster_diskpercent}}, {{cluster_mempercent}}, {{cluster_cpu}}],
+                        backgroundColor: [
+                            window.theme.primary,
+                            window.theme.warning,
+                            window.theme.danger
+                        ],
+                        borderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: !window.MSInputMethodContext,
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false
+                    },
+                    cutoutPercentage: 75,
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var dataset = data.datasets[tooltipItem.datasetIndex];
+                                var value = dataset.data[tooltipItem.index];
+                                return data.labels[tooltipItem.index] + ': ' + value + '%';
+                            }
+                        }
+                    }
+                }
+            });
 		});
 	</script>
 
