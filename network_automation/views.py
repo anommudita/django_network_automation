@@ -37,7 +37,7 @@ def get_proxmox():
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            '192.168.1.10',
+            '10.10.20.100',
             user='root@pam', 
             password='12345', 
             verify_ssl=False)
@@ -49,7 +49,7 @@ def get_proxmox():
 def get_proxmox_paramiko():
     try:
         # setting datauser proxmox
-        host = "10.10.20.100"
+        host = "192.168.1.15"
         username = "root"
         password = "123123123"
 
@@ -108,6 +108,49 @@ def data_api(request):
 
 
 # # halaman utama
+# def home(request):
+
+#     test1 = get_proxmox_paramiko()
+    
+#     # Mengambil objek pertama dari hasil data
+#     if test1 and len(test1) > 0:
+#         test2 = test1[2]
+#     else:
+#         test2 = {}  # Jika tidak ada data, membuat objek kosong
+
+#     # komputer node1
+#     node1_cpu = test2['cpu']
+
+#     # memori = 1974128640
+#     # agar menjadi 1.97
+
+#     node1_mem = test2['mem']
+#     node1_disk = test2['disk']
+
+    
+#     node1_maxmem = test2['maxmem']
+#     node1_maxdisk = test2['maxdisk']
+
+#     node1_disk = round(node1_disk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+#     node1_mem = round(node1_mem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+
+#     node1_maxdisk = round(node1_maxdisk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+#     node1_maxmem = round(node1_maxmem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
+
+
+#     context = {
+#         'title': 'Dashboard',
+#         'active_home': 'active',
+#         'test': test2,
+#         'test2' : test1,
+#         'node1_cpu': node1_cpu,
+#         'node1_mem': node1_mem,
+#         'node1_disk': node1_disk,
+#         'node1_maxmem': node1_maxmem,
+#         'node1_maxdisk': node1_maxdisk,
+#     }
+#     return render(request, 'dashboard/home.html', context )
+
 def home(request):
     proxmox = get_proxmox()
 
