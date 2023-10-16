@@ -108,49 +108,6 @@ def data_api(request):
 
 
 # # halaman utama
-# def home(request):
-
-#     test1 = get_proxmox_paramiko()
-    
-#     # Mengambil objek pertama dari hasil data
-#     if test1 and len(test1) > 0:
-#         test2 = test1[2]
-#     else:
-#         test2 = {}  # Jika tidak ada data, membuat objek kosong
-
-#     # komputer node1
-#     node1_cpu = test2['cpu']
-
-#     # memori = 1974128640
-#     # agar menjadi 1.97
-
-#     node1_mem = test2['mem']
-#     node1_disk = test2['disk']
-
-    
-#     node1_maxmem = test2['maxmem']
-#     node1_maxdisk = test2['maxdisk']
-
-#     node1_disk = round(node1_disk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-#     node1_mem = round(node1_mem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-
-#     node1_maxdisk = round(node1_maxdisk / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-#     node1_maxmem = round(node1_maxmem / 1000000000, 2)  # Konversi dari byte ke gigabyte (dengan dua desimal)
-
-
-#     context = {
-#         'title': 'Dashboard',
-#         'active_home': 'active',
-#         'test': test2,
-#         'test2' : test1,
-#         'node1_cpu': node1_cpu,
-#         'node1_mem': node1_mem,
-#         'node1_disk': node1_disk,
-#         'node1_maxmem': node1_maxmem,
-#         'node1_maxdisk': node1_maxdisk,
-#     }
-#     return render(request, 'dashboard/home.html', context )
-
 def home(request):
     proxmox = get_proxmox()
 
@@ -168,18 +125,22 @@ def home(request):
         # Loop melalui data JSON
         for item in clusters:
             if "cpu" in item:
-                cpu_usage += item["cpu"]
+                if "lxc" not in item["id"]:
+                    cpu_usage += item["cpu"]
             if "mem" in item:
-                mem_usage += item["mem"]
+                if "lxc" not in item["id"]:
+                    mem_usage += item["mem"]
             if "disk" in item:
-                if "local" not in item["id"]:
+                if "storage" in item["id"] and "lxc" not in item["id"]:
                     disk_usage += item["disk"]
             if "maxcpu" in item:
-                maxcpu += item["maxcpu"]
+                if "lxc" not in item["id"]:
+                    maxcpu += item["maxcpu"]
             if "maxmem" in item:
-                maxmem += item["maxmem"]
+                if "lxc" not in item["id"]:
+                    maxmem += item["maxmem"]
             if "maxdisk" in item:
-                if "storage" in item["id"]:
+                if "storage" in item["id"] and "lxc" not in item["id"]:
                     maxdisk += item["maxdisk"]
 
         # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
@@ -193,7 +154,13 @@ def home(request):
         mem_percent = round ((mem_usage / maxmem) * 100, 2)
         disk_percent = round ((disk_usage / maxdisk) * 100, 2)
 
-        # Pastikan data tersedia sebelum mencoba mengaksesny
+        # Pastikan data tersedia sebelum mencoba mengaksesnya
+
+
+        # Log Resource
+        log  = proxmox.cluster.log.get()
+
+        date = log[0]
 
         context = {
             'title': 'Dashboard',
@@ -207,6 +174,8 @@ def home(request):
             'cluster_maxdisk': maxdisk,
             'cluster_mempercent': mem_percent,
             'cluster_diskpercent': disk_percent,
+
+            'time': date,
         }
         return render(request, 'dashboard/home.html', context)
         
