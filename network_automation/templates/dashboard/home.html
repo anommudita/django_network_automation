@@ -93,18 +93,19 @@
 
                         <table class="table mb-0">
                             <tbody>
+                                <p id="data-terbaru">Data akan ditampilkan di sini</p>
                                 <tr>
                                     <td>CPU</td>
-                                    <td class="text-end">{{cluster_cpu|floatformat:1}}% of {{cluster_maxcpu}} CPU</td>
+                                    <td class="text-end" id="cpu"></td>
                                 </tr>
                                 <tr>
                                     <td>Memori</td>
-                                    <td class="text-end">{{ cluster_mem }} GB - {{ cluster_maxmem }} GB</td>
+                                    <td class="text-end" id="memori"></td>
 
                                 </tr>
                                 <tr>
                                     <td>Storage</td>
-                                    <td class="text-end">{{cluster_disk}} GB - {{cluster_maxdisk}} GB</td>
+                                    <td class="text-end" id="disk"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -231,13 +232,18 @@
 
     <!-- resource data center -->
 	<script>
-		document.addEventListener("DOMContentLoaded", function() {
-			new Chart(document.getElementById("chartjs-dashboard-pie"), {
+        var chartData = {}; // Buat variabel kosong untuk data chart
+        var chart; // Deklarasikan chart sebagai variabel global
+    
+        document.addEventListener("DOMContentLoaded", function() {
+            var chartElement = document.getElementById("chartjs-dashboard-pie");
+    
+            chart = new Chart(chartElement, {
                 type: "pie",
                 data: {
                     labels: ["Storage", "Memori", "CPU"],
                     datasets: [{
-                        data: [{{cluster_diskpercent}}, {{cluster_mempercent}}, {{cluster_cpu}}],
+                        data: [0, 0, 0], // Inisialisasi dengan nilai 0
                         backgroundColor: [
                             window.theme.primary,
                             window.theme.warning,
@@ -264,8 +270,18 @@
                     }
                 }
             });
-		});
-	</script>
+    
+            // Panggil fungsi updateChart saat data terbaru diperoleh
+            ambilDataTerbaru();
+        });
+    
+        // Fungsi untuk memperbarui data grafik
+        function updateChart() {
+            chart.data.datasets[0].data = [chartData.cluster_diskpercent, chartData.cluster_mempercent, chartData.cluster_cpu];
+            chart.update();
+        }
+    </script>
+    
 
 
     <!-- lokasi -->
@@ -322,5 +338,30 @@
     });
 </script>
 
+<!-- Script untuk auto refresh data resource -->
+<script>
+    function ambilDataTerbaru() {
+        // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
+        // Pastikan URL endpoint yang sesuai
+        fetch('/cluster-resources')
+            .then(response => response.json())
+            .then(data => {
+                // Perbarui elemen HTML dengan data terbaru
+                document.getElementById('data-terbaru').textContent = `CPU Usage: ${data.cluster_cpu}%, Mem Usage: ${data.cluster_mem} GB, Disk Usage: ${data.cluster_disk} GB`;
+                document.getElementById('cpu').textContent = `${data.cluster_cpu}% of ${data.cluster_maxcpu} CPU`;
+                document.getElementById('memori').textContent = `${data.cluster_mem} GB - ${data.cluster_maxmem} GB`;
+                document.getElementById('disk').textContent = `${data.cluster_disk} GB - ${data.cluster_maxdisk} GB`;
+                chartData = data; // Simpan data terbaru dalam variabel chartData
+                updateChart(); // Panggil fungsi updateChart untuk memperbarui grafik
+            })
+            .catch(error => console.error('Gagal mengambil data terbaru:', error));
+    }
+
+    // // Panggil ambilDataTerbaru saat halaman dimuat
+    // ambilDataTerbaru();
+
+    // Atur interval untuk melakukan pembaruan data setiap 60 detik
+    setInterval(ambilDataTerbaru, 1000);
+</script>
 
 {% endblock content %}

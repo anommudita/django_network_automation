@@ -5,8 +5,9 @@ from . import views
 
 urlpatterns = [
 
-    # halaman utama
+    # halaman utama dan dashboard
     path('', views.home, name="home"),
+    path('cluster-resources/', views.cluster_resources, name='cluster-resources'),
 
     # route error
     path('error', views.error_connection, name="error_connection"),

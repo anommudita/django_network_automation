@@ -37,9 +37,9 @@ def get_proxmox():
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            '10.10.20.100',
+            '192.168.1.15',
             user='root@pam', 
-            password='12345', 
+            password='123123123', 
             verify_ssl=False)
         return proxmox
     except Exception as e:
@@ -168,27 +168,27 @@ def home(request):
         # Loop melalui data JSON
         for item in clusters:
             if "cpu" in item:
-                if "lxc" not in item["id"]:
+                # if "lxc" not in item["id"] and "qemu" not in item["id"]:
                     cpu_usage += item["cpu"]
             if "mem" in item:
-                if "lxc" not in item["id"]:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
                     mem_usage += item["mem"]
             if "disk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"]:
+                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
                     disk_usage += item["disk"]
             if "maxcpu" in item:
-                if "lxc" not in item["id"]:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
                     maxcpu += item["maxcpu"]
             if "maxmem" in item:
-                if "lxc" not in item["id"]:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
                     maxmem += item["maxmem"]
             if "maxdisk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"]:
+                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
                     maxdisk += item["maxdisk"]
 
         # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
         
-        cpu_usage = round(cpu_usage / maxcpu * 100, 2)
+        cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
         mem_usage = round(mem_usage / 1073741824 , 2)
         disk_usage = round(disk_usage / 1073741824 , 2)
         maxmem = round(maxmem / 1073741824 , 2)
@@ -221,6 +221,72 @@ def home(request):
             'time': date,
         }
         return render(request, 'dashboard/home.html', context)
+        
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+
+# cluster resources di home
+def cluster_resources(request):
+    proxmox = get_proxmox()
+
+    if proxmox is not None:
+        # Cluster Resources
+        clusters = proxmox.cluster.resources.get()
+
+        cpu_usage = 0
+        mem_usage = 0
+        disk_usage = 0
+        maxcpu = 0
+        maxmem = 0
+        maxdisk = 0
+
+        # Loop melalui data JSON
+        for item in clusters:
+            if "cpu" in item:
+                # if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    cpu_usage += item["cpu"]
+            if "mem" in item:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    mem_usage += item["mem"]
+            if "disk" in item:
+                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    disk_usage += item["disk"]
+            if "maxcpu" in item:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    maxcpu += item["maxcpu"]
+            if "maxmem" in item:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    maxmem += item["maxmem"]
+            if "maxdisk" in item:
+                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    maxdisk += item["maxdisk"]
+
+        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+        
+        cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
+        mem_usage = round(mem_usage / 1073741824 , 2)
+        disk_usage = round(disk_usage / 1073741824 , 2)
+        maxmem = round(maxmem / 1073741824 , 2)
+        maxdisk = round(maxdisk / 1073741824 , 2)
+
+        mem_percent = round ((mem_usage / maxmem) * 100, 2)
+        disk_percent = round ((disk_usage / maxdisk) * 100, 2)
+
+        # Pastikan data tersedia sebelum mencoba mengaksesnya
+
+        data = {
+            'cluster': clusters,  # Menggunakan indeks 0 karena data adalah list
+            'cluster_cpu': cpu_usage,
+            'cluster_mem': mem_usage,
+            'cluster_disk': disk_usage,
+            'cluster_maxcpu': maxcpu,
+            'cluster_maxmem': maxmem,
+            'cluster_maxdisk': maxdisk,
+            'cluster_mempercent': mem_percent,
+            'cluster_diskpercent': disk_percent,
+        }
+        return JsonResponse(data)
         
     else:
         # Redirect ke halaman eror jika koneksi gagal
