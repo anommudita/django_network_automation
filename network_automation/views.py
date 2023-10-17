@@ -125,18 +125,22 @@ def home(request):
         # Loop melalui data JSON
         for item in clusters:
             if "cpu" in item:
-                cpu_usage += item["cpu"]
+                if "lxc" not in item["id"]:
+                    cpu_usage += item["cpu"]
             if "mem" in item:
-                mem_usage += item["mem"]
+                if "lxc" not in item["id"]:
+                    mem_usage += item["mem"]
             if "disk" in item:
-                if "local" not in item["id"]:
+                if "storage" in item["id"] and "lxc" not in item["id"]:
                     disk_usage += item["disk"]
             if "maxcpu" in item:
-                maxcpu += item["maxcpu"]
+                if "lxc" not in item["id"]:
+                    maxcpu += item["maxcpu"]
             if "maxmem" in item:
-                maxmem += item["maxmem"]
+                if "lxc" not in item["id"]:
+                    maxmem += item["maxmem"]
             if "maxdisk" in item:
-                if "storage" in item["id"]:
+                if "storage" in item["id"] and "lxc" not in item["id"]:
                     maxdisk += item["maxdisk"]
 
         # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
@@ -150,7 +154,13 @@ def home(request):
         mem_percent = round ((mem_usage / maxmem) * 100, 2)
         disk_percent = round ((disk_usage / maxdisk) * 100, 2)
 
-        # Pastikan data tersedia sebelum mencoba mengaksesny
+        # Pastikan data tersedia sebelum mencoba mengaksesnya
+
+
+        # Log Resource
+        log  = proxmox.cluster.log.get()
+
+        date = log[0]
 
         context = {
             'title': 'Dashboard',
@@ -164,6 +174,8 @@ def home(request):
             'cluster_maxdisk': maxdisk,
             'cluster_mempercent': mem_percent,
             'cluster_diskpercent': disk_percent,
+
+            'time': date,
         }
         return render(request, 'dashboard/home.html', context)
         
