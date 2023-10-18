@@ -29,9 +29,23 @@
 								<div class="card-header">
 									<h5 class="card-title mb-0">Configuration IP Server</h5>
 								</div>
-								<div class="card-body pt-2">
+
+                                <div style="padding-left: 25px;">
+									<!-- flash message -->
+                                    {% for message in messages %}
+                                    <div class="container-fluid p-0">
+
+                                        <div class="alert {{ message.tags }} alert-dismissible fade show col-8" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+								</div>
+
+								<div class="card-body" style="padding-top: 5px; margin-top: 5px;">
 									<div class="m-sm-3">
-									<form method="POST" action="{% url 'config'%}">
+									<form method="POST" action="{% url 'config_by_user'%}">
 										{% csrf_token %}
 										<div class="mb-3">
 											<label class="form-label">IP Address</label>

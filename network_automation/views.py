@@ -200,7 +200,7 @@ def config(request):
         form = ServerForm(request.POST, instance=server)
         if form.is_valid():
             form.save()
-            # messages.success(request, "Server updated successfully")
+            messages.success(request, "Server updated successfully")
             return redirect('home')
         else:
             # ketika form tidak valid atau kosong
@@ -211,6 +211,28 @@ def config(request):
         'server' : server
     }
     return render(request, 'config.html', context)
+
+
+# halaman config by user
+def config_by_user(request):
+    # data by id
+    server = Server.objects.get(id=1)
+
+    # form dari form.py
+    form = ServerForm(instance=server)
+
+    # logic update data
+    if request.method == "POST":
+        form = ServerForm(request.POST, instance=server)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Server updated successfully")
+            return redirect('home')
+        else:
+            # ketika form tidak valid atau kosong
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('settings')
+    
 
 
 # wajib login untuk mengakses halaman ini

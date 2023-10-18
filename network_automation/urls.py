@@ -73,6 +73,8 @@ urlpatterns = [
 
     # route config
     path('config', views.config, name="config"),
+    # route config_by_user
+    path('config_by_user', views.config_by_user, name="config_by_user"),
 
 
 
