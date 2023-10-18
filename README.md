@@ -11,31 +11,20 @@ Requirement :
 ```bash
   virtualenv env
 ```
-5. install mysqlclient
+3. Install Pillow
 ```bash
-  pip install mysqlclient
+  pip install pillow
 ```
 
 Steps :
-1. folder config/settings.py , follow the method below :
-```bash
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'network_automation',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
-```
-3. dont forget create database with the name `network_automation` on PHPMYADMIN
-4. migrate database
+1. migrate database
 ```bash
   python manage.py migrate
 ```
-5. table is automatically created in PHPmyadmin
+2. run server
+```bash
+  python manage.py runserver
+```
 
 6. Done :v
 

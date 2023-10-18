@@ -351,29 +351,4 @@
     setInterval(ambilLogTerbaru, 5000);
 </script>
 
-<!-- Script untuk auto refresh data log
-<script>
-    function ambilLogTerbaru() {
-    // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
-    // Pastikan URL endpoint yang sesuai
-    fetch('/cluster-log')
-        .then(response => response.json())
-        .then(data => {
-            // Perbarui elemen HTML dengan data terbaru
-            // const logTime = new Date(data.log_time * 1000); // Konversi timestamp ke objek waktu
-            // const formattedLogTime = logTime.toLocaleString(); // Format waktu sesuai preferensi
-            document.getElementById('time').textContent = `${data.log_time}`;
-            document.getElementById('PID').textContent = `${data.log_pid}`;
-            document.getElementById('node').textContent = `${data.log_node}`;
-            document.getElementById('user').textContent = `${data.log_user}`;
-            document.getElementById('msg').textContent = `${data.log_msg}`;
-            document.getElementById('tag').textContent = `${data.log_tag}`;
-        })
-        .catch(error => console.error('Gagal mengambil data terbaru:', error));
-    }
-
-    // Atur interval untuk melakukan pembaruan data setiap 60 detik
-    setInterval(ambilLogTerbaru, 2000);
-</script> -->
-
 {% endblock content %}
