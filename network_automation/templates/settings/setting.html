@@ -1,6 +1,75 @@
 {% extends 'main.html' %}
-
+{% load static %}
 
 {% block content %}
+
+	<main class="content pt-3">
+				<div class="container-fluid p-0">
+
+					<div class="mb-3">
+						<h1 class="h3 d-inline align-middle">Proxmox</h1>
+					</div>
+					<div class="row">
+                        <!-- about proxmox -->
+						<div class="col-12 col-md-6">
+							<div class="card">
+								<img class="card-img-top m-auto" src="{% static 'img/photos/proxmox.png'%}" alt="Proxmox" style="width: 500px;">
+								<div class="card-header">
+									<h5 class="card-title mb-0">About Proxmox</h5>
+								</div>
+								<div class="card-body mb-3">
+									<p class="card-text" style="text-align: justify;">Proxmox Virtual Environment is a complete open-source platform for enterprise virtualization. With the built-in web interface you can easily manage VMs and containers, software-defined storage and networking, high-availability clustering, and multiple out-of-the-box tools using a single solution</p>
+								</div>
+							</div>
+						</div>
+
+                        <!-- configuration -->
+						<div class="col-12 col-md-6">
+							<div class="card">
+								<div class="card-header">
+									<h5 class="card-title mb-0">Configuration IP Server</h5>
+								</div>
+
+                                <div style="padding-left: 25px;">
+									<!-- flash message -->
+                                    {% for message in messages %}
+                                    <div class="container-fluid p-0">
+
+                                        <div class="alert {{ message.tags }} alert-dismissible fade show col-8" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+								</div>
+
+								<div class="card-body" style="padding-top: 5px; margin-top: 5px;">
+									<div class="m-sm-3">
+									<form method="POST" action="{% url 'config_by_user'%}">
+										{% csrf_token %}
+										<div class="mb-3">
+											<label class="form-label">IP Address</label>
+											<input class="form-control form-control-lg" type="text" name="ip_address" id="ip_address" placeholder="Enter ip server" />
+										</div>
+										<div class="mb-3">
+											<label class="form-label">Username</label>
+											<input class="form-control form-control-lg" type="text" name="username" id="username" placeholder="Enter server username" value="root"/>
+										</div>
+										<div class="mb-3">
+											<label class="form-label">Password</label>
+											<input class="form-control form-control-lg" type="password" name="password" id="password" placeholder="Enter password server" />
+										</div>
+										<div class="d-flex justify-content-end pt-3">
+                                            <button class="btn btn-lg btn-primary">Submit</button>
+                                        </div>
+									</form>
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+			</main>
+
 
 {% endblock content %}

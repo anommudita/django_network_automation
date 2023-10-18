@@ -19,3 +19,19 @@ class Server(models.Model):
         return self.ip_address
     
 
+
+# table user profile
+class UserProfile(models.Model):
+    # user
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    # name
+    name = models.CharField(max_length=250)
+
+    date_created = models.DateTimeField(blank=True, null= True)
+
+    # avatar
+    avatar = models.ImageField(blank = True, null = True)
+
+    def  __str__(self):
+            return self.user.username
