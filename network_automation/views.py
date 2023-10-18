@@ -1,9 +1,25 @@
 from django.shortcuts import render, redirect
 
-from  network_automation.models import User
+
+# import data user untuk panel admin
+from django.contrib.auth.models import User
+# import model dari models.py
+from .models import Server
+
 
 # all form
-from network_automation.forms import UserForm
+# from network_automation.forms import ServerForm
+from .forms import ServerForm
+
+
+# import authenticate untuk login
+from django.contrib.auth import authenticate , login, logout
+# ketika nama  function sama dengan nama import maka buatkan aliasnya
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+
+
+from django.contrib.auth.decorators import login_required
 
 # time
 import time
@@ -35,12 +51,19 @@ def error_connection(request):
     return render(request, 'error.html')
 
 def get_proxmox():
+
+    # get data server
+    server = Server.objects.get(id=1)
+    username = server.username
+    password = server.password
+    ip_address = server.ip_address
+
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            '192.168.1.8',
+            '192.168.1.15',
             user='root@pam', 
-            password='12345', 
+            password='123123123', 
             verify_ssl=False)
         return proxmox
     except Exception as e:
@@ -48,11 +71,15 @@ def get_proxmox():
         return None
     
 def get_proxmox_paramiko():
+
+    # get data server
+    server = Server.objects.get(id=1)
+
     try:
         # setting datauser proxmox
-        host = "192.168.1.15"
-        username = "root"
-        password = "123123123"
+        host = server.ip_address
+        username = server.username
+        password = server.password
 
         client = paramiko.client.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -68,6 +95,8 @@ def get_proxmox_paramiko():
         return None
 
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # API Data AJAX
 def data_api(request):
     action = request.GET.get('action')
@@ -107,20 +136,155 @@ def data_api(request):
     except :
             return redirect('error_connection')
 
+# halamn login
+def login(request):
+    
 
+    # mengambil data dari form login
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if not username or not password :
+            messages.error(request, "Make sure username and password are valid")
+            return redirect('login')
+
+        try:
+            # autentikasi user
+            # mencari data user lalu dibandingkan dengan username dan password
+            user = User.objects.get(username=username)
+        except:
+            # messages.error(request, 'User does not exist')
+            pass
+
+        # ketika berhasil login 
+        # ini akan mengembalikan objek user cocok dengan kredesial ini atau none
+        user = authenticate(request, username=username, password=password)
+
+        # ketika user berhasil login
+        if user is not None:
+            # lagin berhasil
+            # akan mencatat session database dan session di browser
+            # ketika berhasil login akan diarahkan ke halaman home
+            auth_login(request, user)
+            return redirect('home')
+        else:
+            # login gagal
+            # akan menampilkan pesan error
+            messages.error(request, 'Username or password is incorrect')
+
+    context = {}
+    return render(request, 'login.html', context)
+            # return render(request, 'login.html')
+    
+def logout(request):
+
+    # menghapus session di browser
+    auth_logout(request)
+    time.sleep(1.5)
+
+    messages.success(request, "Successfully logged out")
+    
+    return redirect('login')
+
+# halaman config
+def config(request):
+    # data by id
+    server = Server.objects.get(id=1)
+
+    # form dari form.py
+    form = ServerForm(instance=server)
+
+    # logic update data
+    if request.method == "POST":
+        form = ServerForm(request.POST, instance=server)
+        if form.is_valid():
+            form.save()
+            # messages.success(request, "Server updated successfully")
+            return redirect('home')
+        else:
+            # ketika form tidak valid atau kosong
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('config')
+        
+    context = {
+        'server' : server
+    }
+    return render(request, 'config.html', context)
+
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # # halaman utama
 def home(request):
     proxmox = get_proxmox()
 
     if proxmox is not None:
+        # Cluster Resources
+        clusters = proxmox.cluster.resources.get()
+
+        cpu_usage = 0
+        mem_usage = 0
+        disk_usage = 0
+        maxcpu = 0
+        maxmem = 0
+        maxdisk = 0
+
+        # Loop melalui data JSON
+        for item in clusters:
+            if "cpu" in item:
+                # if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    cpu_usage += item["cpu"]
+            if "mem" in item:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    mem_usage += item["mem"]
+            if "disk" in item:
+                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    disk_usage += item["disk"]
+            if "maxcpu" in item:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    maxcpu += item["maxcpu"]
+            if "maxmem" in item:
+                if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    maxmem += item["maxmem"]
+            if "maxdisk" in item:
+                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
+                    maxdisk += item["maxdisk"]
+
+        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+        
+        cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
+        mem_usage = round(mem_usage / 1073741824 , 2)
+        disk_usage = round(disk_usage / 1073741824 , 2)
+        maxmem = round(maxmem / 1073741824 , 2)
+        maxdisk = round(maxdisk / 1073741824 , 2)
+
+        mem_percent = round ((mem_usage / maxmem) * 100, 2)
+        disk_percent = round ((disk_usage / maxdisk) * 100, 2)
+
+        # Pastikan data tersedia sebelum mencoba mengaksesnya
+
 
         # Log Resource
         log  = proxmox.cluster.log.get()
 
+
+        # jumlah data user
+        users = proxmox.access.users.get()
+        count_user = len(users)
+
         context = {
             'title': 'Dashboard',
             'active_home': 'active',
-            'log': log,
+            'cluster': clusters,  # Menggunakan indeks 0 karena data adalah list
+            'cluster_cpu': cpu_usage,
+            'cluster_mem': mem_usage,
+            'cluster_disk': disk_usage,
+            'cluster_maxcpu': maxcpu,
+            'cluster_maxmem': maxmem,
+            'cluster_maxdisk': maxdisk,
+            'cluster_mempercent': mem_percent,
+            'cluster_diskpercent': disk_percent,
         }
         return render(request, 'dashboard/home.html', context)
         
@@ -128,7 +292,7 @@ def home(request):
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
-# cluster data di home
+# cluster resources di home
 def cluster_resources(request):
     proxmox = get_proxmox()
 
@@ -257,6 +421,9 @@ def cluster_log(request):
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 #  halaman user
 def  user(request):
 
@@ -279,7 +446,11 @@ def  user(request):
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
+    
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # add user
 def  addUser(request):
     # connect to proxmox
@@ -305,7 +476,8 @@ def  addUser(request):
             messages.error(request, f"Error adding user : {str(e)}")
             return redirect('user')
     
-
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 def  updateUser(request, id):
 
     proxmox = get_proxmox()
@@ -334,7 +506,8 @@ def  updateUser(request, id):
             messages.error(request, f"Error saved user: {str(e)}")
             return redirect('user')      
 
-
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 #  delete user
 def deleteUser(request, userid):
 
@@ -345,7 +518,9 @@ def deleteUser(request, userid):
     time.sleep(1.5)
     return redirect('user')
 
-#  halaman guru
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+#  halaman groups
 def  groups(request):
 
     proxmox = get_proxmox()
@@ -359,8 +534,10 @@ def  groups(request):
         }
         return render(request, 'user/groups.html', context )
     else:
-        return redirect(error_connection)
+        return redirect('error_connection')
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # add groups
 def  addGroup(request):
     # connect to proxmox
@@ -383,6 +560,8 @@ def  addGroup(request):
             return redirect('groups')
 
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # updateGroup
 def  updateGroup(request, groupid):
     
@@ -404,6 +583,8 @@ def  updateGroup(request, groupid):
             return redirect('groups')      
 
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # delete group
 def deleteGroup(request, groupid):
     # connect to proxmox
@@ -417,6 +598,9 @@ def deleteGroup(request, groupid):
         return redirect('groups')
 
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 #  halaman permissions
 def  permissions(request):
 
@@ -456,6 +640,9 @@ def  permissions(request):
     else:
         return redirect(error_connection)
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # add permissions group
 def addPermissionGroup(request):
     # connect to proxmox
@@ -483,6 +670,9 @@ def addPermissionGroup(request):
             messages.error(request, f"Error adding permissions group: {str(e)}")
             return redirect('permissions')
         
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # add permissions User
 def addPermissionUser(request):
     # connect to proxmox
@@ -539,6 +729,9 @@ def addPermissionAPI(request):
             return redirect('permissions')
 
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # delete permission
 def deletePermissions(request, path, roles, type, ugid):
 
@@ -559,6 +752,9 @@ def deletePermissions(request, path, roles, type, ugid):
         messages.error(request, f"Error deleting permissions : {str(e)}")
         return redirect('permissions')
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 #  roles
 def roles(request):
 
@@ -586,7 +782,8 @@ def roles(request):
         return('error_connection')
 
     
-
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # add roles
 def addRole(request):
 # connect to proxmox
@@ -611,6 +808,9 @@ def addRole(request):
             messages.error(request, f"Error adding permissions roles : {str(e)}")
             return redirect('roles')
 
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # update roles 
 def  updateRole(request, roleid):
     
@@ -633,7 +833,10 @@ def  updateRole(request, roleid):
         except Exception as e:
             messages.error(request, f"Error updated permissions roles : {str(e)}")
             return redirect('roles')  
-        
+
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
 # delete role
 def deleteRole(request, roleid):
 
@@ -646,5 +849,141 @@ def deleteRole(request, roleid):
     except Exception as e:
         messages.error(request, f"Error deleting roles : {str(e)}")
         return redirect('roles')
+
+
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# halaman node
+def nodes(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None :
+        roles = proxmox.access.roles.get()
+
+        privs = []
+
+        # menampilkan data select option dari data list roles
+        for item in roles:
+            if item['roleid'] == 'Administrator':
+                privs_string = item['privs']
+                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        
+        context = {
+            'title': 'Nodes',
+            'active_node': 'active',
+        }
+        return render(request, 'node/node.html', context )
+    else :
+        return('error_connection')
+    
+
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# halaman clusters
+def clusters(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None :
+        roles = proxmox.access.roles.get()
+
+        privs = []
+
+        # menampilkan data select option dari data list roles
+        for item in roles:
+            if item['roleid'] == 'Administrator':
+                privs_string = item['privs']
+                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        
+        context = {
+            'title': 'Clusters',
+            'active_cluster': 'active',
+        }
+        return render(request, 'cluster/cluster.html', context )
+    else :
+        return('error_connection')
+
+
+@login_required(login_url='login')
+# halaman monitor
+def monitors(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None :
+        roles = proxmox.access.roles.get()
+
+        privs = []
+
+        # menampilkan data select option dari data list roles
+        for item in roles:
+            if item['roleid'] == 'Administrator':
+                privs_string = item['privs']
+                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        
+        context = {
+            'title': 'Monitors',
+            'active_monitor': 'active',
+        }
+        return render(request, 'monitor/monitor.html', context )
+    else :
+        return('error_connection')
+    
+
+@login_required(login_url='login')
+# halaman profile
+def profile(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None :
+        roles = proxmox.access.roles.get()
+
+        privs = []
+
+        # menampilkan data select option dari data list roles
+        for item in roles:
+            if item['roleid'] == 'Administrator':
+                privs_string = item['privs']
+                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        
+        context = {
+            'title': 'Monitors',
+        }
+        return render(request, 'settings/profile.html', context )
+    else :
+        return('error_connection')
+    
+
+
+@login_required(login_url='login')
+# halaman settings
+def settings(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None :
+        roles = proxmox.access.roles.get()
+
+        privs = []
+
+        # menampilkan data select option dari data list roles
+        for item in roles:
+            if item['roleid'] == 'Administrator':
+                privs_string = item['privs']
+                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        
+        context = {
+            'title': 'Settings',
+        }
+        return render(request, 'settings/setting.html', context )
+    else :
+        return('error_connection')
+    
+
+
 
 

@@ -23,28 +23,28 @@
                 </li>
                 
                 <!-- halaman node -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="pages-sign-in.html">
+                <li class="sidebar-item {{active_node}}">
+                    <a class="sidebar-link" href="{% url 'nodes' %}">
                     <i class="align-middle" data-feather="hard-drive"></i> <span class="align-middle">Node</span>
                     </a>
                 </li>
 
                 <!-- halaman cluster -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="pages-sign-up.html">
+                <li class="sidebar-item {{active_cluster}}">
+                    <a class="sidebar-link" href="{% url 'clusters'%}">
                     <i class="align-middle" data-feather="server"></i> <span class="align-middle">Cluster</span>
                     </a>
                 </li>
 
                 <!-- Monitor -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="pages-sign-up.html">
+                <li class="sidebar-item {{active_monitor}}">
+                    <a class="sidebar-link" href="{% url 'monitors'%}">
                     <i class="align-middle" data-feather="airplay"></i> <span class="align-middle">Monitor</span>
                     </a>
                 </li>
     
             <li class="sidebar-item">
-                    <a class="sidebar-link" href="{% url 'home' %}">
+                    <a class="sidebar-link logout-notif" href="{% url 'logout' %}">
             <i class="align-middle" data-feather="log-out"></i> <span class="align-middle">Logout</span>
         </a>
                 
