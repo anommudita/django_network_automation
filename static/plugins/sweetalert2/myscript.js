@@ -1,3 +1,35 @@
+// logout-notifikasi
+$('.logout-notif').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure',
+        text: "Want to logout network automation?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Logout'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Logout!',
+                'Success logout from network automation',
+                'success'
+            )
+        }
+    })
+
+});
+
+
 
 // tombol delete user
 $('.delete-user').on('click', function(e){
@@ -124,6 +156,9 @@ $('.delete-role').on('click', function (e) {
     })
 
 });
+
+
+
 
 
 
