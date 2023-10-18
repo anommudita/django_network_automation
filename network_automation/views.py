@@ -61,9 +61,9 @@ def get_proxmox():
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            '192.168.1.15',
-            user='root@pam', 
-            password='123123123', 
+            ip_address,
+            user=username + '@pam', 
+            password=password, 
             verify_ssl=False)
         return proxmox
     except Exception as e:
@@ -220,71 +220,32 @@ def home(request):
     proxmox = get_proxmox()
 
     if proxmox is not None:
-        # Cluster Resources
-        clusters = proxmox.cluster.resources.get()
 
-        cpu_usage = 0
-        mem_usage = 0
-        disk_usage = 0
-        maxcpu = 0
-        maxmem = 0
-        maxdisk = 0
-
-        # Loop melalui data JSON
-        for item in clusters:
-            if "cpu" in item:
-                # if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    cpu_usage += item["cpu"]
-            if "mem" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    mem_usage += item["mem"]
-            if "disk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    disk_usage += item["disk"]
-            if "maxcpu" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxcpu += item["maxcpu"]
-            if "maxmem" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxmem += item["maxmem"]
-            if "maxdisk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxdisk += item["maxdisk"]
-
-        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
-        
-        cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
-        mem_usage = round(mem_usage / 1073741824 , 2)
-        disk_usage = round(disk_usage / 1073741824 , 2)
-        maxmem = round(maxmem / 1073741824 , 2)
-        maxdisk = round(maxdisk / 1073741824 , 2)
-
-        mem_percent = round ((mem_usage / maxmem) * 100, 2)
-        disk_percent = round ((disk_usage / maxdisk) * 100, 2)
-
-        # Pastikan data tersedia sebelum mencoba mengaksesnya
-
-
-        # Log Resource
-        log  = proxmox.cluster.log.get()
-
-
-        # jumlah data user
+        # # jumlah data user
         users = proxmox.access.users.get()
         count_user = len(users)
+
+        cluster_status = proxmox.cluster.status.get()
+        cluster_status = cluster_status[0]
+        
+        if cluster_status['type'] == 'cluster':
+            cluster_name = cluster_status['name']
+        else:
+            cluster_name = '-'
+
+        if 'nodes' in cluster_status:
+            node = cluster_status['nodes']
+        else:
+            node = cluster_status['name']
+        
+        
 
         context = {
             'title': 'Dashboard',
             'active_home': 'active',
-            'cluster': clusters,  # Menggunakan indeks 0 karena data adalah list
-            'cluster_cpu': cpu_usage,
-            'cluster_mem': mem_usage,
-            'cluster_disk': disk_usage,
-            'cluster_maxcpu': maxcpu,
-            'cluster_maxmem': maxmem,
-            'cluster_maxdisk': maxdisk,
-            'cluster_mempercent': mem_percent,
-            'cluster_diskpercent': disk_percent,
+            'count_user': count_user,
+            'cluster_name': cluster_name,
+            'node': node,
         }
         return render(request, 'dashboard/home.html', context)
         
