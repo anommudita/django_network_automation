@@ -93,7 +93,7 @@
 
                         <table class="table mb-0">
                             <tbody>
-                                <p id="data-terbaru">Data akan ditampilkan di sini</p>
+                                <p id="">Data akan ditampilkan di sini</p>
                                 <tr>
                                     <td>CPU</td>
                                     <td class="text-end" id="cpu"></td>
@@ -151,24 +151,24 @@
         <table class="table table-hover my-0">
             <thead>
                 <tr>
-                    <th>Start Time</th>
-                    <th class="d-none d-xl-table-cell">End Time</th>
+                    <th>Time</th>
+                    <th class="d-none d-xl-table-cell">PID</th>
                     <th class="d-none d-xl-table-cell">Node</th>
                     <th>User name</th>
                     <th>Description</th>
-                    <th class="d-none d-md-table-cell">Status</th>
+                    <th class="d-none d-md-table-cell">Tag</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>{{time}}</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                    <td class="d-none d-md-table-cell">Vanessa Tucker</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
+            <tbody id="log-table-body">
+                    <!-- <tr>
+                        <td id="time"></td>
+                        <td class="d-none d-xl-table-cell" id="PID"></td>
+                        <td class="d-none d-xl-table-cell" id="node"></td>
+                        <td><span class="badge bg-success" id="user"></span></td>
+                        <td class="d-none d-md-table-cell" id="msg"></td>
+                        <td><span class="badge bg-success" id="tag"></span></td>
+                    </tr> -->
+                <!-- <tr>
                     <td>Project Fireball</td>
                     <td class="d-none d-xl-table-cell">01/01/2023</td>
                     <td class="d-none d-xl-table-cell">31/06/2023</td>
@@ -223,7 +223,7 @@
                     <td><span class="badge bg-warning">In progress</span></td>
                     <td class="d-none d-md-table-cell">William Harris</td>
                     <td><span class="badge bg-success">Done</span></td>
-                </tr>
+                </tr> -->
             </tbody>
         </table>
     </div>
@@ -347,7 +347,7 @@
             .then(response => response.json())
             .then(data => {
                 // Perbarui elemen HTML dengan data terbaru
-                document.getElementById('data-terbaru').textContent = `CPU Usage: ${data.cluster_cpu}%, Mem Usage: ${data.cluster_mem} GB, Disk Usage: ${data.cluster_disk} GB`;
+                // cluster
                 document.getElementById('cpu').textContent = `${data.cluster_cpu}% of ${data.cluster_maxcpu} CPU`;
                 document.getElementById('memori').textContent = `${data.cluster_mem} GB - ${data.cluster_maxmem} GB`;
                 document.getElementById('disk').textContent = `${data.cluster_disk} GB - ${data.cluster_maxdisk} GB`;
@@ -363,5 +363,70 @@
     // Atur interval untuk melakukan pembaruan data setiap 60 detik
     setInterval(ambilDataTerbaru, 1000);
 </script>
+
+<!-- Elemen HTML untuk menampilkan log -->
+<script>
+    function ambilLogTerbaru() {
+        // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
+        // Pastikan URL endpoint yang sesuai
+        fetch('/cluster-log')
+            .then(response => response.json())
+            .then(data => {
+                // Dapatkan elemen <tbody> untuk memasukkan baris baru
+                const tbody = document.getElementById('log-table-body');
+
+                // Buat elemen <tr> dan <td> baru untuk menampilkan pesan log
+                const newRow = tbody.insertRow(0); // Insert a new row at the top of the tbody
+                const logTime = newRow.insertCell(0);
+                const logPID = newRow.insertCell(1);
+                const logNode = newRow.insertCell(2);
+                const logUser = newRow.insertCell(3);
+                const logMsg = newRow.insertCell(4);
+                const logTag = newRow.insertCell(5);
+
+                // Isi elemen <td> dengan data log terbaru
+                logTime.textContent = data.log_time;
+                logPID.textContent = data.log_pid;
+                logNode.textContent = data.log_node;
+                logUser.textContent = data.log_user;
+                logMsg.textContent = data.log_msg;
+                logTag.textContent = data.log_tag;
+
+                // Batasi jumlah baris (pesan log) yang ditampilkan (misalnya, maksimal 10 baris)
+                if (tbody.rows.length > 10) {
+                    tbody.deleteRow(-1); // Hapus baris terakhir
+                }
+            })
+            .catch(error => console.error('Gagal mengambil data terbaru:', error));
+    }
+
+    // Atur interval untuk melakukan pembaruan data setiap 2 detik
+    setInterval(ambilLogTerbaru, 5000);
+</script>
+
+<!-- Script untuk auto refresh data log
+<script>
+    function ambilLogTerbaru() {
+    // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
+    // Pastikan URL endpoint yang sesuai
+    fetch('/cluster-log')
+        .then(response => response.json())
+        .then(data => {
+            // Perbarui elemen HTML dengan data terbaru
+            // const logTime = new Date(data.log_time * 1000); // Konversi timestamp ke objek waktu
+            // const formattedLogTime = logTime.toLocaleString(); // Format waktu sesuai preferensi
+            document.getElementById('time').textContent = `${data.log_time}`;
+            document.getElementById('PID').textContent = `${data.log_pid}`;
+            document.getElementById('node').textContent = `${data.log_node}`;
+            document.getElementById('user').textContent = `${data.log_user}`;
+            document.getElementById('msg').textContent = `${data.log_msg}`;
+            document.getElementById('tag').textContent = `${data.log_tag}`;
+        })
+        .catch(error => console.error('Gagal mengambil data terbaru:', error));
+    }
+
+    // Atur interval untuk melakukan pembaruan data setiap 60 detik
+    setInterval(ambilLogTerbaru, 2000);
+</script> -->
 
 {% endblock content %}

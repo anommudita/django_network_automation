@@ -23,6 +23,8 @@ from django.contrib.auth.decorators import login_required
 
 # time
 import time
+import datetime
+
 
 # get response json
 from django.http import JsonResponse
@@ -59,9 +61,9 @@ def get_proxmox():
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            ip_address,
-            user= username+'@pam', 
-            password=password, 
+            '192.168.1.15',
+            user='root@pam', 
+            password='123123123', 
             verify_ssl=False)
         return proxmox
     except Exception as e:
@@ -221,7 +223,6 @@ def home(request):
         # Cluster Resources
         clusters = proxmox.cluster.resources.get()
 
-
         cpu_usage = 0
         mem_usage = 0
         disk_usage = 0
@@ -267,8 +268,6 @@ def home(request):
         # Log Resource
         log  = proxmox.cluster.log.get()
 
-        date = log[0]
-
 
         # jumlah data user
         users = proxmox.access.users.get()
@@ -286,10 +285,6 @@ def home(request):
             'cluster_maxdisk': maxdisk,
             'cluster_mempercent': mem_percent,
             'cluster_diskpercent': disk_percent,
-
-            'time': date,
-
-            'count_user': count_user,
         }
         return render(request, 'dashboard/home.html', context)
         
@@ -297,16 +292,17 @@ def home(request):
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
-# wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
 # cluster resources di home
 def cluster_resources(request):
     proxmox = get_proxmox()
 
-    if proxmox is not None:
-        # Cluster Resources
-        clusters = proxmox.cluster.resources.get()
+    # Cluster Resources
+    clusters = proxmox.cluster.resources.get()
 
+    # Cluster Log
+    # log = proxmox.cluster.log.get()
+
+    if proxmox is not None:
         cpu_usage = 0
         mem_usage = 0
         disk_usage = 0
@@ -346,10 +342,24 @@ def cluster_resources(request):
         mem_percent = round ((mem_usage / maxmem) * 100, 2)
         disk_percent = round ((disk_usage / maxdisk) * 100, 2)
 
+
+        # for item in log:
+        #     # time
+        #     date_from_proxmox = item['time']  # Get the date from Proxmox
+
+        #     # You may need to parse the date_from_proxmox if it's in a specific format
+        #     formatted_time = datetime.datetime.fromtimestamp(date_from_proxmox).strftime('%Y-%m-%d %H:%M:%S')
+
+        #     pid = item['pid']
+        #     node = item['node']
+        #     user = item['user']
+        #     msg = item['msg']
+        #     tag = item['tag']
+
         # Pastikan data tersedia sebelum mencoba mengaksesnya
 
         data = {
-            'cluster': clusters,  # Menggunakan indeks 0 karena data adalah list
+            # resource
             'cluster_cpu': cpu_usage,
             'cluster_mem': mem_usage,
             'cluster_disk': disk_usage,
@@ -358,6 +368,52 @@ def cluster_resources(request):
             'cluster_maxdisk': maxdisk,
             'cluster_mempercent': mem_percent,
             'cluster_diskpercent': disk_percent,
+
+            # # log
+            # 'log_time' : formatted_time,
+            # 'log_pid' : pid,
+            # 'log_node' : node,
+            # 'log_user' : user,
+            # 'log_msg' : msg,
+            # 'log_tag' : tag,
+        }
+        return JsonResponse(data)
+        
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+
+def cluster_log(request):
+    proxmox = get_proxmox()
+
+    if proxmox is not None:
+        # Cluster Resources
+        log = proxmox.cluster.log.get()
+
+        for item in log:
+            # time
+            date_from_proxmox = item['time']  # Get the date from Proxmox
+
+            # You may need to parse the date_from_proxmox if it's in a specific format
+            formatted_time = datetime.datetime.fromtimestamp(date_from_proxmox).strftime('%Y-%m-%d %H:%M:%S')
+
+            pid = item['pid']
+            node = item['node']
+            user = item['user']
+            msg = item['msg']
+            tag = item['tag']
+
+        # Pastikan data tersedia sebelum mencoba mengaksesnya
+
+        data = {
+            'cluster_log': log,
+            'log_time' : formatted_time,
+            'log_pid' : pid,
+            'log_node' : node,
+            'log_user' : user,
+            'log_msg' : msg,
+            'log_tag' : tag,
+             
         }
         return JsonResponse(data)
         
