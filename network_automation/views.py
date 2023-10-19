@@ -973,7 +973,7 @@ def profile(request):
                 privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
         
         context = {
-            'title': 'Monitors',
+            'title': 'Profile',
         }
         return render(request, 'settings/profile.html', context )
     else :
