@@ -92,44 +92,45 @@
 
 </body>
 
-    <!--   Core JS Files   -->
-    <script src="{% static 'js/app.js' %}"></script>
 
-    
+    <!-- {% block ScriptBlock %} -->
+        <!--   Core JS Files   -->
+        <script src="{% static 'js/app.js' %}"></script>
 
-    <!-- sweetalert2 -->
-    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
-    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
-    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+        
+        <!-- sweetalert2 -->
+        <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+        <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+        <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
 
+        
+        <!-- plugin datatable -->
+        <script src="{% static 'plugins/datatable/datatables.js' %}"></script>
+        <!-- <link rel="stylesheet" href="{% static 'plugins/datatable/datatables.css'%}"> -->
 
-    
-    <!-- plugin datatable -->
-    <script src="{% static 'plugins/datatable/datatables.js' %}"></script>
-    <!-- <link rel="stylesheet" href="{% static 'plugins/datatable/datatables.css'%}"> -->
-
-    <script>
-    $(document).ready(function($) {
-        $('#dataTable').DataTable({
-            "language": {
-                "search": "Cari:",
-                "lengthMenu": "Menampilkan _MENU_ data",
-                "info": "Menampilkan _START_ sampai _END_ data dari _TOTAL_ data",
-                "infoEmpty": "Tidak ada data yang ditampilkan",
-                "infoFiltered": "(dari total _MAX_ data)",
-                "zeroRecords": "Tidak ada hasil pencarian ditemukan",
-                "paginate": {
-                    "first": "&laquo;",
-                    "last": "&raquo;",
-                    "next": "&rsaquo;",
-                    "previous": "&lsaquo;"
+        <script>
+        $(document).ready(function($) {
+            $('#dataTable').DataTable({
+                "language": {
+                    "search": "Cari:",
+                    "lengthMenu": "Menampilkan _MENU_ data",
+                    "info": "Menampilkan _START_ sampai _END_ data dari _TOTAL_ data",
+                    "infoEmpty": "Tidak ada data yang ditampilkan",
+                    "infoFiltered": "(dari total _MAX_ data)",
+                    "zeroRecords": "Tidak ada hasil pencarian ditemukan",
+                    "paginate": {
+                        "first": "&laquo;",
+                        "last": "&raquo;",
+                        "next": "&rsaquo;",
+                        "previous": "&lsaquo;"
+                    }
                 }
-            }
+            });
         });
-    });
-    </script>
+        </script>
+    
+    <!-- {% endblock ScriptBlock%} -->
 
     
-
 
 </html>

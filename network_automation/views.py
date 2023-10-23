@@ -4,12 +4,15 @@ from django.shortcuts import render, redirect
 # import data user untuk panel admin
 from django.contrib.auth.models import User
 # import model dari models.py
-from .models import Server
+from .models import Server, UserProfile
 
 
 # all form
 # from network_automation.forms import ServerForm
-from .forms import ServerForm
+from .forms import ServerForm, UpdateProfileAvatar, UpdateProfile, UpdateUserProfile
+
+
+from django.contrib.auth.hashers import make_password  # Import fungsi make_password
 
 
 # import authenticate untuk login
@@ -61,9 +64,9 @@ def get_proxmox():
     try:
         # setting datauser proxmox
         proxmox =  ProxmoxAPI(
-            '192.168.1.15',
-            user='root@pam', 
-            password='123123123', 
+            ip_address,
+            user=username + '@pam', 
+            password=password, 
             verify_ssl=False)
         return proxmox
     except Exception as e:
@@ -242,71 +245,32 @@ def home(request):
     proxmox = get_proxmox()
 
     if proxmox is not None:
-        # Cluster Resources
-        clusters = proxmox.cluster.resources.get()
 
-        cpu_usage = 0
-        mem_usage = 0
-        disk_usage = 0
-        maxcpu = 0
-        maxmem = 0
-        maxdisk = 0
-
-        # Loop melalui data JSON
-        for item in clusters:
-            if "cpu" in item:
-                # if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    cpu_usage += item["cpu"]
-            if "mem" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    mem_usage += item["mem"]
-            if "disk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    disk_usage += item["disk"]
-            if "maxcpu" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxcpu += item["maxcpu"]
-            if "maxmem" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxmem += item["maxmem"]
-            if "maxdisk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxdisk += item["maxdisk"]
-
-        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
-        
-        cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
-        mem_usage = round(mem_usage / 1073741824 , 2)
-        disk_usage = round(disk_usage / 1073741824 , 2)
-        maxmem = round(maxmem / 1073741824 , 2)
-        maxdisk = round(maxdisk / 1073741824 , 2)
-
-        mem_percent = round ((mem_usage / maxmem) * 100, 2)
-        disk_percent = round ((disk_usage / maxdisk) * 100, 2)
-
-        # Pastikan data tersedia sebelum mencoba mengaksesnya
-
-
-        # Log Resource
-        log  = proxmox.cluster.log.get()
-
-
-        # jumlah data user
+        # # jumlah data user
         users = proxmox.access.users.get()
         count_user = len(users)
+
+        cluster_status = proxmox.cluster.status.get()
+        cluster_status = cluster_status[0]
+        
+        if cluster_status['type'] == 'cluster':
+            cluster_name = cluster_status['name']
+        else:
+            cluster_name = '-'
+
+        if 'nodes' in cluster_status:
+            node = cluster_status['nodes']
+        else:
+            node = cluster_status['name']
+        
+        
 
         context = {
             'title': 'Dashboard',
             'active_home': 'active',
-            'cluster': clusters,  # Menggunakan indeks 0 karena data adalah list
-            'cluster_cpu': cpu_usage,
-            'cluster_mem': mem_usage,
-            'cluster_disk': disk_usage,
-            'cluster_maxcpu': maxcpu,
-            'cluster_maxmem': maxmem,
-            'cluster_maxdisk': maxdisk,
-            'cluster_mempercent': mem_percent,
-            'cluster_diskpercent': disk_percent,
+            'count_user': count_user,
+            'cluster_name': cluster_name,
+            'node': node,
         }
         return render(request, 'dashboard/home.html', context)
         
@@ -961,17 +925,7 @@ def profile(request):
     
     proxmox = get_proxmox()
 
-    if proxmox is not None :
-        roles = proxmox.access.roles.get()
-
-        privs = []
-
-        # menampilkan data select option dari data list roles
-        for item in roles:
-            if item['roleid'] == 'Administrator':
-                privs_string = item['privs']
-                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
-        
+    if proxmox is not None :        
         context = {
             'title': 'Profile',
         }
@@ -979,6 +933,87 @@ def profile(request):
     else :
         return('error_connection')
     
+
+@login_required(login_url='login')
+# halaman profile
+def edit_profile(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None : 
+
+        # request.user = data sessin ketika sudah login
+        user = User.objects.get(id=request.user.id)
+        profile = UserProfile.objects.get(user=user)
+
+        if request.method == "POST":
+            password1 = request.POST.get('password1')
+            password2 = request.POST.get('password2')
+
+            # update data user
+            profile.name = request.POST.get('name')
+            user.username = request.POST.get('username')
+    
+            # jika password tidak diisi
+            if not password1 and not password2:
+                # maka gunakan password lama
+                user.password = user.password
+                
+                # save
+                user.save()
+                profile.save()
+
+                messages.success(request, "Your Profile has been updated successfully")
+                return redirect('profile')
+            else:
+                if password1 == password2:
+                    # jika password 1 sama dengan password 2
+                    # maka ganti password lama dengan password baru
+                    # hash password
+                    hashed_password = make_password(password1)
+                    user.password = hashed_password
+
+                    # save password
+                    user.save()
+
+                    messages.success(request, "Your Profile has been updated successfully")
+                    return redirect('profile')
+                else:
+                    messages.error(request, "Password does not match")
+                    return redirect('edit-profile')
+                    
+        context = {
+            'title': 'Edit Profile',
+            'userData' : user,
+            'userProfile': profile
+        }
+        return render(request, 'settings/edit_profile.html', context )
+    else :
+        return('error_connection')
+    
+
+@login_required(login_url='login')
+# update foto profile
+def updateImage(request):
+
+    user = User.objects.get(id=request.user.id)
+
+    img = user.profile.avatar
+    if request.method == 'POST':
+
+        # hapus  gambar 
+        if img and img.storage.exists(img.name):
+            img.delete()
+
+        form = UpdateProfileAvatar(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your Profile has been updated successfully")
+            return redirect('profile')
+        else:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('edit_profile')
+
 
 
 @login_required(login_url='login')
@@ -988,16 +1023,6 @@ def settings(request):
     proxmox = get_proxmox()
 
     if proxmox is not None :
-        roles = proxmox.access.roles.get()
-
-        privs = []
-
-        # menampilkan data select option dari data list roles
-        for item in roles:
-            if item['roleid'] == 'Administrator':
-                privs_string = item['privs']
-                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
-        
         context = {
             'title': 'Settings',
         }

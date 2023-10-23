@@ -147,9 +147,14 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# meletakan file gambar user 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # meletakan static file(file css, js, img) di folder static
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    # BASE_DIR / 'static',
+    './static',
 ]
 
 # Default primary key field type

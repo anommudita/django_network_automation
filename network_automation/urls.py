@@ -2,10 +2,7 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
-
-
     # route login dan login
     path('login', views.login, name="login"),
     path('logout', views.logout, name="logout"),
@@ -65,6 +62,10 @@ urlpatterns = [
 
     # route profile
     path('profile', views.profile, name="profile"),
+    # route edit profile
+    path('edit-profile', views.edit_profile, name="edit-profile"),
+    # route update-image
+    path('image-update', views.updateImage, name="image-update"),
 
 
     # route settings
@@ -75,9 +76,6 @@ urlpatterns = [
     path('config', views.config, name="config"),
     # route config_by_user
     path('config_by_user', views.config_by_user, name="config_by_user"),
-
-
-
 
 
 ]

@@ -1,0 +1,115 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+	<main class="content pt-3">
+				<div class="container-fluid p-0">
+
+					<div class="mb-3">
+						<h1 class="h3 d-inline align-middle">Edit My Profile</h1>
+					</div>
+					<div class="row">
+                        <!-- about proxmox -->
+						<div class="col-12 col-md-6">
+							<div class="card">
+								<div class="mx-auto pt-3" id="preview">
+									<img class="card-img-top m-auto" src="{{user.profile.avatar.url}}" alt="Proxmox" style="width: 500px;">
+								</div>
+									
+								<div class="card-header">
+									<form method="POST" action="{% url 'image-update'%}" enctype="multipart/form-data">
+										{% csrf_token %}
+
+										<!-- Image -->
+										<div class="mb-3">
+											<label class="form-label">Image</label>
+											<input class="form-control form-control-lg" type="file" name="avatar" id="avatar" onchange="getImagePreview(event)"  required="required"/>
+										</div>
+
+										<div class="d-flex justify-content-end pt-3">
+                                            <button class="btn btn-lg btn-primary">Update Profile</button>
+                                        </div>
+									</form>
+								</div>
+
+							</div>
+						</div>
+
+                        <!-- Your Profile -->
+						<div class="col-12 col-md-6">
+							<div class="card">
+								<div class="card-header">
+									<h5 class="card-title mb-0">Data My Profile</h5>
+								</div>
+
+                                <div style="padding-left: 25px;">
+									<!-- flash message -->
+                                    {% for message in messages %}
+                                    <div class="container-fluid p-0">
+
+                                        <div class="alert {{ message.tags }} alert-dismissible fade show col-8" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+								</div>
+
+								<div class="card-body" style="padding-top: 5px; margin-top: 5px;">
+									<div class="m-sm-3">
+									<form method="POST" action="{% url 'edit-profile'%}">
+										{% csrf_token %}
+										<div class="mb-3">
+											<label class="form-label">Name</label>
+											<input class="form-control form-control-lg" type="text" name="name" id="name" placeholder="Enter your name" value="{{userProfile.name}}"  required="required"/>
+										</div>
+										<div class="mb-3">
+											<label class="form-label">Username</label>
+											<input class="form-control form-control-lg" type="text" name="username" id="username" placeholder="Enter your username" value="{{userData.username}}" required="required"/>
+										</div>
+
+										<div class="mb-3">
+											<label class="form-label">Password</label>
+											<input class="form-control form-control-lg" type="password" name="password1" id="password1" placeholder="Enter your password"  />
+										</div>
+
+										<div class="mb-3">
+											<label class="form-label">Confirm Password</label>
+											<input class="form-control form-control-lg" type="password" name="password2" id="password2" placeholder="Enter your confirm password"  />
+										</div>
+
+
+										<div class="d-flex justify-content-end pt-3">
+                                            <button class="btn btn-lg btn-primary">Update Profile</button>
+                                        </div>
+									</form>
+							
+								</div>
+
+					</div>
+
+				</div>
+			</main>
+
+
+			<!-- script view gambar -->
+			<script>
+				function getImagePreview(event) {
+					var image = URL.createObjectURL(event.target.files[0]);
+					var iamgediv = document.getElementById('preview')
+
+					var newImage = document.createElement('img');
+					iamgediv.innerHTML = '';
+					newImage.src = image;
+					newImage.style.width = '100%';
+
+					// Menambahkan class "img-thumbnail" pada elemen gambar
+					newImage.classList.add('img-thumbnail');
+
+					iamgediv.appendChild(newImage);
+				}
+		</script>
+
+
+{% endblock content %}

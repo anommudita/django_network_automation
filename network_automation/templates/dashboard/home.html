@@ -42,7 +42,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Node</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{node}}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fa-regular fa-hard-drive fa-2x text-gray-300"></i>
@@ -60,7 +60,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Cluster</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{cluster_name}}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-server fa-2x text-gray-300"></i>
@@ -171,70 +171,6 @@
                 </tr>
             </thead>
             <tbody id="log-table-body">
-                    <!-- <tr>
-                        <td id="time"></td>
-                        <td class="d-none d-xl-table-cell" id="PID"></td>
-                        <td class="d-none d-xl-table-cell" id="node"></td>
-                        <td><span class="badge bg-success" id="user"></span></td>
-                        <td class="d-none d-md-table-cell" id="msg"></td>
-                        <td><span class="badge bg-success" id="tag"></span></td>
-                    </tr> -->
-                <!-- <tr>
-                    <td>Project Fireball</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-danger">Cancelled</span></td>
-                    <td class="d-none d-md-table-cell">William Harris</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
-                    <td>Project Hades</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                    <td class="d-none d-md-table-cell">Sharon Lessman</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
-                    <td>Project Nitro</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-warning">In progress</span></td>
-                    <td class="d-none d-md-table-cell">Vanessa Tucker</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
-                    <td>Project Phoenix</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                    <td class="d-none d-md-table-cell">William Harris</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
-                    <td>Project X</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                    <td class="d-none d-md-table-cell">Sharon Lessman</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
-                    <td>Project Romeo</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                    <td class="d-none d-md-table-cell">Christina Mason</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr>
-                <tr>
-                    <td>Project Wombat</td>
-                    <td class="d-none d-xl-table-cell">01/01/2023</td>
-                    <td class="d-none d-xl-table-cell">31/06/2023</td>
-                    <td><span class="badge bg-warning">In progress</span></td>
-                    <td class="d-none d-md-table-cell">William Harris</td>
-                    <td><span class="badge bg-success">Done</span></td>
-                </tr> -->
             </tbody>
         </table>
     </div>
@@ -414,30 +350,5 @@
     // Atur interval untuk melakukan pembaruan data setiap 2 detik
     setInterval(ambilLogTerbaru, 5000);
 </script>
-
-<!-- Script untuk auto refresh data log
-<script>
-    function ambilLogTerbaru() {
-    // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
-    // Pastikan URL endpoint yang sesuai
-    fetch('/cluster-log')
-        .then(response => response.json())
-        .then(data => {
-            // Perbarui elemen HTML dengan data terbaru
-            // const logTime = new Date(data.log_time * 1000); // Konversi timestamp ke objek waktu
-            // const formattedLogTime = logTime.toLocaleString(); // Format waktu sesuai preferensi
-            document.getElementById('time').textContent = `${data.log_time}`;
-            document.getElementById('PID').textContent = `${data.log_pid}`;
-            document.getElementById('node').textContent = `${data.log_node}`;
-            document.getElementById('user').textContent = `${data.log_user}`;
-            document.getElementById('msg').textContent = `${data.log_msg}`;
-            document.getElementById('tag').textContent = `${data.log_tag}`;
-        })
-        .catch(error => console.error('Gagal mengambil data terbaru:', error));
-    }
-
-    // Atur interval untuk melakukan pembaruan data setiap 60 detik
-    setInterval(ambilLogTerbaru, 2000);
-</script> -->
 
 {% endblock content %}

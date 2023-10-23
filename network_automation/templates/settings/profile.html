@@ -7,27 +7,21 @@
 				<div class="container-fluid p-0">
 
 					<div class="mb-3">
-						<h1 class="h3 d-inline align-middle">Proxmox</h1>
+						<h1 class="h3 d-inline align-middle">My Profile</h1>
 					</div>
 					<div class="row">
                         <!-- about proxmox -->
 						<div class="col-12 col-md-6">
 							<div class="card">
-								<img class="card-img-top m-auto" src="{% static 'img/photos/proxmox.png'%}" alt="Proxmox" style="width: 500px;">
-								<div class="card-header">
-									<h5 class="card-title mb-0">About Proxmox</h5>
-								</div>
-								<div class="card-body mb-3">
-									<p class="card-text" style="text-align: justify;">Proxmox Virtual Environment is a complete open-source platform for enterprise virtualization. With the built-in web interface you can easily manage VMs and containers, software-defined storage and networking, high-availability clustering, and multiple out-of-the-box tools using a single solution</p>
-								</div>
+								<img class="card-img-top m-auto" src="{{user.profile.avatar.url}}" alt="Proxmox" style="width: 500px;">
 							</div>
 						</div>
 
-                        <!-- configuration -->
+                        <!-- Your Profile -->
 						<div class="col-12 col-md-6">
 							<div class="card">
 								<div class="card-header">
-									<h5 class="card-title mb-0">Configuration IP Server</h5>
+									<h5 class="card-title mb-0">Data My Profile</h5>
 								</div>
 
                                 <div style="padding-left: 25px;">
@@ -45,22 +39,21 @@
 
 								<div class="card-body" style="padding-top: 5px; margin-top: 5px;">
 									<div class="m-sm-3">
-									<form method="POST" action="{% url 'config_by_user'%}">
-										{% csrf_token %}
+									<form>
 										<div class="mb-3">
-											<label class="form-label">IP Address</label>
-											<input class="form-control form-control-lg" type="text" name="ip_address" id="ip_address" placeholder="Enter ip server" />
+											<label class="form-label">Name</label>
+											<input class="form-control form-control-lg" type="text" name="name" id="name" placeholder="Enter your name" value="{{user.profile.name}}" readonly/>
 										</div>
 										<div class="mb-3">
 											<label class="form-label">Username</label>
-											<input class="form-control form-control-lg" type="text" name="username" id="username" placeholder="Enter server username" value="root"/>
+											<input class="form-control form-control-lg" type="text" name="username" id="username" placeholder="Enter your username" value="{{user.username}}" readonly/>
 										</div>
 										<div class="mb-3">
-											<label class="form-label">Password</label>
-											<input class="form-control form-control-lg" type="password" name="password" id="password" placeholder="Enter password server" />
+											<label class="form-label">Date Created</label>
+											<input class="form-control form-control-lg" type="text" name="date_created" id="date_created" placeholder="" value="{{user.profile.date_created}}" />
 										</div>
 										<div class="d-flex justify-content-end pt-3">
-                                            <button class="btn btn-lg btn-primary">Submit</button>
+											<a href="{% url 'edit-profile'%}" class="btn btn-lg btn-primary">Edit Profile</a>
                                         </div>
 									</form>
 							</div>
