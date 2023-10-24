@@ -234,12 +234,14 @@ def data_api(request):
 
                 for node in nodes:
                     if node.get('status') == 'online':
+                        id = node.get('id')
                         cpu_usage = node.get('cpu')
                         mem_usage = node.get('mem')
                         disk_usage = node.get('disk')
                         maxcpu = node.get('maxcpu')
                         maxmem = node.get('maxmem')
                         maxdisk = node.get('maxdisk')
+                        uptime = node.get('uptime')
 
                         # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
                         cpu_usage = round((cpu_usage / maxcpu) * 100, 2)
@@ -249,8 +251,11 @@ def data_api(request):
                         maxdisk = round(maxdisk / 1073741824, 2)
                         mem_percent = round((mem_usage / maxmem) * 100, 2)
                         disk_percent = round((disk_usage / maxdisk) * 100, 2)
+                        hours, remainder = divmod(uptime, 3600)
+                        minute, second = divmod(remainder, 60)
 
                         node_data.append({
+                            'node_id': node.get('id'),
                             'node_name': node.get('node'),
                             'node_status': node.get('status'),
                             'nodes_cpu': cpu_usage,
@@ -261,10 +266,14 @@ def data_api(request):
                             'nodes_maxdisk': maxdisk,
                             'nodes_mempercent': mem_percent,
                             'nodes_diskpercent': disk_percent,
+                            'nodes_hours': hours,
+                            'nodes_minutes': minute,
+                            'nodes_second': second,
                         })
                     
                     else:
                         node_data.append({
+                            'node_id': node.get('id'),
                             'node_name': node.get('node'),
                             'node_status': node.get('status'),
                         })
@@ -862,13 +871,11 @@ def nodes(request):
     if proxmox is not None :
         nodes = proxmox.nodes.get()
 
-        count_nodes = len(nodes)
         
         context = {
             'title': 'Nodes',
             'active_node': 'active',
             'nodes': nodes,
-            'length' : count_nodes,
         }
         return render(request, 'node/node.html', context )
     else :

@@ -6,65 +6,8 @@
     {% endfor %} -->
 
     <div id="data-container">
-        <!-- Data akan ditampilkan di sini -->
+        
     </div>
-
-    <div class="col-auto">
-        <div class="chart chart-xs">
-            <canvas id="chartjs-dashboard-pie"></canvas>
-        </div>
-    </div>
-    
-    <script>
-        var chartData = {}; // Buat variabel kosong untuk data chart
-        var chart; // Deklarasikan chart sebagai variabel global
-    
-        document.addEventListener("DOMContentLoaded", function() {
-            var chartElement = document.getElementById("chartjs-dashboard-pie");
-    
-            chart = new Chart(chartElement, {
-                type: "pie",
-                data: {
-                    labels: ["Storage", "Memori", "CPU"],
-                    datasets: [{
-                        data: [0, 0, 0], // Inisialisasi dengan nilai 0
-                        backgroundColor: [
-                            window.theme.primary,
-                            window.theme.warning,
-                            window.theme.danger
-                        ],
-                        borderWidth: 5
-                    }]
-                },
-                options: {
-                    responsive: !window.MSInputMethodContext,
-                    maintainAspectRatio: false,
-                    legend: {
-                        display: false
-                    },
-                    cutoutPercentage: 75,
-                    tooltips: {
-                        callbacks: {
-                            label: function(tooltipItem, data) {
-                                var dataset = data.datasets[tooltipItem.datasetIndex];
-                                var value = dataset.data[tooltipItem.index];
-                                return data.labels[tooltipItem.index] + ': ' + value + '%';
-                            }
-                        }
-                    }
-                }
-            });
-    
-            // Panggil fungsi updateChart saat data terbaru diperoleh
-            ambilDataTerbaru();
-        });
-    
-        // Fungsi untuk memperbarui data grafik
-        function updateChart() {
-            chart.data.datasets[0].data = [chartData.nodes_diskpercent, chartData.nodes_mempercent, chartData.nodes_cpu];
-            chart.update();
-        }
-    </script>
     
     <!-- Script untuk auto refresh data resource -->
     <script>
@@ -73,12 +16,6 @@
             if (nodeData.node_status === "online") {
                 const nodeCard = document.createElement('div');
                 nodeCard.classList.add('col');
-
-                // Tambahkan elemen tautan
-                const cardLink = document.createElement('a');
-                cardLink.href = '/'; // Gantilah dengan URL halaman target
-                cardLink.classList.add('card-link');
-                nodeCard.appendChild(cardLink);
 
                 const cardContainer = document.createElement('div');
                 cardContainer.classList.add('card', 'border-left-primary', 'shadow');
@@ -171,6 +108,28 @@
                 diskRow.appendChild(diskCell);
                 diskRow.appendChild(diskValueCell);
                 tableBody.appendChild(diskRow);
+
+                // Uptime
+                const uptimeRow = document.createElement('tr');
+                const uptimeCell = document.createElement('td');
+                uptimeCell.textContent = 'Uptime';
+                const uptimeValueCell = document.createElement('td');
+                uptimeValueCell.textContent = `${nodeData.nodes_hours} jam ${nodeData.nodes_minutes} menit ${nodeData.nodes_second} detik`;
+                uptimeValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                uptimeRow.appendChild(uptimeCell);
+                uptimeRow.appendChild(uptimeValueCell);
+                tableBody.appendChild(uptimeRow);
+
+                const button = document.createElement('div');
+                button.classList.add('d-flex', 'justify-content-end', 'pt-3');
+
+                const linkButton = document.createElement('a');
+                linkButton.href = `/detail-node/${nodeData.node_id}`;
+                linkButton.classList.add('btn', 'btn-primary');
+                linkButton.textContent = `Detail`;
+                
+                button.appendChild(linkButton);
+                cardBody.appendChild(button);
 
                 return nodeCard;
             }
