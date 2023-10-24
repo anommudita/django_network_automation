@@ -11,99 +11,148 @@
         <a href="" class="btn btn-success ml-2">Add Virtual Machine</a>
     </div>
 
+
+        {{container}}
+
+        <hr>
+        {{virtual_machine}}
+
+    {% if container is None %}
+        <div class="col-12 col-lg-12 col-xxl-12 order-xxl-4">
+            <div class="card flex-fill ">
+                <div class="card-body d-flex align-items-center" style="height: 300px;">
+                    <h1 class="text-center mx-auto">Container is Empty</h1>
+                </div>
+            </div>
+        </div>
+    {% else  %}
+        <!-- Container -->
+        <H3>Container</H3>
+        <div class="row">
+        <!-- container -->
+        {% for row in container %}
+            <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
+                <div class="card flex-fill w-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0 pb-2">{{row.name}}</h5>
+                        {% if row.status == "stopped"%}
+                            <span class="badge bg-danger">Stopped</span>
+                        {% else %}
+                            <span class="badge bg-success">Running</span>
+                        {% endif %}
+
+                    </div>
+                    <div class="card-body d-flex">
+                        <div class="align-self-center w-100">
+                            <div class="py-3">
+                                <div class="chart chart-xs">
+                                    <canvas id="chartjs-dashboard-pie"></canvas>
+                                </div>
+                            </div>
+
+                            <table class="table mb-0">
+                                <tbody>
+                                    <p id="">Data akan ditampilkan di sini</p>
+                                    <tr>
+                                        <td>CPU</td>
+                                        <td class="text-end" id="cpu"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Memori</td>
+                                        <td class="text-end" id="memori"></td>
+
+                                    </tr>
+                                    <tr>
+                                        <td>Storage</td>
+                                        <td class="text-end" id="disk"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="d-flex justify-content-end pt-3">
+                                <a href="/detail-container/{{row.vmid}}" class="btn btn-primary">Detail</a>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        {% endfor%}  
+        
+
+        </div>
+
+
+    {% endif %}
     
-    <!-- Container -->
-    <H3>Container</H3>
-    <div class="row">
-        <!-- resource -->
-        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
-            <div class="card flex-fill w-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Nama_Container</h5>
+
+    {% if virtual_machine is None %}
+        <div class="col-12 col-lg-12 col-xxl-12 order-xxl-4">
+            <div class="card flex-fill ">
+                <div class="card-body d-flex align-items-center" style="height: 300px;">
+                    <h1 class="text-center mx-auto">Virtual Machine is Empty</h1>
                 </div>
-                <div class="card-body d-flex">
-                    <div class="align-self-center w-100">
-                        <div class="py-3">
-                            <div class="chart chart-xs">
-                                <canvas id="chartjs-dashboard-pie"></canvas>
-                            </div>
-                        </div>
-
-                        <table class="table mb-0">
-                            <tbody>
-                                <p id="">Data akan ditampilkan di sini</p>
-                                <tr>
-                                    <td>CPU</td>
-                                    <td class="text-end" id="cpu"></td>
-                                </tr>
-                                <tr>
-                                    <td>Memori</td>
-                                    <td class="text-end" id="memori"></td>
-
-                                </tr>
-                                <tr>
-                                    <td>Storage</td>
-                                    <td class="text-end" id="disk"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div class="d-flex justify-content-end pt-3">
-                            <a href="" class="btn btn-primary">Detail</a>
-                        </div>
-                        
-                    </div>
-				</div>
-                
             </div>
         </div>
-    </div>
 
+    {% else  %}
         <!-- Virtual Machine -->
-    <H3>Virtual Machine</H3>
-    <div class="row">
-        <!-- resource -->
-        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
-            <div class="card flex-fill w-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Nama_Virtual Machine</h5>
-                </div>
-                <div class="card-body d-flex">
-                    <div class="align-self-center w-100">
-                        <div class="py-3">
-                            <div class="chart chart-xs">
-                                <canvas id="chartjs-dashboard-pie"></canvas>
+        <H3>Virtual Machine</H3>
+        {% for row in virtual_machine %}
+            <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
+                <div class="card flex-fill w-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0 pb-2">{{row.name}}</h5>
+                        {% if row.status == "stopped"%}
+                            <span class="badge bg-danger">Stopped</span>
+                        {% else %}
+                            <span class="badge bg-success">Running</span>
+                        {% endif %}
+
+                    </div>
+                    <div class="card-body d-flex">
+                        <div class="align-self-center w-100">
+                            <div class="py-3">
+                                <div class="chart chart-xs">
+                                    <canvas id="chartjs-dashboard-pie"></canvas>
+                                </div>
                             </div>
-                        </div>
 
-                        <table class="table mb-0">
-                            <tbody>
-                                <p id="">Data akan ditampilkan di sini</p>
-                                <tr>
-                                    <td>CPU</td>
-                                    <td class="text-end" id="cpu"></td>
-                                </tr>
-                                <tr>
-                                    <td>Memori</td>
-                                    <td class="text-end" id="memori"></td>
+                            <table class="table mb-0">
+                                <tbody>
+                                    <p id="">Data akan ditampilkan di sini</p>
+                                    <tr>
+                                        <td>CPU</td>
+                                        <td class="text-end" id="cpu"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Memori</td>
+                                        <td class="text-end" id="memori"></td>
 
-                                </tr>
-                                <tr>
-                                    <td>Storage</td>
-                                    <td class="text-end" id="disk"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    </tr>
+                                    <tr>
+                                        <td>Storage</td>
+                                        <td class="text-end" id="disk"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                        <div class="d-flex justify-content-end pt-3">
-                            <a href="" class="btn btn-primary">Detail</a>
+                            <div class="d-flex justify-content-end pt-3">
+                                <a href="/detail-container/{{row.vmid}}" class="btn btn-primary">Detail</a>
+                            </div>
+                            
                         </div>
                     </div>
-				</div>
-                
+                    
+                </div>
             </div>
-        </div>
-    </div>
+        {% endfor%}  
+        
+    {% endif%}
+
+
+
 
 <!-- end konten -->
 {% endblock content %}

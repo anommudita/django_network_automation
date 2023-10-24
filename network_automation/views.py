@@ -884,13 +884,30 @@ def nodes(request):
 
 @login_required(login_url='login')
 # halaman detail_node
-def detail_node(request):
+def detail_node(request, id_node):
     
     proxmox = get_proxmox()
 
     if proxmox is not None :
+
+        id_node = id_node
+
+
+        container = proxmox.nodes(id_node).lxc.get()
+        virtual_machine = proxmox.nodes(id_node).qemu.get()
+
+        if container == []:
+            container = None
+        if virtual_machine == []:
+            virtual_machine = None
+                
+
         context = {
             'title': 'Detail Node',
+            'active_node': 'active',
+            'id_node': id_node,
+            'container': container,
+            'virtual_machine': virtual_machine,
         }
         return render(request, 'node/detail_node.html', context )
     else :
