@@ -2,5 +2,274 @@
 
 
 {% block content %}
+    <!-- {% for col in nodes %} 
+    {% endfor %} -->
 
+    <div id="data-container">
+        <!-- Data akan ditampilkan di sini -->
+    </div>
+
+    <div class="col-auto">
+        <div class="chart chart-xs">
+            <canvas id="chartjs-dashboard-pie"></canvas>
+        </div>
+    </div>
+    
+    <script>
+        var chartData = {}; // Buat variabel kosong untuk data chart
+        var chart; // Deklarasikan chart sebagai variabel global
+    
+        document.addEventListener("DOMContentLoaded", function() {
+            var chartElement = document.getElementById("chartjs-dashboard-pie");
+    
+            chart = new Chart(chartElement, {
+                type: "pie",
+                data: {
+                    labels: ["Storage", "Memori", "CPU"],
+                    datasets: [{
+                        data: [0, 0, 0], // Inisialisasi dengan nilai 0
+                        backgroundColor: [
+                            window.theme.primary,
+                            window.theme.warning,
+                            window.theme.danger
+                        ],
+                        borderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: !window.MSInputMethodContext,
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false
+                    },
+                    cutoutPercentage: 75,
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var dataset = data.datasets[tooltipItem.datasetIndex];
+                                var value = dataset.data[tooltipItem.index];
+                                return data.labels[tooltipItem.index] + ': ' + value + '%';
+                            }
+                        }
+                    }
+                }
+            });
+    
+            // Panggil fungsi updateChart saat data terbaru diperoleh
+            ambilDataTerbaru();
+        });
+    
+        // Fungsi untuk memperbarui data grafik
+        function updateChart() {
+            chart.data.datasets[0].data = [chartData.nodes_diskpercent, chartData.nodes_mempercent, chartData.nodes_cpu];
+            chart.update();
+        }
+    </script>
+    
+    <!-- Script untuk auto refresh data resource -->
+    <script>
+    
+        function createNodeCard(nodeData) {
+            if (nodeData.node_status === "online") {
+                const nodeCard = document.createElement('div');
+                nodeCard.classList.add('col');
+
+                // Tambahkan elemen tautan
+                const cardLink = document.createElement('a');
+                cardLink.href = '/'; // Gantilah dengan URL halaman target
+                cardLink.classList.add('card-link');
+                nodeCard.appendChild(cardLink);
+
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card', 'border-left-primary', 'shadow');
+                nodeCard.appendChild(cardContainer);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+                cardContainer.appendChild(cardBody);
+
+                const cardRow = document.createElement('div');
+                cardRow.classList.add('row', 'no-gutters', 'align-items-center');
+                cardBody.appendChild(cardRow);
+
+                // Ikon hard drive
+                const iconCol = document.createElement('div');
+                iconCol.classList.add('col-auto');
+                cardRow.appendChild(iconCol);
+
+                const icon = document.createElement('i');
+                icon.classList.add('fa-regular', 'fa-hard-drive', 'fa-4x', 'text-gray-300');
+                iconCol.appendChild(icon);
+
+                // Informasi node
+                const infoCol = document.createElement('div');
+                infoCol.classList.add('col');
+                cardRow.appendChild(infoCol);
+
+                const infoContainer = document.createElement('div');
+                infoContainer.classList.add('text-xs', 'font-weight-bold', 'text-primary', 'text-uppercase', 'mb-1');
+                infoCol.appendChild(infoContainer);
+
+                const table = document.createElement('table');
+                table.classList.add('table');
+                infoContainer.appendChild(table);
+
+                const tableBody = document.createElement('tbody');
+                table.appendChild(tableBody);
+
+                // Node Name
+                const nodeNameRow = document.createElement('tr');
+                const nodeNameCell = document.createElement('td');
+                nodeNameCell.textContent = 'Node Name';
+                const nodeNameValueCell = document.createElement('td');
+                nodeNameValueCell.textContent = nodeData.node_name;
+                nodeNameValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                nodeNameRow.appendChild(nodeNameCell);
+                nodeNameRow.appendChild(nodeNameValueCell);
+                tableBody.appendChild(nodeNameRow);
+
+                // Status
+                const statusRow = document.createElement('tr');
+                const statusCell = document.createElement('td');
+                statusCell.textContent = 'Status';
+                const statusValueCell = document.createElement('td');
+                statusValueCell.textContent = nodeData.node_status;
+                statusValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                statusRow.appendChild(statusCell);
+                statusRow.appendChild(statusValueCell);
+                tableBody.appendChild(statusRow);
+
+                // CPU
+                const cpuRow = document.createElement('tr');
+                const cpuCell = document.createElement('td');
+                cpuCell.textContent = 'CPU';
+                const cpuValueCell = document.createElement('td');
+                cpuValueCell.textContent = `${nodeData.nodes_cpu}% of ${nodeData.nodes_maxcpu} CPU`;
+                cpuValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                cpuRow.appendChild(cpuCell);
+                cpuRow.appendChild(cpuValueCell);
+                tableBody.appendChild(cpuRow);
+
+                // Memori
+                const memoriRow = document.createElement('tr');
+                const memoriCell = document.createElement('td');
+                memoriCell.textContent = 'Memori';
+                const memoriValueCell = document.createElement('td');
+                memoriValueCell.textContent = `${nodeData.nodes_mem} GB - ${nodeData.nodes_maxmem} GB`;
+                memoriValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                memoriRow.appendChild(memoriCell);
+                memoriRow.appendChild(memoriValueCell);
+                tableBody.appendChild(memoriRow);
+
+                // Disk
+                const diskRow = document.createElement('tr');
+                const diskCell = document.createElement('td');
+                diskCell.textContent = 'Storage';
+                const diskValueCell = document.createElement('td');
+                diskValueCell.textContent = `${nodeData.nodes_disk} GB - ${nodeData.nodes_maxdisk} GB`;
+                diskValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                diskRow.appendChild(diskCell);
+                diskRow.appendChild(diskValueCell);
+                tableBody.appendChild(diskRow);
+
+                return nodeCard;
+            }
+            else {
+                const nodeCard = document.createElement('div');
+                nodeCard.classList.add('col');
+
+                // Tambahkan elemen tautan
+                const cardLink = document.createElement('a');
+                cardLink.href = '/'; // Gantilah dengan URL halaman target
+                cardLink.classList.add('card-link');
+                nodeCard.appendChild(cardLink);
+
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card', 'border-left-primary', 'shadow');
+                nodeCard.appendChild(cardContainer);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+                cardContainer.appendChild(cardBody);
+
+                const cardRow = document.createElement('div');
+                cardRow.classList.add('row', 'no-gutters', 'align-items-center');
+                cardBody.appendChild(cardRow);
+
+                // Ikon hard drive
+                const iconCol = document.createElement('div');
+                iconCol.classList.add('col-auto');
+                cardRow.appendChild(iconCol);
+
+                const icon = document.createElement('i');
+                icon.classList.add('fa-regular', 'fa-hard-drive', 'fa-4x', 'text-gray-300');
+                iconCol.appendChild(icon);
+
+                // Informasi node
+                const infoCol = document.createElement('div');
+                infoCol.classList.add('col');
+                cardRow.appendChild(infoCol);
+
+                const infoContainer = document.createElement('div');
+                infoContainer.classList.add('text-xs', 'font-weight-bold', 'text-primary', 'text-uppercase', 'mb-1');
+                infoCol.appendChild(infoContainer);
+
+                const table = document.createElement('table');
+                table.classList.add('table');
+                infoContainer.appendChild(table);
+
+                const tableBody = document.createElement('tbody');
+                table.appendChild(tableBody);
+
+                // Node Name
+                const nodeNameRow = document.createElement('tr');
+                const nodeNameCell = document.createElement('td');
+                nodeNameCell.textContent = 'Node Name';
+                const nodeNameValueCell = document.createElement('td');
+                nodeNameValueCell.textContent = nodeData.node_name;
+                nodeNameValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                nodeNameRow.appendChild(nodeNameCell);
+                nodeNameRow.appendChild(nodeNameValueCell);
+                tableBody.appendChild(nodeNameRow);
+
+                // Status
+                const statusRow = document.createElement('tr');
+                const statusCell = document.createElement('td');
+                statusCell.textContent = 'Status';
+                const statusValueCell = document.createElement('td');
+                statusValueCell.textContent = nodeData.node_status;
+                statusValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                statusRow.appendChild(statusCell);
+                statusRow.appendChild(statusValueCell);
+                tableBody.appendChild(statusRow);
+
+                return nodeCard;
+            }
+        }
+    
+        function ambilDataTerbaru() {
+            // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
+            // Pastikan URL endpoint yang sesuai
+            fetch('/data_api?action=view_data_nodes_resources')
+                .then(response => response.json())
+                .then(data => {
+                    const dataContainer = document.getElementById('data-container');
+                    dataContainer.innerHTML = ''; // Hapus data yang ada sebelumnya
+    
+                    let nodesData = data.node_data; // Menerima data untuk beberapa node
+
+                    // Urutkan nodesData berdasarkan node_name
+                    nodesData.sort((a, b) => a.node_name.localeCompare(b.node_name));
+    
+                    nodesData.forEach(nodeData => {
+                        const nodeCard = createNodeCard(nodeData);
+                        dataContainer.appendChild(nodeCard);
+                    });
+                })
+                .catch(error => console.error('Gagal mengambil data terbaru:', error));
+        }
+    
+        // Atur interval untuk melakukan pembaruan data setiap 60 detik
+        setInterval(ambilDataTerbaru, 1000); // 1000 ms = 1 detik, jadi 60.000 ms = 60 detik
+    </script>
 {% endblock content %}

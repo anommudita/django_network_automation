@@ -133,6 +133,144 @@ def data_api(request):
                     'data': role
                 }
                 return JsonResponse(response)
+            case 'view_data_cluster_resources':
+                proxmox = get_proxmox()
+
+                # Cluster Resources
+                clusters = proxmox.cluster.resources.get()
+
+                cpu_usage = 0
+                mem_usage = 0
+                disk_usage = 0
+                maxcpu = 0
+                maxmem = 0
+                maxdisk = 0
+
+                # Loop melalui data JSON
+                for item in clusters:
+                    if "cpu" in item:
+                        # if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                            cpu_usage += item["cpu"]
+                    if "mem" in item:
+                        if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                            mem_usage += item["mem"]
+                    if "disk" in item:
+                        if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
+                            disk_usage += item["disk"]
+                    if "maxcpu" in item:
+                        if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                            maxcpu += item["maxcpu"]
+                    if "maxmem" in item:
+                        if "lxc" not in item["id"] and "qemu" not in item["id"]:
+                            maxmem += item["maxmem"]
+                    if "maxdisk" in item:
+                        if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
+                            maxdisk += item["maxdisk"]
+
+                # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+                
+                cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
+                mem_usage = round(mem_usage / 1073741824 , 2)
+                disk_usage = round(disk_usage / 1073741824 , 2)
+                maxmem = round(maxmem / 1073741824 , 2)
+                maxdisk = round(maxdisk / 1073741824 , 2)
+
+                mem_percent = round ((mem_usage / maxmem) * 100, 2)
+                disk_percent = round ((disk_usage / maxdisk) * 100, 2)
+
+                # Pastikan data tersedia sebelum mencoba mengaksesnya
+
+                response = {
+                    # resource
+                    'cluster_cpu': cpu_usage,
+                    'cluster_mem': mem_usage,
+                    'cluster_disk': disk_usage,
+                    'cluster_maxcpu': maxcpu,
+                    'cluster_maxmem': maxmem,
+                    'cluster_maxdisk': maxdisk,
+                    'cluster_mempercent': mem_percent,
+                    'cluster_diskpercent': disk_percent,
+
+                }
+                return JsonResponse(response)
+            case 'view_data_cluster_log':
+                proxmox = get_proxmox()
+                log = proxmox.cluster.log.get()
+
+                for item in log:
+                    # time
+                    date_from_proxmox = item['time']  # Get the date from Proxmox
+
+                    # You may need to parse the date_from_proxmox if it's in a specific format
+                    formatted_time = datetime.datetime.fromtimestamp(date_from_proxmox).strftime('%Y-%m-%d %H:%M:%S')
+
+                    pid = item['pid']
+                    node = item['node']
+                    user = item['user']
+                    msg = item['msg']
+                    tag = item['tag']
+
+                # Pastikan data tersedia sebelum mencoba mengaksesnya
+
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'cluster_log': log,
+                    'log_time' : formatted_time,
+                    'log_pid' : pid,
+                    'log_node' : node,
+                    'log_user' : user,
+                    'log_msg' : msg,
+                    'log_tag' : tag,
+                }
+                return JsonResponse(response)
+            case 'view_data_nodes_resources':
+                proxmox = get_proxmox()
+                nodes = proxmox.nodes.get()
+                node_data = []
+
+                for node in nodes:
+                    if node.get('status') == 'online':
+                        cpu_usage = node.get('cpu')
+                        mem_usage = node.get('mem')
+                        disk_usage = node.get('disk')
+                        maxcpu = node.get('maxcpu')
+                        maxmem = node.get('maxmem')
+                        maxdisk = node.get('maxdisk')
+
+                        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+                        cpu_usage = round((cpu_usage / maxcpu) * 100, 2)
+                        mem_usage = round(mem_usage / 1073741824, 2)
+                        disk_usage = round(disk_usage / 1073741824, 2)
+                        maxmem = round(maxmem / 1073741824, 2)
+                        maxdisk = round(maxdisk / 1073741824, 2)
+                        mem_percent = round((mem_usage / maxmem) * 100, 2)
+                        disk_percent = round((disk_usage / maxdisk) * 100, 2)
+
+                        node_data.append({
+                            'node_name': node.get('node'),
+                            'node_status': node.get('status'),
+                            'nodes_cpu': cpu_usage,
+                            'nodes_mem': mem_usage,
+                            'nodes_disk': disk_usage,
+                            'nodes_maxcpu': maxcpu,
+                            'nodes_maxmem': maxmem,
+                            'nodes_maxdisk': maxdisk,
+                            'nodes_mempercent': mem_percent,
+                            'nodes_diskpercent': disk_percent,
+                        })
+                    
+                    else:
+                        node_data.append({
+                            'node_name': node.get('node'),
+                            'node_status': node.get('status'),
+                        })
+                # Buat JSON response
+                response = {
+                    'node_data': node_data,
+                }
+                
+                return JsonResponse(response)
     except :
             return redirect('error_connection')
 
@@ -247,8 +385,8 @@ def home(request):
         users = proxmox.access.users.get()
         count_user = len(users)
 
-        cluster_status = proxmox.cluster.status.get()
-        cluster_status = cluster_status[0]
+        cluster = proxmox.cluster.status.get()
+        cluster_status = cluster[0]
         
         if cluster_status['type'] == 'cluster':
             cluster_name = cluster_status['name']
@@ -260,7 +398,11 @@ def home(request):
         else:
             node = cluster_status['name']
         
-        
+        node_online = 0
+
+        for item in cluster:
+            if 'online' in item:
+                node_online += item['online']
 
         context = {
             'title': 'Dashboard',
@@ -268,137 +410,9 @@ def home(request):
             'count_user': count_user,
             'cluster_name': cluster_name,
             'node': node,
+            'cluster_online': node_online,
         }
         return render(request, 'dashboard/home.html', context)
-        
-    else:
-        # Redirect ke halaman eror jika koneksi gagal
-        return redirect('error_connection')
-
-# cluster resources di home
-def cluster_resources(request):
-    proxmox = get_proxmox()
-
-    # Cluster Resources
-    clusters = proxmox.cluster.resources.get()
-
-    # Cluster Log
-    # log = proxmox.cluster.log.get()
-
-    if proxmox is not None:
-        cpu_usage = 0
-        mem_usage = 0
-        disk_usage = 0
-        maxcpu = 0
-        maxmem = 0
-        maxdisk = 0
-
-        # Loop melalui data JSON
-        for item in clusters:
-            if "cpu" in item:
-                # if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    cpu_usage += item["cpu"]
-            if "mem" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    mem_usage += item["mem"]
-            if "disk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    disk_usage += item["disk"]
-            if "maxcpu" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxcpu += item["maxcpu"]
-            if "maxmem" in item:
-                if "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxmem += item["maxmem"]
-            if "maxdisk" in item:
-                if "storage" in item["id"] and "lxc" not in item["id"] and "qemu" not in item["id"]:
-                    maxdisk += item["maxdisk"]
-
-        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
-        
-        cpu_usage = round((cpu_usage / maxcpu) * 100 , 2)
-        mem_usage = round(mem_usage / 1073741824 , 2)
-        disk_usage = round(disk_usage / 1073741824 , 2)
-        maxmem = round(maxmem / 1073741824 , 2)
-        maxdisk = round(maxdisk / 1073741824 , 2)
-
-        mem_percent = round ((mem_usage / maxmem) * 100, 2)
-        disk_percent = round ((disk_usage / maxdisk) * 100, 2)
-
-
-        # for item in log:
-        #     # time
-        #     date_from_proxmox = item['time']  # Get the date from Proxmox
-
-        #     # You may need to parse the date_from_proxmox if it's in a specific format
-        #     formatted_time = datetime.datetime.fromtimestamp(date_from_proxmox).strftime('%Y-%m-%d %H:%M:%S')
-
-        #     pid = item['pid']
-        #     node = item['node']
-        #     user = item['user']
-        #     msg = item['msg']
-        #     tag = item['tag']
-
-        # Pastikan data tersedia sebelum mencoba mengaksesnya
-
-        data = {
-            # resource
-            'cluster_cpu': cpu_usage,
-            'cluster_mem': mem_usage,
-            'cluster_disk': disk_usage,
-            'cluster_maxcpu': maxcpu,
-            'cluster_maxmem': maxmem,
-            'cluster_maxdisk': maxdisk,
-            'cluster_mempercent': mem_percent,
-            'cluster_diskpercent': disk_percent,
-
-            # # log
-            # 'log_time' : formatted_time,
-            # 'log_pid' : pid,
-            # 'log_node' : node,
-            # 'log_user' : user,
-            # 'log_msg' : msg,
-            # 'log_tag' : tag,
-        }
-        return JsonResponse(data)
-        
-    else:
-        # Redirect ke halaman eror jika koneksi gagal
-        return redirect('error_connection')
-
-def cluster_log(request):
-    proxmox = get_proxmox()
-
-    if proxmox is not None:
-        # Cluster Resources
-        log = proxmox.cluster.log.get()
-
-        for item in log:
-            # time
-            date_from_proxmox = item['time']  # Get the date from Proxmox
-
-            # You may need to parse the date_from_proxmox if it's in a specific format
-            formatted_time = datetime.datetime.fromtimestamp(date_from_proxmox).strftime('%Y-%m-%d %H:%M:%S')
-
-            pid = item['pid']
-            node = item['node']
-            user = item['user']
-            msg = item['msg']
-            tag = item['tag']
-
-        # Pastikan data tersedia sebelum mencoba mengaksesnya
-
-        data = {
-            'cluster_log': log,
-            'log_time' : formatted_time,
-            'log_pid' : pid,
-            'log_node' : node,
-            'log_user' : user,
-            'log_msg' : msg,
-            'log_tag' : tag,
-             
-        }
-        return JsonResponse(data)
         
     else:
         # Redirect ke halaman eror jika koneksi gagal
@@ -843,19 +857,15 @@ def nodes(request):
     proxmox = get_proxmox()
 
     if proxmox is not None :
-        roles = proxmox.access.roles.get()
+        nodes = proxmox.nodes.get()
 
-        privs = []
-
-        # menampilkan data select option dari data list roles
-        for item in roles:
-            if item['roleid'] == 'Administrator':
-                privs_string = item['privs']
-                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+        count_nodes = len(nodes)
         
         context = {
             'title': 'Nodes',
             'active_node': 'active',
+            'nodes': nodes,
+            'length' : count_nodes,
         }
         return render(request, 'node/node.html', context )
     else :
