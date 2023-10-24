@@ -1,0 +1,109 @@
+{% extends 'main.html' %}
+
+
+{% block content %}
+
+<!-- main konten -->
+    
+    <div class="d-flex justify-content-end pt-3">
+        <a href="" class="btn btn-primary">Add Container</a>
+        <div>&nbsp;&nbsp;</div>
+        <a href="" class="btn btn-success ml-2">Add Virtual Machine</a>
+    </div>
+
+    
+    <!-- Container -->
+    <H3>Container</H3>
+    <div class="row">
+        <!-- resource -->
+        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
+            <div class="card flex-fill w-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Nama_Container</h5>
+                </div>
+                <div class="card-body d-flex">
+                    <div class="align-self-center w-100">
+                        <div class="py-3">
+                            <div class="chart chart-xs">
+                                <canvas id="chartjs-dashboard-pie"></canvas>
+                            </div>
+                        </div>
+
+                        <table class="table mb-0">
+                            <tbody>
+                                <p id="">Data akan ditampilkan di sini</p>
+                                <tr>
+                                    <td>CPU</td>
+                                    <td class="text-end" id="cpu"></td>
+                                </tr>
+                                <tr>
+                                    <td>Memori</td>
+                                    <td class="text-end" id="memori"></td>
+
+                                </tr>
+                                <tr>
+                                    <td>Storage</td>
+                                    <td class="text-end" id="disk"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="d-flex justify-content-end pt-3">
+                            <a href="" class="btn btn-primary">Detail</a>
+                        </div>
+                        
+                    </div>
+				</div>
+                
+            </div>
+        </div>
+    </div>
+
+        <!-- Virtual Machine -->
+    <H3>Virtual Machine</H3>
+    <div class="row">
+        <!-- resource -->
+        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
+            <div class="card flex-fill w-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Nama_Virtual Machine</h5>
+                </div>
+                <div class="card-body d-flex">
+                    <div class="align-self-center w-100">
+                        <div class="py-3">
+                            <div class="chart chart-xs">
+                                <canvas id="chartjs-dashboard-pie"></canvas>
+                            </div>
+                        </div>
+
+                        <table class="table mb-0">
+                            <tbody>
+                                <p id="">Data akan ditampilkan di sini</p>
+                                <tr>
+                                    <td>CPU</td>
+                                    <td class="text-end" id="cpu"></td>
+                                </tr>
+                                <tr>
+                                    <td>Memori</td>
+                                    <td class="text-end" id="memori"></td>
+
+                                </tr>
+                                <tr>
+                                    <td>Storage</td>
+                                    <td class="text-end" id="disk"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="d-flex justify-content-end pt-3">
+                            <a href="" class="btn btn-primary">Detail</a>
+                        </div>
+                    </div>
+				</div>
+                
+            </div>
+        </div>
+    </div>
+
+<!-- end konten -->
+{% endblock content %}

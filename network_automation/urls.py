@@ -10,8 +10,6 @@ urlpatterns = [
 
     # halaman utama dan dashboard
     path('', views.home, name="home"),
-    path('cluster-resources/', views.cluster_resources, name='cluster-resources'),
-    path('cluster-log/', views.cluster_log, name='cluster-log'),
 
     # route error
     path('error', views.error_connection, name="error_connection"),
@@ -51,6 +49,7 @@ urlpatterns = [
 
     # route node
     path('nodes', views.nodes, name="nodes"),
+    path('detail-node', views.detail_node, name="detail-node"),
 
 
     # route cluster
