@@ -31,7 +31,16 @@ class UserProfile(models.Model):
     date_created = models.DateTimeField(blank=True, null= True)
 
     # avatar
-    avatar = models.ImageField(blank = True, null = True)
+    avatar = models.ImageField(blank = True, null = True, upload_to='images/')
 
     def  __str__(self):
             return self.user.username
+    
+    def save_user_profile(sender, instance, created, **kwargs):
+
+        print(instance)
+        try:
+            profile = UserProfile.objects.get(user=instance)
+        except Exception as e:
+            UserProfile.objects.create(user=instance)
+        instance.profile.save()

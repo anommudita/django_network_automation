@@ -4,12 +4,15 @@ from django.shortcuts import render, redirect
 # import data user untuk panel admin
 from django.contrib.auth.models import User
 # import model dari models.py
-from .models import Server
+from .models import Server, UserProfile
 
 
 # all form
 # from network_automation.forms import ServerForm
-from .forms import ServerForm
+from .forms import ServerForm, UpdateProfileAvatar, UpdateProfile, UpdateUserProfile
+
+
+from django.contrib.auth.hashers import make_password  # Import fungsi make_password
 
 
 # import authenticate untuk login
@@ -932,24 +935,95 @@ def profile(request):
     
     proxmox = get_proxmox()
 
-    if proxmox is not None :
-        roles = proxmox.access.roles.get()
-
-        privs = []
-
-        # menampilkan data select option dari data list roles
-        for item in roles:
-            if item['roleid'] == 'Administrator':
-                privs_string = item['privs']
-                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
-        
+    if proxmox is not None :        
         context = {
-            'title': 'Monitors',
+            'title': 'Profile',
         }
         return render(request, 'settings/profile.html', context )
     else :
         return('error_connection')
     
+
+@login_required(login_url='login')
+# halaman profile
+def edit_profile(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None : 
+
+        # request.user = data sessin ketika sudah login
+        user = User.objects.get(id=request.user.id)
+        profile = UserProfile.objects.get(user=user)
+
+        if request.method == "POST":
+            password1 = request.POST.get('password1')
+            password2 = request.POST.get('password2')
+
+            # update data user
+            profile.name = request.POST.get('name')
+            user.username = request.POST.get('username')
+    
+            # jika password tidak diisi
+            if not password1 and not password2:
+                # maka gunakan password lama
+                user.password = user.password
+                
+                # save
+                user.save()
+                profile.save()
+
+                messages.success(request, "Your Profile has been updated successfully")
+                return redirect('profile')
+            else:
+                if password1 == password2:
+                    # jika password 1 sama dengan password 2
+                    # maka ganti password lama dengan password baru
+                    # hash password
+                    hashed_password = make_password(password1)
+                    user.password = hashed_password
+
+                    # save password
+                    user.save()
+
+                    messages.success(request, "Your Profile has been updated successfully")
+                    return redirect('profile')
+                else:
+                    messages.error(request, "Password does not match")
+                    return redirect('edit-profile')
+                    
+        context = {
+            'title': 'Edit Profile',
+            'userData' : user,
+            'userProfile': profile
+        }
+        return render(request, 'settings/edit_profile.html', context )
+    else :
+        return('error_connection')
+    
+
+@login_required(login_url='login')
+# update foto profile
+def updateImage(request):
+
+    user = User.objects.get(id=request.user.id)
+
+    img = user.profile.avatar
+    if request.method == 'POST':
+
+        # hapus  gambar 
+        if img and img.storage.exists(img.name):
+            img.delete()
+
+        form = UpdateProfileAvatar(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your Profile has been updated successfully")
+            return redirect('profile')
+        else:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('edit_profile')
+
 
 
 @login_required(login_url='login')
@@ -959,16 +1033,6 @@ def settings(request):
     proxmox = get_proxmox()
 
     if proxmox is not None :
-        roles = proxmox.access.roles.get()
-
-        privs = []
-
-        # menampilkan data select option dari data list roles
-        for item in roles:
-            if item['roleid'] == 'Administrator':
-                privs_string = item['privs']
-                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
-        
         context = {
             'title': 'Settings',
         }
