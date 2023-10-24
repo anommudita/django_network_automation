@@ -49,6 +49,7 @@ urlpatterns = [
 
     # route node
     path('nodes', views.nodes, name="nodes"),
+    path('detail-node', views.detail_node, name="detail-node"),
 
 
     # route cluster

@@ -882,6 +882,22 @@ def nodes(request):
         return('error_connection')
     
 
+@login_required(login_url='login')
+# halaman detail_node
+def detail_node(request):
+    
+    proxmox = get_proxmox()
+
+    if proxmox is not None :
+        context = {
+            'title': 'Detail Node',
+        }
+        return render(request, 'node/detail_node.html', context )
+    else :
+        return('error_connection')
+    
+    
+
 
 # wajib login untuk mengakses halaman ini
 @login_required(login_url='login')

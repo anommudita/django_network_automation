@@ -8,6 +8,69 @@
     <div id="data-container">
         
     </div>
+<<<<<<< HEAD
+=======
+
+    <div class="col-auto">
+        <div class="chart chart-xs">
+            <canvas id="chartjs-dashboard-pie"></canvas>
+        </div>
+    </div>
+
+
+
+    
+    <script>
+        var chartData = {}; // Buat variabel kosong untuk data chart
+        var chart; // Deklarasikan chart sebagai variabel global
+    
+        document.addEventListener("DOMContentLoaded", function() {
+            var chartElement = document.getElementById("chartjs-dashboard-pie");
+    
+            chart = new Chart(chartElement, {
+                type: "pie",
+                data: {
+                    labels: ["Storage", "Memori", "CPU"],
+                    datasets: [{
+                        data: [0, 0, 0], // Inisialisasi dengan nilai 0
+                        backgroundColor: [
+                            window.theme.primary,
+                            window.theme.warning,
+                            window.theme.danger
+                        ],
+                        borderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: !window.MSInputMethodContext,
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false
+                    },
+                    cutoutPercentage: 75,
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var dataset = data.datasets[tooltipItem.datasetIndex];
+                                var value = dataset.data[tooltipItem.index];
+                                return data.labels[tooltipItem.index] + ': ' + value + '%';
+                            }
+                        }
+                    }
+                }
+            });
+    
+            // Panggil fungsi updateChart saat data terbaru diperoleh
+            ambilDataTerbaru();
+        });
+    
+        // Fungsi untuk memperbarui data grafik
+        function updateChart() {
+            chart.data.datasets[0].data = [chartData.nodes_diskpercent, chartData.nodes_mempercent, chartData.nodes_cpu];
+            chart.update();
+        }
+    </script>
+>>>>>>> ed0c172e3468a7335dd3e3baa15691ba807e627a
     
     <!-- Script untuk auto refresh data resource -->
     <script>
@@ -109,6 +172,7 @@
                 diskRow.appendChild(diskValueCell);
                 tableBody.appendChild(diskRow);
 
+<<<<<<< HEAD
                 // Uptime
                 const uptimeRow = document.createElement('tr');
                 const uptimeCell = document.createElement('td');
@@ -130,6 +194,9 @@
                 
                 button.appendChild(linkButton);
                 cardBody.appendChild(button);
+=======
+ 
+>>>>>>> ed0c172e3468a7335dd3e3baa15691ba807e627a
 
                 return nodeCard;
             }
