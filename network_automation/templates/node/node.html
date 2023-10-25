@@ -2,12 +2,47 @@
 
 
 {% block content %}
+
+    
     <!-- {% for col in nodes %} 
     {% endfor %} -->
 
+
+    <!-- <div class="loading-nodes" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    </div> -->
+
     <div id="data-container">
-        
     </div>
+
+    
+
+    <!-- script loading -->
+    <!-- <script>
+        onload = function (){
+            // deklarasi variabel
+            let id = document.getElemenById("loading-nodes")
+            let loading = document.createElement("div")
+
+            // fill text content
+            loading.textContent = "Loading"
+            loading.style.fontSize = "30px"
+            // panggil id
+            id.appendChild(loading)
+
+            // set interval
+            let loaded = setInterval(() => {
+                loading.textContent += "."
+            }, 1000);
+
+            setTimeout(() => {
+                clearInterval(loaded)
+                loading.textContent = "Loading."
+            }, 4000);
+
+
+
+        }
+    </script> -->
     
     <!-- Script untuk auto refresh data resource -->
     <script>

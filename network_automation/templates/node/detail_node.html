@@ -6,9 +6,9 @@
 <!-- main konten -->
     
     <div class="d-flex justify-content-end pt-3">
-        <a href="" class="btn btn-primary">Add Container</a>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#addContainer" class="btn btn-primary">Add Container</a>
         <div>&nbsp;&nbsp;</div>
-        <a href="" class="btn btn-success ml-2">Add Virtual Machine</a>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#addVirtualMachine" class="btn btn-success ml-2">Add Virtual Machine</a>
     </div>
 
 
@@ -33,6 +33,14 @@
         {% for row in container %}
             <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
                 <div class="card flex-fill w-100">
+                    <div class="d-flex justify-content-end">
+                        <a href="/detail-container/{{row.vmid}}" class="btn btn-primary mt-3">Detail</a>
+                        <div>
+                            &nbsp; &nbsp; &nbsp;
+                        </div>
+                    </div>
+
+
                     <div class="card-header">
                         <h5 class="card-title mb-0 pb-2">{{row.name}}</h5>
                         {% if row.status == "stopped"%}
@@ -42,14 +50,15 @@
                         {% endif %}
 
                     </div>
+
+                    <div class="py-3 mx-auto">
+                        <div class="chart chart-xs">
+                            <i class="align-middle me-1" data-feather="box" style="width: 180px; height: 180px;"></i>
+                        </div>
+                    </div>
+
                     <div class="card-body d-flex">
                         <div class="align-self-center w-100">
-                            <div class="py-3">
-                                <div class="chart chart-xs">
-                                    <canvas id="chartjs-dashboard-pie"></canvas>
-                                </div>
-                            </div>
-
                             <table class="table mb-0">
                                 <tbody>
                                     <p id="">Data akan ditampilkan di sini</p>
@@ -69,8 +78,16 @@
                                 </tbody>
                             </table>
 
-                            <div class="d-flex justify-content-end pt-3">
-                                <a href="/detail-container/{{row.vmid}}" class="btn btn-primary">Detail</a>
+                            <div class=" pt-3">
+                                <div class="text-center mt-2">
+                                    <a href="/start-container/{{id_node}}/{{row.vmid}}" class="btn btn-success mr-3">Start</a>
+                                    <a href="/stop-container/{{id_node}}/{{row.vmid}}" class="btn btn-warning mr-3">Stop</a>
+                                    <a href="/reboot-container/{{row.vmid}}" class="btn btn-primary mr-3">Reboot</a>
+                                </div>
+
+                                <div class="text-center">
+                                    <a href="/remove-container/{{id_node}}//{{row.vmid}}" class="btn btn-danger mt-3 text">Remove</a>
+                                </div>
                             </div>
                             
                         </div>
@@ -102,6 +119,14 @@
         {% for row in virtual_machine %}
             <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
                 <div class="card flex-fill w-100">
+
+                    <div class="d-flex justify-content-end">
+                        <a href="/detail-virtual_machine/{{row.vmid}}" class="btn btn-primary mt-3">Detail</a>
+                        <div>
+                            &nbsp; &nbsp; &nbsp;
+                        </div>
+                    </div>
+
                     <div class="card-header">
                         <h5 class="card-title mb-0 pb-2">{{row.name}}</h5>
                         {% if row.status == "stopped"%}
@@ -111,13 +136,15 @@
                         {% endif %}
 
                     </div>
+
+                    <div class="py-3 mx-auto">
+                        <div class="chart chart-xs">
+                            <i class="align-middle me-1" data-feather="airplay" style="width: 180px; height: 180px;"></i>
+                        </div>
+                    </div>
+
                     <div class="card-body d-flex">
                         <div class="align-self-center w-100">
-                            <div class="py-3">
-                                <div class="chart chart-xs">
-                                    <canvas id="chartjs-dashboard-pie"></canvas>
-                                </div>
-                            </div>
 
                             <table class="table mb-0">
                                 <tbody>
@@ -138,8 +165,18 @@
                                 </tbody>
                             </table>
 
-                            <div class="d-flex justify-content-end pt-3">
-                                <a href="/detail-container/{{row.vmid}}" class="btn btn-primary">Detail</a>
+                            <div class=" pt-3">
+                                <div class="text-center mt-2">
+                                    <a href="/start-virtual_machine/{{id_node}}/{{row.vmid}}" class="btn btn-success mr-3 start-virtual_machine">Start</a>
+                                    <a href="/stop-virtual_machine/{{id_node}}/{{row.vmid}}" class="btn btn-warning mr-3 stop-virtual_machine">Stop</a>
+                                    <a href="/reboot-virtual_machine/{{row.vmid}}" class="btn btn-primary mr-3 reboot-virtual_machine">Reboot</a>
+                                </div>
+
+                                <div class="text-center">
+                                    <a href="/remove-virtual_machine/{{id_node}}//{{row.vmid}}" class="btn btn-danger mt-3 text remove-virtual_machine">Remove</a>
+                                </div>
+
+                                
                             </div>
                             
                         </div>
@@ -150,6 +187,206 @@
         {% endfor%}  
         
     {% endif%}
+
+        <!-- modalbox tambah Container -->
+        <div class="modal fade" id="addContainer" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">Add Container</h2>
+                            </div>
+                            <div class="card-body">
+                                <form action="/adduser" id="addFormUser" method="post">
+                                    {% csrf_token %}
+
+                                    <!-- First Name-->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="firstname" id="firstname" placeholder="Enter First Name" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Last Name-->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="lastname" id="lastname" placeholder="Enter Last Name" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+                                
+
+                                    <!-- Username -->   
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+                                
+
+                                    <!-- Password -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Group -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                            </div>
+                                            <select name="group" class="form-control" id="group">
+                                            <option value="">Pilih..</option>
+                                            {% for group in groups %}
+                                                <option value="{{group.groupid}}">{{group.groupid}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        </div>
+                                    </div>
+                                
+                                    <br>
+                                    <div class="float-start">
+                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                        <div class="float-end">
+                                            <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+        <!-- end modalbox tambah Container -->
+
+        <!-- modalbox tambah Virtual Machine -->
+        <div class="modal fade" id="addVirtualMachine" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">Add Virtual Machine</h2>
+                            </div>
+                            <div class="card-body">
+                                <form action="/adduser" id="addFormUser" method="post">
+                                    {% csrf_token %}
+
+                                    <!-- First Name-->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="firstname" id="firstname" placeholder="Enter First Name" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Last Name-->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="lastname" id="lastname" placeholder="Enter Last Name" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+                                
+
+                                    <!-- Username -->   
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+                                
+
+                                    <!-- Password -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Group -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                            </div>
+                                            <select name="group" class="form-control" id="group">
+                                            <option value="">Pilih..</option>
+                                            {% for group in groups %}
+                                                <option value="{{group.groupid}}">{{group.groupid}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        </div>
+                                    </div>
+                                
+                                    <br>
+                                    <div class="float-start">
+                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                        <div class="float-end">
+                                            <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+        <!-- end modalbox tambah Virtual Machine-->
 
 
 
