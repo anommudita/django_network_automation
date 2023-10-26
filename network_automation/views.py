@@ -339,6 +339,63 @@ def data_api(request):
                 else:
                     # Tanggapan jika id_node tidak diberikan
                     return JsonResponse({'error': 'ID node tidak diberikan'})
+                
+            case 'view_data_vm_resources':
+                id_node = request.GET.get('id_node')  # Mengambil ID node dari permintaan GET
+
+                if id_node is not None:
+                    proxmox = get_proxmox()
+                    vms = proxmox.nodes(id_node).qemu.get()
+                    vm_data = []
+
+                    for vm in vms:
+                        name = vm.get('name')
+                        vmid = vm.get('vmid')
+                        cpu_usage = vm.get('cpu')
+                        mem_usage = vm.get('mem')
+                        disk_usage = vm.get('disk')
+                        maxcpu = vm.get('cpus')
+                        maxmem = vm.get('maxmem')
+                        maxdisk = vm.get('maxdisk')
+                        uptime = vm.get('uptime')
+
+                        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+                        cpu_usage = round((cpu_usage / maxcpu) * 100, 2)
+                        mem_usage = round(mem_usage / 1073741824, 2)
+                        disk_usage = round(disk_usage / 1073741824, 2)
+                        maxmem = round(maxmem / 1073741824, 2)
+                        maxdisk = round(maxdisk / 1073741824, 2)
+                        mem_percent = round((mem_usage / maxmem) * 100, 2)
+                        disk_percent = round((disk_usage / maxdisk) * 100, 2)
+                        hours, remainder = divmod(uptime, 3600)
+                        minute, second = divmod(remainder, 60)
+
+                        vm_data.append({
+                            'vm_status': vm.get('status'),
+                            'vm_name': name,
+                            'vm_vmid': vmid,
+                            'vm_cpu': cpu_usage,
+                            'vm_mem': mem_usage,
+                            'vm_disk': disk_usage,
+                            'vm_maxcpu': maxcpu,
+                            'vm_maxmem': maxmem,
+                            'vm_maxdisk': maxdisk,
+                            'vm_mempercent': mem_percent,
+                            'vm_diskpercent': disk_percent,
+                            'vm_hours': hours,
+                            'vm_minutes': minute,
+                            'vm_seconds': second,
+                        })
+
+                    # Buat JSON response
+                    response = {
+                        'vm_data': vm_data,
+                    }
+                    
+                    return JsonResponse(response)
+                else:
+                    # Tanggapan jika id_node tidak diberikan
+                    return JsonResponse({'error': 'ID node tidak diberikan'})
     except :
             return redirect('error_connection')
 
@@ -969,7 +1026,105 @@ def detail_node(request, id_node):
     else :
         return('error_connection')
     
+
+# start container 
+@login_required(login_url='login')
+def startContainer(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).lxc(vmid).status.start.post()
+            messages.success(request, "Container started successfully, wait a few moments to start the container")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error starting container : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
     
+# stop container 
+@login_required(login_url='login')
+def stopContainer(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).lxc(vmid).status.stop.post()
+            messages.success(request, "Container stopped successfully, wait a few moments to stop the container")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error stoping container : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
+# reboot container
+@login_required(login_url='login')
+def rebootContainer(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).lxc(vmid).status.reboot.post()
+            messages.success(request, "Container rebooted successfully, wait a few moments to reboot the container")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error rebooting container : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+    
+
+
+# start virtual machine 
+@login_required(login_url='login')
+def startVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).status.start.post()
+            messages.success(request, "Virtual Machine started successfully, wait a few moments to start the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error starting virtual machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+    
+# stop virtual machine
+@login_required(login_url='login')
+def stopVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).status.stop.post()
+            messages.success(request, "Virtual Machine stopped successfully, wait a few moments to stop the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error stoping virtual machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
+# reboot virtual machine
+@login_required(login_url='login')
+def rebootVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).status.reboot.post()
+            messages.success(request, "Virtual Machine rebooted successfully, wait a few moments to reboot the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error rebooting virtual machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
 
 
 # wajib login untuk mengakses halaman ini

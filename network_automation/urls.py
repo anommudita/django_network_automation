@@ -51,6 +51,29 @@ urlpatterns = [
     path('nodes', views.nodes, name="nodes"),
     path('detail-node/<str:id_node>', views.detail_node, name="detail-node"),
 
+    # route add container 
+
+    # route remove container
+
+    # route start container
+    path('start-container/<str:id_node>/<str:vmid>', views.startContainer, name="start-container"),
+    # route stop container 
+    path('stop-container/<str:id_node>/<str:vmid>', views.stopContainer, name="stop-container"),
+    # route reboot container 
+    path('reboot-container/<str:id_node>/<str:vmid>', views.rebootContainer, name="reboot-container"),
+
+
+    # route add virtual_machine 
+
+    # route remove virtual_machine
+
+    # route start virtual_machine
+    path('start-virtual_machine/<str:id_node>/<str:vmid>', views.startVirtualMachine, name="start-virtual_machine"),
+    # route stop virtual_machine 
+    path('stop-virtual_machine/<str:id_node>/<str:vmid>', views.stopVirtualMachine, name="stop-virtual_machine"),
+    # route reboot virtual_machine 
+    path('reboot-virtual_machine/<str:id_node>/<str:vmid>', views.rebootVirtualMachine, name="reboot-virtual_machine"),
+
 
     # route cluster
     path('clusters', views.clusters, name="clusters"),
