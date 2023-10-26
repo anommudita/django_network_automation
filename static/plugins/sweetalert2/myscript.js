@@ -159,6 +159,260 @@ $('.delete-role').on('click', function (e) {
 
 
 
+// start container
+$('.start-container').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure',
+        text: "Want to start this container?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1CBB8C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Start Container!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Start!',
+                'Success start container',
+                'success'
+            )
+        }
+    })
+
+});
+
+// stop container
+$('.stop-container').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure',
+        text: "Want to stop this container?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#FCB92C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Stop Container!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Stop!',
+                'Success stop container',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+// reboot container
+$('.reboot-container').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to reboot this container?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Reboot Container!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Reboot!',
+                'Success reboot container',
+                'success'
+            )
+        }
+    })
+
+});
+
+// remove container
+$('.remove-container').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this container?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove Container!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove!',
+                'Success remove container',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+// start virtual machine
+$('.start-virtual_machine').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure',
+        text: "Want to start this virtual machine?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1CBB8C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Start VM!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Start!',
+                'Success start virtual machine',
+                'success'
+            )
+        }
+    })
+
+});
+
+// stop virtual machine
+$('.stop-virtual_machine').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure',
+        text: "Want to stop this virtual machine?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#FCB92C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Stop VM!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Stop!',
+                'Success stop virtual machine',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+// reboot virtual machine
+$('.reboot-virtual_machine').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to reboot this virtual machine?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Reboot VM!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Reboot!',
+                'Success reboot virtual machine',
+                'success'
+            )
+        }
+    })
+
+});
+
+// remove virtual machine
+$('.remove-virtual_machine').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this virtual machine?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove VM!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove!',
+                'Success remove virtual machine',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+
+
 
 
 
