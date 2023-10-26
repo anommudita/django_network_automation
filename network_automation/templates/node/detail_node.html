@@ -11,99 +11,309 @@
         <a href="" class="btn btn-success ml-2">Add Virtual Machine</a>
     </div>
 
+
+        {{container}}
+
+        <hr>
+        {{virtual_machine}}
+
+    {% if container is None %}
+        <div class="col-12 col-lg-12 col-xxl-12 order-xxl-4">
+            <div class="card flex-fill ">
+                <div class="card-body d-flex align-items-center" style="height: 300px;">
+                    <h1 class="text-center mx-auto">Container is Empty</h1>
+                </div>
+            </div>
+        </div>
+    {% else  %}
+        <!-- Container -->
+        <H3>Container</H3>
+        <input class="id_node" type="text" value="{{id_node}}" hidden>
+        <div class="row" id="data-container">
+        </div>
+
+
+    {% endif %}
     
-    <!-- Container -->
-    <H3>Container</H3>
-    <div class="row">
-        <!-- resource -->
-        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
-            <div class="card flex-fill w-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Nama_Container</h5>
+
+    {% if virtual_machine is None %}
+        <div class="col-12 col-lg-12 col-xxl-12 order-xxl-4">
+            <div class="card flex-fill ">
+                <div class="card-body d-flex align-items-center" style="height: 300px;">
+                    <h1 class="text-center mx-auto">Virtual Machine is Empty</h1>
                 </div>
-                <div class="card-body d-flex">
-                    <div class="align-self-center w-100">
-                        <div class="py-3">
-                            <div class="chart chart-xs">
-                                <canvas id="chartjs-dashboard-pie"></canvas>
-                            </div>
-                        </div>
-
-                        <table class="table mb-0">
-                            <tbody>
-                                <p id="">Data akan ditampilkan di sini</p>
-                                <tr>
-                                    <td>CPU</td>
-                                    <td class="text-end" id="cpu"></td>
-                                </tr>
-                                <tr>
-                                    <td>Memori</td>
-                                    <td class="text-end" id="memori"></td>
-
-                                </tr>
-                                <tr>
-                                    <td>Storage</td>
-                                    <td class="text-end" id="disk"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div class="d-flex justify-content-end pt-3">
-                            <a href="" class="btn btn-primary">Detail</a>
-                        </div>
-                        
-                    </div>
-				</div>
-                
             </div>
         </div>
-    </div>
 
+    {% else  %}
         <!-- Virtual Machine -->
-    <H3>Virtual Machine</H3>
-    <div class="row">
-        <!-- resource -->
-        <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
-            <div class="card flex-fill w-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Nama_Virtual Machine</h5>
-                </div>
-                <div class="card-body d-flex">
-                    <div class="align-self-center w-100">
-                        <div class="py-3">
-                            <div class="chart chart-xs">
-                                <canvas id="chartjs-dashboard-pie"></canvas>
+        <H3>Virtual Machine</H3>
+        {% for row in virtual_machine %}
+            <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
+                <div class="card flex-fill w-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0 pb-2">{{row.name}}</h5>
+                        {% if row.status == "stopped"%}
+                            <span class="badge bg-danger">Stopped</span>
+                        {% else %}
+                            <span class="badge bg-success">Running</span>
+                        {% endif %}
+
+                    </div>
+                    <div class="card-body d-flex">
+                        <div class="align-self-center w-100">
+                            <div class="py-3">
+                                <div class="chart chart-xs">
+                                    <canvas id="chartjs-dashboard-pie"></canvas>
+                                </div>
                             </div>
-                        </div>
 
-                        <table class="table mb-0">
-                            <tbody>
-                                <p id="">Data akan ditampilkan di sini</p>
-                                <tr>
-                                    <td>CPU</td>
-                                    <td class="text-end" id="cpu"></td>
-                                </tr>
-                                <tr>
-                                    <td>Memori</td>
-                                    <td class="text-end" id="memori"></td>
+                            <table class="table mb-0">
+                                <tbody>
+                                    <p id="">Data akan ditampilkan di sini</p>
+                                    <tr>
+                                        <td>CPU</td>
+                                        <td class="text-end" id="cpu"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Memori</td>
+                                        <td class="text-end" id="memori"></td>
 
-                                </tr>
-                                <tr>
-                                    <td>Storage</td>
-                                    <td class="text-end" id="disk"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    </tr>
+                                    <tr>
+                                        <td>Storage</td>
+                                        <td class="text-end" id="disk"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                        <div class="d-flex justify-content-end pt-3">
-                            <a href="" class="btn btn-primary">Detail</a>
+                            <div class="d-flex justify-content-end pt-3">
+                                <a href="/detail-container/{{row.vmid}}" class="btn btn-primary">Detail</a>
+                            </div>
+                            
                         </div>
                     </div>
-				</div>
-                
+                    
+                </div>
             </div>
-        </div>
-    </div>
+        {% endfor%}  
+        
+    {% endif%}
+
+    <script>
+        function createCtCard(ctData) {
+          if (ctData.container_status === "running") {
+            const ctCard = document.createElement('div');
+            ctCard.classList.add('col-12', 'col-md-6', 'col-xxl-3', 'd-flex', 'order-2', 'order-xxl-3');
+        
+            const cardContainer = document.createElement('div');
+            cardContainer.classList.add('card', 'flex-fill', 'w-100');
+            ctCard.appendChild(cardContainer);
+        
+            const cardHeader = document.createElement('div');
+            cardHeader.classList.add('card-header');
+            cardContainer.appendChild(cardHeader);
+        
+            const ctName = document.createElement('h5');
+            ctName.classList.add('card-title', 'mb-0', 'pb-2');
+            ctName.textContent = ctData.container_name;
+            cardHeader.appendChild(ctName);
+        
+            const ctStatus = document.createElement('span');
+            ctStatus.classList.add('badge', 'bg-success');
+            ctStatus.textContent = ctData.container_status;
+            cardHeader.appendChild(ctStatus);
+        
+            const cardBody = document.createElement('div');
+            cardBody.classList.add('card-body', 'd-flex');
+            cardContainer.appendChild(cardBody);
+        
+            const cardRow = document.createElement('div');
+            cardRow.classList.add('align-items-center', 'w-100');
+            cardBody.appendChild(cardRow);
+        
+            const table = document.createElement('table');
+            table.classList.add('table', 'mb-0');
+            cardRow.appendChild(table);
+        
+            const tableBody = document.createElement('tbody');
+            table.appendChild(tableBody);
+        
+            const cpuRow = document.createElement('tr');
+            const cpuCell = document.createElement('td');
+            cpuCell.textContent = 'CPU';
+            const cpuValueCell = document.createElement('td');
+            cpuValueCell.textContent = `${ctData.container_cpu}% of ${ctData.container_maxcpu} CPU`;
+            cpuValueCell.classList.add('text-end');
+            cpuRow.appendChild(cpuCell);
+            cpuRow.appendChild(cpuValueCell);
+            tableBody.appendChild(cpuRow);
+        
+            const memoriRow = document.createElement('tr');
+            const memoriCell = document.createElement('td');
+            memoriCell.textContent = 'Memori';
+            const memoriValueCell = document.createElement('td');
+            memoriValueCell.textContent = `${ctData.container_mem} GB - ${ctData.container_maxmem} GB`;
+            memoriValueCell.classList.add('text-end');
+            memoriRow.appendChild(memoriCell);
+            memoriRow.appendChild(memoriValueCell);
+            tableBody.appendChild(memoriRow);
+        
+            const diskRow = document.createElement('tr');
+            const diskCell = document.createElement('td');
+            diskCell.textContent = 'Storage';
+            const diskValueCell = document.createElement('td');
+            diskValueCell.textContent = `${ctData.container_disk} GB - ${ctData.container_maxdisk} GB`;
+            diskValueCell.classList.add('text-end');
+            diskRow.appendChild(diskCell);
+            diskRow.appendChild(diskValueCell);
+            tableBody.appendChild(diskRow);
+        
+            const uptimeRow = document.createElement('tr');
+            const uptimeCell = document.createElement('td');
+            uptimeCell.textContent = 'Uptime';
+            const uptimeValueCell = document.createElement('td');
+            uptimeValueCell.textContent = `${ctData.container_hours} jam ${ctData.container_minutes} menit ${ctData.container_seconds} detik`; // Perbaiki typo di sini
+            uptimeValueCell.classList.add('text-end');
+            uptimeRow.appendChild(uptimeCell);
+            uptimeRow.appendChild(uptimeValueCell);
+            tableBody.appendChild(uptimeRow);
+        
+            //Button
+            const button = document.createElement('div');
+            button.classList.add('d-flex', 'justify-content-end', 'pt-3');
+
+            const linkButton = document.createElement('a');
+            linkButton.href = `/detail-ct/${ctData.container_name}`;
+            linkButton.classList.add('btn', 'btn-primary');
+            linkButton.textContent = `Detail`;
+            
+            button.appendChild(linkButton);
+            cardRow.appendChild(button);
+        
+            return ctCard;
+          } 
+          else {
+            const ctCard = document.createElement('div');
+            ctCard.classList.add('col-12', 'col-md-6', 'col-xxl-3', 'd-flex', 'order-2', 'order-xxl-3');
+        
+            const cardContainer = document.createElement('div');
+            cardContainer.classList.add('card', 'flex-fill', 'w-100');
+            ctCard.appendChild(cardContainer);
+        
+            const cardHeader = document.createElement('div');
+            cardHeader.classList.add('card-header');
+            cardContainer.appendChild(cardHeader);
+        
+            const ctName = document.createElement('h5');
+            ctName.classList.add('card-title', 'mb-0', 'pb-2');
+            ctName.textContent = ctData.container_name;
+            cardHeader.appendChild(ctName);
+        
+            const ctStatus = document.createElement('span');
+            ctStatus.classList.add('badge', 'bg-danger');
+            ctStatus.textContent = ctData.container_status;
+            cardHeader.appendChild(ctStatus);
+        
+            const cardBody = document.createElement('div');
+            cardBody.classList.add('card-body', 'd-flex');
+            cardContainer.appendChild(cardBody);
+        
+            const cardRow = document.createElement('div');
+            cardRow.classList.add('align-items-center', 'w-100');
+            cardBody.appendChild(cardRow);
+        
+            const table = document.createElement('table');
+            table.classList.add('table', 'mb-0');
+            cardRow.appendChild(table);
+        
+            const tableBody = document.createElement('tbody');
+            table.appendChild(tableBody);
+        
+            const cpuRow = document.createElement('tr');
+            const cpuCell = document.createElement('td');
+            cpuCell.textContent = 'CPU';
+            const cpuValueCell = document.createElement('td');
+            cpuValueCell.textContent = `${ctData.container_cpu}% of ${ctData.container_maxcpu} CPU`;
+            cpuValueCell.classList.add('text-end');
+            cpuRow.appendChild(cpuCell);
+            cpuRow.appendChild(cpuValueCell);
+            tableBody.appendChild(cpuRow);
+        
+            const memoriRow = document.createElement('tr');
+            const memoriCell = document.createElement('td');
+            memoriCell.textContent = 'Memori';
+            const memoriValueCell = document.createElement('td');
+            memoriValueCell.textContent = `${ctData.container_mem} GB - ${ctData.container_maxmem} GB`;
+            memoriValueCell.classList.add('text-end');
+            memoriRow.appendChild(memoriCell);
+            memoriRow.appendChild(memoriValueCell);
+            tableBody.appendChild(memoriRow);
+        
+            const diskRow = document.createElement('tr');
+            const diskCell = document.createElement('td');
+            diskCell.textContent = 'Storage';
+            const diskValueCell = document.createElement('td');
+            diskValueCell.textContent = `${ctData.container_disk} GB - ${ctData.container_maxdisk} GB`;
+            diskValueCell.classList.add('text-end');
+            diskRow.appendChild(diskCell);
+            diskRow.appendChild(diskValueCell);
+            tableBody.appendChild(diskRow);
+        
+            const uptimeRow = document.createElement('tr');
+            const uptimeCell = document.createElement('td');
+            uptimeCell.textContent = 'Uptime';
+            const uptimeValueCell = document.createElement('td');
+            uptimeValueCell.textContent = `${ctData.container_hours} jam ${ctData.container_minutes} menit ${ctData.container_seconds} detik`; // Perbaiki typo di sini
+            uptimeValueCell.classList.add('text-end');
+            uptimeRow.appendChild(uptimeCell);
+            uptimeRow.appendChild(uptimeValueCell);
+            tableBody.appendChild(uptimeRow);
+        
+             //Button
+            const button = document.createElement('div');
+            button.classList.add('d-flex', 'justify-content-end', 'pt-3');
+
+            const linkButton = document.createElement('a');
+            linkButton.href = `/detail-ct/${ctData.container_name}`;
+            linkButton.classList.add('btn', 'btn-primary');
+            linkButton.textContent = `Detail`;
+            
+            button.appendChild(linkButton);
+            cardRow.appendChild(button);
+        
+            return ctCard;
+          }
+        }
+        
+        function ambilDataTerbaru() {
+            const idNodeInput = document.querySelector('.id_node'); // Ambil elemen input dengan class 'id_node'
+            const idNode = idNodeInput.value; // Ambil nilai dari input
+
+            fetch(`/data_api?action=view_data_ct_resources&id_node=${idNode}`, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                const dataContainer = document.getElementById('data-container');
+                dataContainer.innerHTML = '';
+
+                let ctsData = data.container_data;
+                ctsData.sort((a, b) => a.container_name.localeCompare(b.container_name));
+
+                ctsData.forEach(ctData => {
+                    const ctCard = createCtCard(ctData);
+                    dataContainer.appendChild(ctCard);
+                });
+            })
+            .catch(error => console.error('Gagal mengambil data terbaru:', error));
+        }
+
+        
+        // Atur interval untuk melakukan pembaruan data setiap 60 detik
+        setInterval(ambilDataTerbaru, 1000); // 60000 ms = 60 detik
+        </script>
+        
 
 <!-- end konten -->
 {% endblock content %}
