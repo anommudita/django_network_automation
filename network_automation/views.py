@@ -882,6 +882,30 @@ def nodes(request):
         return('error_connection')
     
 
+# network node
+@login_required(login_url='login')
+def networkNode(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+
+        # id node
+        id_node = id_node
+
+        # get network
+        network = proxmox.nodes(id_node).network.get()
+        
+        context = {
+            'title': 'Network',
+            'active_node': 'active',
+            'network': network,
+            'id_node': id_node,
+        }
+        return render(request, 'node/network.html', context )
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
 @login_required(login_url='login')
 # halaman detail_node
 def detail_node(request, id_node):
@@ -890,7 +914,38 @@ def detail_node(request, id_node):
 
     if proxmox is not None :
 
+        # id node
         id_node = id_node
+
+        # data resource pool
+        resource_pool = proxmox.pools.get()
+
+        # template
+        templates = proxmox.nodes(id_node).storage('local').content.get()
+
+        # ISO Container Templated
+        iso_container = []
+
+        for item in templates:
+            if item['format'] == 'tzst':
+                # volid :
+                volid = item['volid']
+                # format :
+                format = item['format']
+                # size :
+                size = round(item['size'] / 1048576, 2)
+
+                
+                # disk_usage = round(disk_usage / 1073741824, 2)
+                iso_container.append({
+                    'volid': volid,
+                    'format': format,
+                    'size': size,
+                })
+
+        # get network
+        network = proxmox.nodes(id_node).network.get()
+
 
 
         container = proxmox.nodes(id_node).lxc.get()
@@ -905,6 +960,9 @@ def detail_node(request, id_node):
         context = {
             'title': 'Detail Node',
             'active_node': 'active',
+            'resource_pool': resource_pool,
+            'iso_container': iso_container,
+            'network': network,
             'id_node': id_node,
             'container': container,
             'virtual_machine': virtual_machine,
@@ -913,6 +971,78 @@ def detail_node(request, id_node):
     else :
         return('error_connection')
     
+
+# add container 
+@login_required(login_url='login')
+def addContainer(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+
+        # id node
+        id_node = id_node
+
+        # get network
+        network = proxmox.nodes(id_node).network.get()
+
+        if request.method == "POST":
+
+            ct_id = request.POST.get('ct-id')
+            hostname= request.POST.get('hostname')
+            resource_pool = request.POST.get('resource-pool')
+            password = request.POST.get('password')
+            ssh_key = request.POST.get('ssh-key')
+            storage_container = request.POST.get('storage-container')
+            storage_disk = request.POST.get('storage_disk')
+            template = request.POST.get('container_templated')
+            disk_size = request.POST.get('disk-size')
+            cores = request.POST.get('cores')
+            memory = request.POST.get('memory')
+            memory_swap = request.POST.get('memory-swap')
+            network_interface = request.POST.get('network_interfaces')
+
+
+            #  form required in field
+            if not ct_id or not hostname or not password or not template or not network_interface:
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('detail-node', id_node)
+            
+            # insert container on proxmox with use api proxoxer
+            try:
+                proxmox.nodes(id_node).lxc.create(
+                    vmid=ct_id,
+                    ostemplate=template,
+                    password=password,
+                    cores=cores,
+                    hostname=hostname,
+                    memory=memory,
+                    swap=memory_swap,
+                    storage=storage_disk,
+                    # net[0]=network_interface,
+                    pool=resource_pool,
+                    ssh_public_keys=ssh_key,
+                )
+                messages.success(request, "Container added successfully")
+                return redirect('detail-node', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding container : {str(e)}")
+                return redirect('detail-node', id_node)
+
+
+
+        
+        context = {
+            'title': 'Network',
+            'active_node': 'active',
+            'network': network,
+            'id_node': id_node,
+        }
+        return render(request, 'node/network.html', context )
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+
+
+
 
 # start container 
 @login_required(login_url='login')

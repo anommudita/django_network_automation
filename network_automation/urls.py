@@ -51,7 +51,11 @@ urlpatterns = [
     path('nodes', views.nodes, name="nodes"),
     path('detail-node/<str:id_node>', views.detail_node, name="detail-node"),
 
-    # route add container 
+    # route node network
+    path('node-network/<str:id_node>', views.networkNode, name="node-network"),
+
+    # route add container
+    path('add-container/<str:id_node>', views.addContainer, name="add-container"),
 
     # route remove container
 

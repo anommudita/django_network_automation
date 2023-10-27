@@ -1,0 +1,376 @@
+
+
+<!-- file dari config html -->
+{% extends 'main.html' %}
+
+<!-- load static -->
+{% load static %}
+
+<!-- wrapping content -->
+{% block content %}
+
+
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- tombol tambah -->
+    <div class="col-lg-6 col-5 text-right mb-4">
+        <a href="{% url 'detail-node' id_node=id_node %}" class="btn btn-outline-secondary fs-4">Back to Detail Node</a>
+    </div>
+
+
+    <div class="row">
+        <div class="col">
+        <!-- DataTales Example -->
+            <div class="card flex-fill">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Data Network</h5>
+                    <!-- dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                Insert
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPermissionGroup">Group</a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPermissionUser">User</a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPermissionAPI">API Token</a></li>
+                            </ul>
+                        </div>
+                </div>
+                <table class="table table-hover my-0" id="dataTable" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-xl-table-cell" scope="col" width="5%">No</th>
+                            <th class="d-none d-xl-table-cell" scope="col" width="15%">Name</th>
+                            <th scope="col" width="10%">Type</th>
+                            <th scope="col" width="10%">Active</th>
+                            <th scope="col" width="15%">Address</th>
+                            <th scope="col" width="15%">CIDR</th>
+                            <th scope="col" width="15%">Gateway</th>
+                            <th scope="col" width="20%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in network %}  
+                            <tr>
+                                <td class="no_urut">{{ forloop.counter }}</td>
+                                <td>{{ row.iface }}</td>
+                                <td>{{ row.type }}</td>  
+                                <td>
+                                    {% if row.active == 1 %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>  
+                                <td>{{ row.address }}</td> 
+                                <td>{{ row.cidr }}</td>
+                                <td>{{ row.gateway }}</td> 
+                                <td>
+                                    <a href="#" class="btn btn-success btnEdit" data-id="{{row.userid}}">Edit</a>
+                                    <a href="/delete-user/{{ row.userid }}" class="btn btn-danger delete-user">Delete</a>
+                                </td>  
+                            </tr>
+                        {% endfor %} 
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal box edit data -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Edit Group</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="" id="editFormUser" method="post">
+                                {% csrf_token %}
+
+                                <input type="text" class="edit_id" hidden>
+
+                                <!-- First Name-->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_firstname" id="edit_firstname" placeholder="Enter First Name" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+                                <!-- Last Name-->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_lastname" id="edit_lastname" placeholder="Enter Last Name" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_email" id="edit_email" placeholder="Enter Email" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+                            
+                                <!-- Password -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_password" id="edit_password" placeholder="Enter Password" type="password" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+                                <!-- Group -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                        </div>
+                                        <select name="edit_group" class="form-control" id="edit_group">
+                                        <option value="">Pilih..</option>
+                                        {% for group in groups %}
+                                            <option value="{{group.groupid}}">{{group.groupid}}</option>
+                                        {% endfor %}
+                                    </select>
+                                    </div>
+                                </div>
+                        
+                                <br>
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-success" id="editButtonUser">Edit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    <!-- end modal box edit data -->
+
+
+
+    <!-- modalbox tambah -->
+    <div class="modal fade" id="addUser" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Add User</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="/adduser" id="addFormUser" method="post">
+                                {% csrf_token %}
+
+                                <!-- First Name-->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="firstname" id="firstname" placeholder="Enter First Name" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+                                <!-- Last Name-->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="lastname" id="lastname" placeholder="Enter Last Name" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+                            
+
+                                <!-- Username -->   
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
+                                    </div>
+                                </div>
+                            
+
+                                <!-- Password -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+
+                                <!-- Group -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                        </div>
+                                        <select name="group" class="form-control" id="group">
+                                        <option value="">Pilih..</option>
+                                        {% for group in groups %}
+                                            <option value="{{group.groupid}}">{{group.groupid}}</option>
+                                        {% endfor %}
+                                    </select>
+                                    </div>
+                                </div>
+                            
+                                <br>
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>
+    <!-- end modalbox tambah -->
+
+
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+
+    <!-- script merapikan data -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Mendapatkan semua baris tabel ke dalam array
+            var rows = $("tbody").find("tr").toArray();
+
+            // Mengurutkan baris berdasarkan data yang ingin Anda urutkan (misalnya, berdasarkan groupid)
+            rows.sort(function (a, b) {
+                var keyA = $(a).find(".d-none.d-xl-table-cell").eq(0).text();
+                var keyB = $(b).find(".d-none.d-xl-table-cell").eq(0).text();
+
+                return keyA.localeCompare(keyB);
+            });
+
+            // Mengganti urutan baris dalam tabel
+            $("tbody").empty();
+            for (var i = 0; i < rows.length; i++) {
+                $("tbody").append(rows[i]);
+                // Memperbarui nomor urut
+                $(rows[i]).find(".no_urut").text(i + 1);
+            }
+        });
+    </script>
+
+    <!-- scirpts ajax get data by group id -->
+    <script>
+        const myModal =  new bootstrap.Modal('#editUserModal')
+        $(document).ready(function($) {
+            $(document).on('click', '.btnEdit', function() {
+                var id = $(this).data('id');
+
+                $.ajax({
+                    method: 'GET',
+                    url: '/data_api?action=view_data_user',
+                    data: {
+                        id: id
+                    },
+                    success: function(res) {
+                        if (res.data) {
+                            var d = res.data;
+                            // console.log(d);
+                            $('#edit_firstname').val(d.firstname);
+                            $('#edit_lastname').val(d.lastname);
+                            $('#edit_email').val(d.email);
+                            $('.edit_id').val(id);
+                            var group = d.groups[0];
+                            $('#edit_group').val(group);
+                            
+                            
+
+                            myModal.show()
+                        }
+                    }
+                });
+            });
+        
+        });
+
+        //  edit data user
+        document.getElementById("editFormUser").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var id = document.querySelector('.edit_id').value;
+            var editForm = document.getElementById("editFormUser");
+            editForm.action = '/edit-user/' + id; // Change the action URL
+            editForm.submit(); // Submit the form
+        });
+    </script>
+
+
+
+
+    <!-- ketika mengirim form maka tombol tambah akan disable -->
+    <script>
+        document.getElementById("addFormUser").addEventListener("submit", function() {
+            document.getElementById("addButtonUser").disabled = true;
+        });
+    </script>
+
+    <!-- ketika mengirim form maka tombol edit akan disable --> 
+    <script>
+        document.getElementById("editFormUser").addEventListener("submit", function() {
+            document.getElementById("editButtonUser").disabled = true;
+        });
+    </script>
+
+
+{% endblock content %}
+
+

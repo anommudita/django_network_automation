@@ -4,8 +4,6 @@
 {% block content %}
 
 <!-- main konten -->
-
-
     <!-- flash message -->
         {% for message in messages %}
         <div class="container-fluid p-0">
@@ -19,9 +17,11 @@
     <!-- end flash message -->
     
     <div class="d-flex justify-content-end pt-3">
+        <a href="/node-network/{{id_node}}"  class="btn btn-success">Add Network</a>
+        <div>&nbsp;&nbsp;</div>
         <a href="#" data-bs-toggle="modal" data-bs-target="#addContainer" class="btn btn-primary">Add Container</a>
         <div>&nbsp;&nbsp;</div>
-        <a href="#" data-bs-toggle="modal" data-bs-target="#addVirtualMachine" class="btn btn-success ml-2">Add Virtual Machine</a>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#addVirtualMachine" class="btn btn-primary ml-2">Add Virtual Machine</a>
     </div>
 
 
@@ -208,84 +208,307 @@
                             <div class="card-header bg-transparent">
                                 <h2 class="card-heading text-center">Add Container</h2>
                             </div>
+
+                            <!-- circles -->
+                            <div style="text-align:center;margin-top:40px;">
+                                <span class="step"></span>
+                                <span class="step"></span>
+                                <span class="step"></span>
+                                <span class="step"></span>
+                                <span class="step"></span>
+                                <span class="step"></span>
+                                <span class="step"></span>
+                            </div>
+
+                            <!-- card body -->
                             <div class="card-body">
-                                <form action="/adduser" id="addFormUser" method="post">
+                                <form action="{% url 'add-container' id_node=id_node %}" id="regForm" method="post">
                                     {% csrf_token %}
 
-                                    <!-- First Name-->
-                                    <div class="form-group mb-4">
+                                    <!-- Tab 1 -->
+                                    <div class="form-group mb-4 tab">
+
+                                        <h2 class="">General :</h2>
+                                        <br>
+
+                                        <!-- ct_id -->
+                                        <label for="ct-id">CT ID : </label>
                                         <div class="input-group input-group-merge input-group-alternative">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                                <span class="input-group-text"><i class="fa-solid fa-box  fa-2x "></i></span>
                                             </div>
-                                            <input class="form-control" name="firstname" id="firstname" placeholder="Enter First Name" type="text" autocomplete="off" value="">
+                                            <input class="form-control" name="ct-id" id="ct-id" placeholder="Enter CT-ID" type="number" autocomplete="off">
                                         </div>
-                                    </div>
 
-                                    <!-- Last Name-->
-                                    <div class="form-group mb-4">
+                                        <br>
+
+                                        <!-- hostname -->
                                         <div class="input-group input-group-merge input-group-alternative">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
+                                                <span class="input-group-text"><i class="fa-solid fa-desktop fa-2x "></i></span>
                                             </div>
-                                            <input class="form-control" name="lastname" id="lastname" placeholder="Enter Last Name" type="text" autocomplete="off" value="">
+                                            <input class="form-control" name="hostname" id="hostname" placeholder="Enter Hostname" type="text" autocomplete="off">
                                         </div>
-                                    </div>
 
-                                    <!-- Email -->
-                                    <div class="form-group mb-4">
+                                        <br>
+
+                                        <!-- resource_pool -->
+                                        <label for="resource_pool">Resource Pool : </label>
                                         <div class="input-group input-group-merge input-group-alternative">
+                                            
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                                <span class="input-group-text"><i class="fa-solid fa-earth-asia fa-2x "></i></span>
                                             </div>
-                                            <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
-                                        </div>
-                                    </div>
-                                
 
-                                    <!-- Username -->   
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
+                                            <select name="resource_pool" class="form-control" id="resource_pool">
+                                                <option value="">Pilih..</option>
+                                                
+                                                {% for row in resource_pool %}
+                                                    <option value="{{row.poolid}}">{{row.poolid}}</option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
-                                    </div>
-                                
 
-                                    <!-- Password -->
-                                    <div class="form-group mb-4">
+                                        <br>
+
+                                        <!-- password -->
                                         <div class="input-group input-group-merge input-group-alternative">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
                                             </div>
                                             <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
                                         </div>
-                                    </div>
 
+                                        <br>
 
-                                    <!-- Group -->
-                                    <div class="form-group mb-4">
+                                        <!-- ssh key -->
                                         <div class="input-group input-group-merge input-group-alternative">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
+                                                <span class="input-group-text"><i class="fa-solid fa-key fa-2x "></i></span>
                                             </div>
-                                            <select name="group" class="form-control" id="group">
-                                            <option value="">Pilih..</option>
-                                            {% for group in groups %}
-                                                <option value="{{group.groupid}}">{{group.groupid}}</option>
-                                            {% endfor %}
-                                        </select>
+                                            <input class="form-control" name="ssh_key" id="ssh_key" placeholder="Enter SSH Public KEY" type="text" autocomplete="off" value="">
                                         </div>
                                     </div>
-                                
-                                    <br>
-                                    <div class="float-start">
-                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+
+                                    <!-- Tab 2 -->
+                                    <div class="form-group mb-4 tab">
+
+                                        <h2 class="">Templates :</h2>
+                                        <br>
+
+                                        <!-- Storage -->
+                                        <label for="storage_container">Storage : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-database fa-2x "></i></span>
+                                            </div>
+
+                                            <select name="storage_container" class="form-control" id="storage_container">
+                                                <option value="local" selected>local</option>
+                                            </select>
                                         </div>
-                                        <div class="float-end">
-                                            <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
+
+                                        <br>
+
+                                        <!-- Templates -->
+                                        <label for="container_templated">Tempaltes : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-compact-disc fa-2x "></i></span>
+                                            </div>
+
+                                            <select name="container_templated" class="form-control" id="container_templated">
+                                                <option value="">Pilih..</option>
+                                                {% for row in iso_container %}
+                                                    <option value="{{row.volid}}">{{row.volid}} | {{row.format}} | {{row.size}} MB</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Tab 3 -->
+                                    <div class="form-group mb-4 tab">
+
+                                        <h2 class="">Disks :</h2>
+                                        <br>
+
+                                        <!-- Storage -->
+                                        <label for="storage_disk">Storage : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-database fa-2x "></i></span>
+                                            </div>
+
+                                            <select name="storage_disk" class="form-control" id="storage_disk">
+                                                <option value="local-lvm" selected>local-lvm</option>
+                                            </select>
+                                        </div>
+
+                                        <br>
+
+                                        <!-- Disk Size -->
+                                        <label for="disk_size">Disk Size (GiB): </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="disk_size" id="disk_size"  type="number" autocomplete="off" value="8">
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Tab 4 -->
+                                    <div class="form-group mb-4 tab">
+
+                                        <h2 class="">CPU :</h2>
+                                        <br>
+
+                                        <!-- Cores -->
+                                        <label for="cores">Cores : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="cores" id="cores"  type="number" autocomplete="off" value="1">
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Tab 5 -->
+                                    <div class="form-group mb-4 tab">
+
+                                        <h2 class="">Memory :</h2>
+                                        <br>
+
+                                        <!-- Memori -->
+                                        <label for="memory">Memory (MiB): </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="memory" id="memory" type="number" autocomplete="off" value="512">
+                                        </div>
+
+                                        <!-- Swap -->
+                                        <label for="memori_swap">Swap (MiB) : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="memory_swap" id="memory_swap" type="number" autocomplete="off" value="512">
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Tab 6 -->
+                                    <div class="form-group mb-4 tab">
+
+                                        <h2 class="">Network :</h2>
+                                        <br>
+
+                                        <!-- Network -->
+                                        <label for="network_interfaces">Interfaces : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <select name="network_interfaces" class="form-control" id="network_interfaces">
+                                                <option value="">Pilih..</option>
+                                                {% for row in network %}
+                                                    <option value="{{row.iface}}">{{row.iface}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+
+                                    </div>
+
+                                    <!-- Tab 7 -->
+                                    <!-- Confirm -->
+                                    <!-- data yang sudah dinputkan -->
+                                    <div class="form-group mb-4 tab">
+                                        <div class="card flex-fill">
+                                            <div class="card-header">
+                                                <h5 class="card-title mb-0">Confirm Configuration</h5>
+                                            </div>
+                                            <table class="table table-hover my-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>KEY</th>
+                                                        <th class="d-none d-xl-table-cell">VALUE</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="log-table-body">
+
+                                                    <tr>
+                                                        <td>CT ID</td>
+                                                        <!-- ct-id inputan -->
+                                                        <td id="confirm_ct-id"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Core</td>
+                                                        <!-- core inputan -->
+                                                        <td id="confirm_core"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Hostname</td>
+                                                        <!-- hostname inputan -->
+                                                        <td id="confirm_hostname"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Memory</td>
+                                                        <!-- memory inputan -->
+                                                        <td id="confirm_memory"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Net0</td>
+                                                        <!-- net inputan -->
+                                                        <td id="confirm_net"></td>
+                                                    </tr>
+
+
+                                                    <tr>
+                                                        <td>ostemplate</td>
+                                                        <!-- template inputan -->
+                                                        <td id="confirm_ostemplate"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Pool</td>
+                                                        <!-- pool inputan -->
+                                                        <td id="confirm_pool"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Rootfs</td>
+                                                        <!-- rootfs inputan -->
+                                                        <td id="confirm_rootfs"></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>Swap</td>
+                                                        <!-- swap inputan -->
+                                                        <td id="confirm_swap"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>                            
+                                    <br>
+
+                                    <div style="overflow:auto;">
+                                        <div style="float:right;">
+                                        <button class="btn btn-primary" type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
+                                        <button class="btn btn-success" type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
+                                        </div>
                                     </div>
                                 </form>
                             </div>
@@ -295,6 +518,8 @@
         </div>
         </div>
         <!-- end modalbox tambah Container -->
+
+
 
         <!-- modalbox tambah Virtual Machine -->
         <div class="modal fade" id="addVirtualMachine" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -309,85 +534,6 @@
                                 <h2 class="card-heading text-center">Add Virtual Machine</h2>
                             </div>
                             <div class="card-body">
-                                <form action="/adduser" id="addFormUser" method="post">
-                                    {% csrf_token %}
-
-                                    <!-- First Name-->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="firstname" id="firstname" placeholder="Enter First Name" type="text" autocomplete="off" value="">
-                                        </div>
-                                    </div>
-
-                                    <!-- Last Name-->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="lastname" id="lastname" placeholder="Enter Last Name" type="text" autocomplete="off" value="">
-                                        </div>
-                                    </div>
-
-                                    <!-- Email -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="email" id="email" placeholder="Enter Email" type="text" autocomplete="off" value="">
-                                        </div>
-                                    </div>
-                                
-
-                                    <!-- Username -->   
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="username" id="username" placeholder="Enter Username" type="text" autocomplete="off" value="">
-                                        </div>
-                                    </div>
-                                
-
-                                    <!-- Password -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
-                                            </div>
-                                            <input class="form-control" name="password" id="password" placeholder="Enter Password" type="password" autocomplete="off" value="">
-                                        </div>
-                                    </div>
-
-
-                                    <!-- Group -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text"><i class="fa-solid fa-users fa-2x "></i></span>
-                                            </div>
-                                            <select name="group" class="form-control" id="group">
-                                            <option value="">Pilih..</option>
-                                            {% for group in groups %}
-                                                <option value="{{group.groupid}}">{{group.groupid}}</option>
-                                            {% endfor %}
-                                        </select>
-                                        </div>
-                                    </div>
-                                
-                                    <br>
-                                    <div class="float-start">
-                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                        <div class="float-end">
-                                            <button type="submit" class="btn btn-primary " id="addButtonUser">Insert</button>
-                                    </div>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -403,6 +549,143 @@
         <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
         <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
 
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+        <!-- scripts data history inputan -->
+        <script>
+            // Function to update the confirmation table
+            function updateConfirmationTable() {
+                // Get the values from the input fields
+                var disk_size = document.getElementById("disk_size").value;
+                var storage_disk = document.getElementById("storage_disk").value;
+                var rootfs = storage_disk + ":" + disk_size
+
+                var ct_id = document.getElementById("ct-id").value;
+                var network_interfaces = document.getElementById("network_interfaces").value;
+                var cores = document.getElementById("cores").value;
+                var memory = document.getElementById("memory").value + " MB";
+                var swap = document.getElementById("memory_swap").value + " MB";
+                var hostname = document.getElementById("hostname").value;
+
+                // Get the values from the select fields
+                var ostemplateSelect = document.getElementById("container_templated");
+                var resourcePoolSelect = document.getElementById("resource_pool");
+
+                var ostemplate = ostemplateSelect.options[ostemplateSelect.selectedIndex].text;
+                var resourcePool = resourcePoolSelect.options[resourcePoolSelect.selectedIndex].text;
+
+
+                // Update the confirmation table cells
+                document.getElementById("confirm_rootfs").textContent = rootfs;
+                document.getElementById("confirm_net").textContent = network_interfaces;
+                document.getElementById("confirm_ct-id").textContent = ct_id;
+                document.getElementById("confirm_hostname").textContent = hostname;
+                document.getElementById("confirm_pool").textContent = resourcePool;
+                document.getElementById("confirm_core").textContent = cores;
+                document.getElementById("confirm_memory").textContent = memory;
+                document.getElementById("confirm_swap").textContent = swap;
+                document.getElementById("confirm_ostemplate").textContent = ostemplate;
+
+            }
+
+            // Add an event listener to the input field to trigger the update
+            document.getElementById("network_interfaces").addEventListener("input", updateConfirmationTable);
+            document.getElementById("disk_size").addEventListener("input", updateConfirmationTable);
+            document.getElementById("storage_disk").addEventListener("change", updateConfirmationTable);
+            document.getElementById("hostname").addEventListener("input", updateConfirmationTable);
+            document.getElementById("cores").addEventListener("input", updateConfirmationTable);
+            document.getElementById("memory").addEventListener("input", updateConfirmationTable);
+            document.getElementById("memory_swap").addEventListener("input", updateConfirmationTable);
+            document.getElementById("ct-id").addEventListener("input", updateConfirmationTable);
+            
+
+            
+            // Add an event listener to the select element to trigger the update
+            document.getElementById("resource_pool").addEventListener("change", updateConfirmationTable);
+            document.getElementById("container_templated").addEventListener("change", updateConfirmationTable);
+        </script>
+
+
+
+        <!-- script multistep -->
+        <script>
+            var currentTab = 0; // Current tab is set to the first tab (0)
+            showTab(currentTab); // Display the current tab
+
+            function showTab(n) {
+                // This function will display the specified tab of the form...
+                var x = document.getElementsByClassName("tab");
+                x[n].style.display = "block";
+                // ... and fix the Previous/Next buttons:
+                if (n == 0) {
+                    document.getElementById("prevBtn").style.display = "none";
+                } else {
+                    document.getElementById("prevBtn").style.display = "inline";
+                }
+                if (n == (x.length - 1)) {
+                    document.getElementById("nextBtn").innerHTML = "Submit";
+                } else {
+                    document.getElementById("nextBtn").innerHTML = "Next";
+                }
+                // ... and run a function that will display the correct step indicator:
+                fixStepIndicator(n);
+            }
+
+            function nextPrev(n) {
+                // This function will figure out which tab to display
+                var x = document.getElementsByClassName("tab");
+
+                // Exit the function if any field in the current tab is invalid:
+                // if (n == 1 && !validateForm()) return false;
+                // Hide the current tab:
+
+
+                x[currentTab].style.display = "none";
+                // Increase or decrease the current tab by 1:
+                currentTab = currentTab + n;
+                // if you have reached the end of the form...
+                if (currentTab >= x.length) {
+                    // ... the form gets submitted:
+                    document.getElementById("regForm").submit();
+                    return false;
+                }
+                // Otherwise, display the correct tab:
+                showTab(currentTab);
+            }
+
+            function validateForm() {
+                // This function deals with the validation of the form fields
+                var x, y, i, valid = true;
+                x = document.getElementsByClassName("tab");
+                y = x[currentTab].getElementsByTagName("input");
+                // A loop that checks every input field in the current tab:
+                for (i = 0; i < y.length; i++) {
+                    // If a field is empty...
+                    if (y[i].value == "") {
+                        // add an "invalid" class to the field:
+                        y[i].className += " invalid";
+                        // and set the current valid status to false
+                        valid = false;
+                    }
+                }
+                // If the valid status is true, mark the step as finished and valid:
+                if (valid) {
+                    document.getElementsByClassName("step")[currentTab].className += " finish";
+                }
+                return valid; // return the valid status
+            }
+
+            function fixStepIndicator(n) {
+                // This function removes the "active" class of all steps...
+                var i, x = document.getElementsByClassName("step");
+                for (i = 0; i < x.length; i++) {
+                    x[i].className = x[i].className.replace(" active", "");
+                }
+                //... and adds the "active" class to the current step:
+                x[n].className += " active";
+            }
+        </script>
 
 
 <!-- end konten -->
