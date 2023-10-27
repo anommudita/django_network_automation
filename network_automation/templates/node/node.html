@@ -78,13 +78,9 @@
                 infoCol.classList.add('col');
                 cardRow.appendChild(infoCol);
 
-                const infoContainer = document.createElement('div');
-                infoContainer.classList.add('text-xs', 'font-weight-bold', 'text-primary', 'text-uppercase', 'mb-1');
-                infoCol.appendChild(infoContainer);
-
                 const table = document.createElement('table');
                 table.classList.add('table');
-                infoContainer.appendChild(table);
+                infoCol.appendChild(table);
 
                 const tableBody = document.createElement('tbody');
                 table.appendChild(tableBody);
@@ -155,6 +151,7 @@
                 uptimeRow.appendChild(uptimeValueCell);
                 tableBody.appendChild(uptimeRow);
 
+                //Button
                 const button = document.createElement('div');
                 button.classList.add('d-flex', 'justify-content-end', 'pt-3');
 
@@ -204,13 +201,9 @@
                 infoCol.classList.add('col');
                 cardRow.appendChild(infoCol);
 
-                const infoContainer = document.createElement('div');
-                infoContainer.classList.add('text-xs', 'font-weight-bold', 'text-primary', 'text-uppercase', 'mb-1');
-                infoCol.appendChild(infoContainer);
-
                 const table = document.createElement('table');
                 table.classList.add('table');
-                infoContainer.appendChild(table);
+                infoCol.appendChild(table);
 
                 const tableBody = document.createElement('tbody');
                 table.appendChild(tableBody);

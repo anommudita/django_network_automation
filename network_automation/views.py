@@ -283,6 +283,119 @@ def data_api(request):
                 }
                 
                 return JsonResponse(response)
+            case 'view_data_ct_resources':
+                id_node = request.GET.get('id_node')  # Mengambil ID node dari permintaan GET
+
+                if id_node is not None:
+                    proxmox = get_proxmox()
+                    containers = proxmox.nodes(id_node).lxc.get()
+                    container_data = []
+
+                    for container in containers:
+                        name = container.get('name')
+                        vmid = container.get('vmid')
+                        cpu_usage = container.get('cpu')
+                        mem_usage = container.get('mem')
+                        disk_usage = container.get('disk')
+                        maxcpu = container.get('cpus')
+                        maxmem = container.get('maxmem')
+                        maxdisk = container.get('maxdisk')
+                        uptime = container.get('uptime')
+
+                        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+                        cpu_usage = round((cpu_usage / maxcpu) * 100, 2)
+                        mem_usage = round(mem_usage / 1073741824, 2)
+                        disk_usage = round(disk_usage / 1073741824, 2)
+                        maxmem = round(maxmem / 1073741824, 2)
+                        maxdisk = round(maxdisk / 1073741824, 2)
+                        mem_percent = round((mem_usage / maxmem) * 100, 2)
+                        disk_percent = round((disk_usage / maxdisk) * 100, 2)
+                        hours, remainder = divmod(uptime, 3600)
+                        minute, second = divmod(remainder, 60)
+
+                        container_data.append({
+                            'container_status': container.get('status'),
+                            'container_name': name,
+                            'container_vmid': vmid,
+                            'container_cpu': cpu_usage,
+                            'container_mem': mem_usage,
+                            'container_disk': disk_usage,
+                            'container_maxcpu': maxcpu,
+                            'container_maxmem': maxmem,
+                            'container_maxdisk': maxdisk,
+                            'container_mempercent': mem_percent,
+                            'container_diskpercent': disk_percent,
+                            'container_hours': hours,
+                            'container_minutes': minute,
+                            'container_seconds': second,
+                        })
+
+                    # Buat JSON response
+                    response = {
+                        'container_data': container_data,
+                    }
+                    
+                    return JsonResponse(response)
+                else:
+                    # Tanggapan jika id_node tidak diberikan
+                    return JsonResponse({'error': 'ID node tidak diberikan'})
+                
+            case 'view_data_vm_resources':
+                id_node = request.GET.get('id_node')  # Mengambil ID node dari permintaan GET
+
+                if id_node is not None:
+                    proxmox = get_proxmox()
+                    vms = proxmox.nodes(id_node).qemu.get()
+                    vm_data = []
+
+                    for vm in vms:
+                        name = vm.get('name')
+                        vmid = vm.get('vmid')
+                        cpu_usage = vm.get('cpu')
+                        mem_usage = vm.get('mem')
+                        disk_usage = vm.get('disk')
+                        maxcpu = vm.get('cpus')
+                        maxmem = vm.get('maxmem')
+                        maxdisk = vm.get('maxdisk')
+                        uptime = vm.get('uptime')
+
+                        # Anda dapat menyesuaikan operasi sesuai kebutuhan Anda.
+                        cpu_usage = round((cpu_usage / maxcpu) * 100, 2)
+                        mem_usage = round(mem_usage / 1073741824, 2)
+                        disk_usage = round(disk_usage / 1073741824, 2)
+                        maxmem = round(maxmem / 1073741824, 2)
+                        maxdisk = round(maxdisk / 1073741824, 2)
+                        mem_percent = round((mem_usage / maxmem) * 100, 2)
+                        disk_percent = round((disk_usage / maxdisk) * 100, 2)
+                        hours, remainder = divmod(uptime, 3600)
+                        minute, second = divmod(remainder, 60)
+
+                        vm_data.append({
+                            'vm_status': vm.get('status'),
+                            'vm_name': name,
+                            'vm_vmid': vmid,
+                            'vm_cpu': cpu_usage,
+                            'vm_mem': mem_usage,
+                            'vm_disk': disk_usage,
+                            'vm_maxcpu': maxcpu,
+                            'vm_maxmem': maxmem,
+                            'vm_maxdisk': maxdisk,
+                            'vm_mempercent': mem_percent,
+                            'vm_diskpercent': disk_percent,
+                            'vm_hours': hours,
+                            'vm_minutes': minute,
+                            'vm_seconds': second,
+                        })
+
+                    # Buat JSON response
+                    response = {
+                        'vm_data': vm_data,
+                    }
+                    
+                    return JsonResponse(response)
+                else:
+                    # Tanggapan jika id_node tidak diberikan
+                    return JsonResponse({'error': 'ID node tidak diberikan'})
     except :
             return redirect('error_connection')
 
@@ -955,7 +1068,7 @@ def detail_node(request, id_node):
             container = None
         if virtual_machine == []:
             virtual_machine = None
-                
+        
 
         context = {
             'title': 'Detail Node',

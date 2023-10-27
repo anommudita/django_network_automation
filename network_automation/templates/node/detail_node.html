@@ -36,9 +36,11 @@
     {% else  %}
         <!-- Container -->
         <H3>Container</H3>
-        <div class="row">
+        <input class="id_node" type="text" value="{{id_node}}" hidden>
+        <!-- <div class="row" id="data-container"> -->
+        <div class="row" id="data-container">
         <!-- container -->
-        {% for row in container %}
+        <!-- {% for row in container %}
             <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
                 <div class="card flex-fill w-100">
                     <div class="d-flex justify-content-end">
@@ -103,7 +105,7 @@
                     
                 </div>
             </div>
-        {% endfor%}  
+        {% endfor%}   -->
         
 
         </div>
@@ -124,7 +126,8 @@
     {% else  %}
         <!-- Virtual Machine -->
         <H3>Virtual Machine</H3>
-        {% for row in virtual_machine %}
+        <div class="row" id="data-vm"></div>
+        <!-- {% for row in virtual_machine %}
             <div class="col-12 col-md-6 col-xxl-3 d-flex order-2 order-xxl-3">
                 <div class="card flex-fill w-100">
 
@@ -192,7 +195,7 @@
                     
                 </div>
             </div>
-        {% endfor%}  
+        {% endfor%}   -->
         
     {% endif%}
 
@@ -549,7 +552,334 @@
         <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
         <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
 
+        <script src="https://unpkg.com/feather-icons"></script>
 
+        <script>
+            let idNode = '';
+            const idNodeInput = document.querySelector('.id_node'); // Ambil elemen input dengan class 'id_node'
+            idNode = idNodeInput.value; // Ambil nilai dari input
+
+            function createCtCard(ctData) {
+                const ctCard = document.createElement('div');
+                ctCard.classList.add('col-12', 'col-md-6', 'col-xxl-3', 'd-flex', 'order-2', 'order-xxl-3');
+
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card', 'flex-fill', 'w-100');
+                ctCard.appendChild(cardContainer);
+
+                const ctDetail = document.createElement('div');
+                ctDetail.classList.add('d-flex', 'justify-content-end');
+                cardContainer.appendChild(ctDetail);
+
+                const detailLink = document.createElement('a');
+                detailLink.classList.add('btn', 'btn-primary', 'mt-3');
+                detailLink.href = `/detail-container/${ctData.container_vmid}`;
+                detailLink.textContent = 'Detail';
+                ctDetail.appendChild(detailLink);
+
+                const detailSpace = document.createElement('div');
+                detailSpace.innerHTML = '&nbsp; &nbsp; &nbsp;';
+                ctDetail.appendChild(detailSpace);
+
+                const cardHeader = document.createElement('div');
+                cardHeader.classList.add('card-header');
+                cardContainer.appendChild(cardHeader);
+
+                const ctName = document.createElement('h5');
+                ctName.classList.add('card-title', 'mb-0', 'pb-2');
+                ctName.textContent = ctData.container_name;
+                cardHeader.appendChild(ctName);
+
+                const ctStatus = document.createElement('span');
+                ctStatus.classList.add('badge', ctData.container_status === "running" ? 'bg-success' : 'bg-danger');
+                ctStatus.textContent = ctData.container_status;
+                cardHeader.appendChild(ctStatus);
+
+                const chartContainer = document.createElement('div');
+                chartContainer.classList.add('py-3', 'mx-auto');
+
+                const chartIconContainer = document.createElement('div');
+                chartIconContainer.classList.add('chart', 'chart-xs');
+                cardContainer.appendChild(chartContainer);
+
+                const chartIcon = document.createElement('i');
+                chartIcon.classList.add('align-middle', 'me-1');
+                chartIcon.setAttribute('data-feather', 'box');
+                chartIcon.style.width = '180px';
+                chartIcon.style.height = '180px';
+
+                chartIconContainer.appendChild(chartIcon);
+                chartContainer.appendChild(chartIconContainer);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body', 'd-flex');
+                cardContainer.appendChild(cardBody);
+
+                const cardRow = document.createElement('div');
+                cardRow.classList.add('align-items-center', 'w-100');
+                cardBody.appendChild(cardRow);
+
+                const table = document.createElement('table');
+                table.classList.add('table', 'mb-0');
+                cardRow.appendChild(table);
+
+                const tableBody = document.createElement('tbody');
+                table.appendChild(tableBody);
+
+                const rows = [
+                    { label: 'CPU', value: `${ctData.container_cpu}% of ${ctData.container_maxcpu} CPU` },
+                    { label: 'Memori', value: `${ctData.container_mem} GB - ${ctData.container_maxmem} GB` },
+                    { label: 'Storage', value: `${ctData.container_disk} GB - ${ctData.container_maxdisk} GB` },
+                    { label: 'Uptime', value: `${ctData.container_hours} jam ${ctData.container_minutes} menit ${ctData.container_seconds} detik` }
+                ];
+
+                rows.forEach(rowData => {
+                    const row = document.createElement('tr');
+                    const cellLabel = document.createElement('td');
+                    cellLabel.textContent = rowData.label;
+                    const cellValue = document.createElement('td');
+                    cellValue.textContent = rowData.value;
+                    cellValue.classList.add('text-end');
+                    row.appendChild(cellLabel);
+                    row.appendChild(cellValue);
+                    tableBody.appendChild(row);
+                });
+                
+                const textCenterDiv = document.createElement('div');
+                textCenterDiv.classList.add('text-center', 'mt-2');
+                cardRow.appendChild(textCenterDiv);
+
+                const buttons = [
+                    { label: 'Start', href: `/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success mr-3 start-container' },
+                    { label: 'Stop', href: `/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning mr-3 stop-container' },
+                    { label: 'Reboot', href: `/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary mr-3 reboot-container' },
+                    // { label: 'Remove', href: `/remove-container/${ctData.container_vmid}`, class: 'btn btn-danger mt-5 text remove-container' }
+                ];
+
+                buttons.forEach(buttonData => {
+                    const button = document.createElement('a');
+                    button.setAttribute('href', buttonData.href);
+                    button.classList.add(...buttonData.class.split(' ')); // Menambahkan kelas-kelas tombol
+                    button.textContent = buttonData.label;
+                    textCenterDiv.appendChild(button);
+                });
+
+                const removeDiv = document.createElement('div');
+                removeDiv.classList.add('text-center');
+                cardRow.appendChild(removeDiv);
+
+                const removeLink = document.createElement('a');
+                removeLink.setAttribute('href', `/remove-container/${idNode}/${ctData.container_vmid}`);
+                removeLink.classList.add('btn', 'btn-danger', 'mt-3', 'text', 'remove-container');
+                removeLink.textContent = 'Remove';
+                removeDiv.appendChild(removeLink);
+
+
+                return ctCard;
+            }
+            
+            function ambilDataCtTerbaru() {
+                const idNodeInput = document.querySelector('.id_node'); // Ambil elemen input dengan class 'id_node'
+                idNode = idNodeInput.value; // Ambil nilai dari input
+    
+                fetch(`/data_api?action=view_data_ct_resources&id_node=${idNode}`, {
+                    method: 'GET',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const dataContainer = document.getElementById('data-container');
+                    dataContainer.innerHTML = '';
+    
+                    let ctsData = data.container_data;
+                    ctsData.sort((a, b) => a.container_name.localeCompare(b.container_name));
+    
+                    ctsData.forEach(ctData => {
+                        const ctCard = createCtCard(ctData);
+                        dataContainer.appendChild(ctCard);
+                    });
+                    // Memanggil fungsi Feather Icons untuk merender ikon
+                    feather.replace();
+                })
+                .catch(error => console.error('Gagal mengambil data terbaru:', error));
+            }
+    
+            
+            // Atur interval untuk melakukan pembaruan data setiap 60 detik
+            setInterval(ambilDataCtTerbaru, 1000); // 60000 ms = 60 detik
+        </script>
+
+
+
+        <script>
+            function createVmCard(vmData) {
+                const vmCard = document.createElement('div');
+                vmCard.classList.add('col-12', 'col-md-6', 'col-xxl-3', 'd-flex', 'order-2', 'order-xxl-3');
+
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card', 'flex-fill', 'w-100');
+                vmCard.appendChild(cardContainer);
+
+                const vmDetail = document.createElement('div');
+                vmDetail.classList.add('d-flex', 'justify-content-end');
+                cardContainer.appendChild(vmDetail);
+
+                const detailLink = document.createElement('a');
+                detailLink.classList.add('btn', 'btn-primary', 'mt-3');
+                detailLink.href = `/detail-vm/${vmData.vm_name}`;
+                detailLink.textContent = 'Detail';
+                vmDetail.appendChild(detailLink);
+
+                const detailSpace = document.createElement('div');
+                detailSpace.innerHTML = '&nbsp; &nbsp; &nbsp;';
+                vmDetail.appendChild(detailSpace);
+
+                const cardHeader = document.createElement('div');
+                cardHeader.classList.add('card-header');
+                cardContainer.appendChild(cardHeader);
+
+                const vmName = document.createElement('h5');
+                vmName.classList.add('card-title', 'mb-0', 'pb-2');
+                vmName.textContent = vmData.vm_name;
+                cardHeader.appendChild(vmName);
+
+                const vmStatus = document.createElement('span');
+                vmStatus.classList.add('badge', vmData.container_status === "running" ? 'bg-success' : 'bg-danger');
+                vmStatus.textContent = vmData.container_status;
+                cardHeader.appendChild(vmStatus);
+
+                const chartContainer = document.createElement('div');
+                chartContainer.classList.add('py-3', 'mx-auto');
+
+                const chartIconContainer = document.createElement('div');
+                chartIconContainer.classList.add('chart', 'chart-xs');
+
+                const chartIcon = document.createElement('i');
+                chartIcon.classList.add('align-middle', 'me-1');
+                chartIcon.setAttribute('data-feather', 'airplay');
+                chartIcon.style.width = '180px';
+                chartIcon.style.height = '180px';
+
+                chartIconContainer.appendChild(chartIcon);
+                chartContainer.appendChild(chartIconContainer);
+                cardContainer.appendChild(chartContainer);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body', 'd-flex');
+                cardContainer.appendChild(cardBody);
+
+                const cardRow = document.createElement('div');
+                cardRow.classList.add('align-items-center', 'w-100');
+                cardBody.appendChild(cardRow);
+
+                const table = document.createElement('table');
+                table.classList.add('table', 'mb-0');
+                cardRow.appendChild(table);
+
+                const tableBody = document.createElement('tbody');
+                table.appendChild(tableBody);
+
+                const rows = [
+                    { label: 'CPU', value: `${vmData.vm_cpu}% of ${vmData.vm_maxcpu} CPU` },
+                    { label: 'Memori', value: `${vmData.vm_mem} GB - ${vmData.vm_maxmem} GB` },
+                    { label: 'Storage', value: `${vmData.vm_disk} GB - ${vmData.vm_maxdisk} GB` },
+                    { label: 'Uptime', value: `${vmData.vm_hours} jam ${vmData.vm_minutes} menit ${vmData.vm_seconds} detik` }
+                ];
+
+                rows.forEach(rowData => {
+                    const row = document.createElement('tr');
+                    const cellLabel = document.createElement('td');
+                    cellLabel.textContent = rowData.label;
+                    const cellValue = document.createElement('td');
+                    cellValue.textContent = rowData.value;
+                    cellValue.classList.add('text-end');
+                    row.appendChild(cellLabel);
+                    row.appendChild(cellValue);
+                    tableBody.appendChild(row);
+                });
+
+                // const textCenterDiv = document.createElement('div');
+                // textCenterDiv.classList.add('text-center', 'mt-2');
+                // cardRow.appendChild(textCenterDiv);
+
+                // const startLink = document.createElement('a');
+                // startLink.setAttribute('href', `/start-container/${idNode}/${vmData.vm_vmid}`);
+                // startLink.classList.add('btn', 'btn-success', 'mr-3', 'start-container');
+                // startLink.textContent = 'Start';
+                // textCenterDiv.appendChild(startLink);
+
+                // const stopLink = document.createElement('a');
+                // stopLink.setAttribute('href', `/stop-container/${idNode}/${vmData.vm_vmid}`);
+                // stopLink.classList.add('btn', 'btn-warning', 'mr-3', 'stop-container');
+                // stopLink.textContent = 'Stop';
+                // textCenterDiv.appendChild(stopLink);
+
+                // const rebootLink = document.createElement('a');
+                // rebootLink.setAttribute('href', `/reboot-container/${idNode}/${vmData.vm_vmid}`);
+                // rebootLink.classList.add('btn', 'btn-primary', 'mr-3', 'reboot-container');
+                // rebootLink.textContent = 'Reboot';
+                // textCenterDiv.appendChild(rebootLink);
+
+                
+
+                const textCenterDiv = document.createElement('div');
+                textCenterDiv.classList.add('text-center', 'mt-2');
+                cardRow.appendChild(textCenterDiv);
+
+                const buttons = [
+                    { label: 'Start', href: `/start-container/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success mr-3 start-virtual_machine') },
+                    { label: 'Stop', href: `/stop-container/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning mr-3 stop-virtual_machine') },
+                    { label: 'Reboot', href: `/reboot-container/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary mr-3 reboot-virtual_machine') },
+                    // { label: 'Remove', href: `/remove-container/${vmData.container_vmid}`, class: ('btn', 'btn-danger', 'mt-3', 'text', 'remove-container') }
+                ];
+
+                buttons.forEach(buttonData => {
+                    const button = document.createElement('a');
+                    button.setAttribute('href', buttonData.href);
+                    button.classList.add(...buttonData.class.split(' ')); // Menambahkan kelas-kelas tombol
+                    button.textContent = buttonData.label;
+                    textCenterDiv.appendChild(button);
+                });
+
+                const removeDiv = document.createElement('div');
+                removeDiv.classList.add('text-center');
+                cardRow.appendChild(removeDiv);
+
+                const removeLink = document.createElement('a');
+                removeLink.setAttribute('href', `/remove-container//${idNode}/${vmData.vm_vmid}`);
+                removeLink.classList.add('btn', 'btn-danger', 'mt-3', 'text', 'remove-virtual_machine');
+                removeLink.textContent = 'Remove';
+                removeDiv.appendChild(removeLink);
+
+                return vmCard;
+            }
+
+        function ambilDataVmTerbaru() {
+
+            fetch(`/data_api?action=view_data_vm_resources&id_node=${idNode}`, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                const dataContainer = document.getElementById('data-vm');
+                dataContainer.innerHTML = '';
+
+                let vmsData = data.vm_data;
+                vmsData.sort((a, b) => a.vm_name.localeCompare(b.vm_name));
+
+                vmsData.forEach(vmData => {
+                    const vmCard = createVmCard(vmData);
+                    dataContainer.appendChild(vmCard);
+                });
+                // Memanggil fungsi Feather Icons untuk merender ikon
+                feather.replace();
+            })
+            .catch(error => console.error('Gagal mengambil data terbaru:', error));
+        }
+
+        
+        // Atur interval untuk melakukan pembaruan data setiap 60 detik
+        setInterval(ambilDataVmTerbaru, 1000); // 60000 ms = 60 detik
+        </script>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <!-- scripts data history inputan -->
