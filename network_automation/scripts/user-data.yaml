@@ -1,0 +1,8 @@
+#cloud-config
+users:
+  - name: log
+    passwd: $6$9vvFDR688jNAPjB6$4FzT1v6LSwRrefuo.UG4.1WzDR98Mv6bOzI.qmgAu4Ri3dmdKe4INMJHlabs3UgELOsRMuNfOW7EQq/4R0j3w.  # Ganti dengan kata sandi terenkripsi
+    lock-passwd: false  # Jangan mengunci kata sandi
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL

@@ -744,7 +744,7 @@
 
                 const vmStatus = document.createElement('span');
                 vmStatus.classList.add('badge', vmData.container_status === "running" ? 'bg-success' : 'bg-danger');
-                vmStatus.textContent = vmData.container_status;
+                vmStatus.textContent = vmData.vm_status;
                 cardHeader.appendChild(vmStatus);
 
                 const chartContainer = document.createElement('div');

@@ -45,6 +45,10 @@ from proxmoxer import ProxmoxAPI
 
 import paramiko
 
+import os
+from pathlib import Path
+from django.shortcuts import render, redirect
+from django.contrib import messages
 # Create your views here.
 
 
@@ -1113,6 +1117,17 @@ def addContainer(request, id_node):
             memory_swap = request.POST.get('memory-swap')
             network_interface = request.POST.get('network_interfaces')
 
+            # Cari lokasi file user_data.yaml dalam folder skrip
+            script_folder = Path(__file__).resolve().parent / 'scripts'
+            user_data_path = script_folder / "user_data.yaml"
+
+            # Pastikan file user_data.yaml ada dan baca kontennya
+            if user_data_path.is_file():
+                with open(user_data_path, 'r') as user_data_file:
+                    user_data_yaml = user_data_file.read()
+            else:
+                messages.error(request, "user_data.yaml file not found")
+                return redirect('detail-node', id_node)
 
             #  form required in field
             if not ct_id or not hostname or not password or not template or not network_interface:
@@ -1133,6 +1148,7 @@ def addContainer(request, id_node):
                     # net[0]=network_interface,
                     pool=resource_pool,
                     ssh_public_keys=ssh_key,
+                    user_data= user_data_yaml,
                 )
                 messages.success(request, "Container added successfully")
                 return redirect('detail-node', id_node)
