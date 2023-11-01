@@ -54,6 +54,11 @@ urlpatterns = [
     # route node network
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
 
+    #  route add network linux bridge
+    path('add-linux-bridge/<str:id_node>/<str:type>', views.addLinuxBridge, name="add-linux-bridge"),
+
+
+
     # route add container
     path('add-container/<str:id_node>', views.addContainer, name="add-container"),
 

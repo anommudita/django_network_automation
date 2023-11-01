@@ -396,6 +396,18 @@ def data_api(request):
                 else:
                     # Tanggapan jika id_node tidak diberikan
                     return JsonResponse({'error': 'ID node tidak diberikan'})
+            case 'view_data_network':
+                iface = request.GET.get('iface')
+                type = request.GET.get('type')
+                node = request.GET.get('node')
+                proxmox = get_proxmox()
+                network = proxmox.nodes(node).network(iface=iface, type=type).get()
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': network
+                }
+                return JsonResponse(response)
     except :
             return redirect('error_connection')
 
@@ -995,6 +1007,22 @@ def nodes(request):
         return('error_connection')
     
 
+# netmask to prefix || netmask to desimal
+def netmask_to_prefix(netmask):
+    netmask = int(netmask)  # Mengonversi ke integer jika belum
+    # Membuat daftar 8 bit yang mewakili masing-masing bagian dari netmask
+    binary_netmask = "1" * netmask + "0" * (32 - netmask)
+    
+    # Memisahkan daftar 8 bit menjadi empat bagian dan mengonversinya ke desimal
+    parts = [int(binary_netmask[i:i+8], 2) for i in range(0, 32, 8)]
+    
+    # Menggabungkan empat bagian dalam notasi netmask
+    netmask_str = ".".join(map(str, parts))
+    
+    return netmask_str
+
+
+
 # network node
 @login_required(login_url='login')
 def networkNode(request, id_node):
@@ -1004,6 +1032,11 @@ def networkNode(request, id_node):
         # id node
         id_node = id_node
 
+
+        # get network by id 
+        # pvesh get /nodes/{node}/network/{iface}
+        network1 = proxmox.nodes(id_node).network('vmbr0').get()
+
         # get network
         network = proxmox.nodes(id_node).network.get()
         
@@ -1012,12 +1045,86 @@ def networkNode(request, id_node):
             'active_node': 'active',
             'network': network,
             'id_node': id_node,
+            'network1': network1,
         }
         return render(request, 'node/network.html', context )
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
+
+# network node
+@login_required(login_url='login')
+def addLinuxBridge(request, id_node, type):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+
+        # # id node                                                 
+        id_node = id_node
+
+        if request.method == "POST":
+            name = request.POST.get('name')
+            ipv4 = request.POST.get('ipv4')
+            ipv6 = request.POST.get('ipv6')
+            netmask = request.POST.get('netmask')
+            netmask6 = request.POST.get('netmask6')
+            gateway = request.POST.get('gateway_cidr4')
+            gateway6 = request.POST.get('gateway_cidr6')
+            autostart = request.POST.get('autostart')
+            bridgePort = request.POST.get('bridgePort')
+
+            desimal_to_netmask = netmask_to_prefix(netmask)
+
+            # cidr = ipv4 + '/' + netmask
+            # cidr6 = ipv6 + '/' + netmask6
+
+            # ketika vlan aware di centang
+            if 'vlan_Aware' in request.POST:
+                vlan_Aware = 1
+            else:
+                vlan_Aware = 0
+            
+
+            # ketika autostar di centang atau default-nya 1
+            if autostart:
+                autostart = 1
+            else:
+                autostart = 0
+
+
+            if not name or not ipv4 or not netmask :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+        
+            try:
+                proxmox.nodes(id_node).network.create(
+                        iface=name,
+                        type=type,
+                        address=ipv4,
+                        # address6=ipv6,
+                        # gateway='10.10.10.1',
+                        # gateway6=gateway6,
+                        netmask=desimal_to_netmask,
+                        # netmask6=netmask6,
+                        # cidr= ipv4 + ' ' +netmask,
+                        # cidr6= ipv6 + ' ' +netmask6,
+                        autostart=autostart,
+                        bridge_ports=bridgePort,
+                        bridge_vlan_aware=vlan_Aware,
+                    )
+                messages.success(request, "Network Linux Bridge added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding user : {str(e)}")
+                return redirect('node-network', id_node)
+        
+
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
     
+
+
 
 @login_required(login_url='login')
 # halaman detail_node
