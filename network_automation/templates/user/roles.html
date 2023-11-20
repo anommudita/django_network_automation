@@ -228,6 +228,7 @@
 
     <script>
         $(document).ready(function() {
+            
             // Inisialisasi Select2 setelah modal terbuka
             $('#addRole').on('shown.bs.modal', function () {
                 $('#privileges').select2({
@@ -240,7 +241,8 @@
             $('#editRoleModal').on('shown.bs.modal', function () {
                 $('#edit_privileges').select2({
                     placeholder: "Select Privileges",
-                    allowClear: true
+                    allowClear: true,
+                    width: 100
                 });
             });
 
@@ -326,6 +328,17 @@
 
             // Assign nilai sebagai nilai dari input dengan name "privileges"
             $('input[name="edit_privileges"]').val(privilegesString);
+        });
+
+        
+        // menonaktifkan Select2 pada elemen dengan id "privileges" setelah modal tambah ditutup
+        $('#addRole').on('hidden.bs.modal', function () {
+            $('#privileges').select2('destroy');
+        });
+
+        // menonaktifkan Select2 pada elemen dengan id "edit_privileges" setelah modal edit ditutup
+        $('#editRoleModal').on('hidden.bs.modal', function () {
+            $('#edit_privileges').select2('destroy');
         });
 
         //  edit data role

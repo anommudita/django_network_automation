@@ -55,14 +55,27 @@ urlpatterns = [
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
 
     #  route add network linux bridge
-    path('add-linux-bridge/<str:id_node>/<str:type>', views.addLinuxBridge, name="add-linux-bridge"),
+    path('add-linux-bridge/<str:id_node>', views.addLinuxBridge, name="add-linux-bridge"),
 
+    #  route add network linux Bond
+    path('add-linux-bond/<str:id_node>', views.addLinuxBond, name="add-linux-bond"),
+
+    #  route add network linux Vlan
+    path('add-linux-vlan/<str:id_node>', views.addLinuxVlan, name="add-linux-vlan"),
+    
+
+    # route network apply
+    path('apply-network/<str:id_node>', views.NetworkApply, name="apply-network"),
+    
+    # route delete network
+    path('delete-network/<str:iface>/<str:id_node>', views.deleteNetwork, name="delete-network"),
 
 
     # route add container
     path('add-container/<str:id_node>', views.addContainer, name="add-container"),
 
     # route remove container
+    path('remove-container/<str:id_node>/<str:vmid>', views.removeContainer, name="remove-container"),
 
     # route start container
     path('start-container/<str:id_node>/<str:vmid>', views.startContainer, name="start-container"),
@@ -72,10 +85,12 @@ urlpatterns = [
     path('reboot-container/<str:id_node>/<str:vmid>', views.rebootContainer, name="reboot-container"),
 
 
-    # route add virtual_machine 
+    # route add virtual_machine
+    path('add-virtual-machine/<str:id_node>', views.addVirtualMachine, name="add-virtual-machine"), 
 
     # route remove virtual_machine
-
+    path('remove-virtual-machine/<str:id_node>/<str:vmid>', views.removeVirtualMachine, name="remove-virtual-machine"),
+    
     # route start virtual_machine
     path('start-virtual_machine/<str:id_node>/<str:vmid>', views.startVirtualMachine, name="start-virtual_machine"),
     # route stop virtual_machine 

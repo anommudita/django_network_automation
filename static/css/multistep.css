@@ -22,12 +22,29 @@ input.invalid {
 }
 
 /* Hide all steps by default: */
-.tab {
+/* .tab {
+    display: none;
+} */
+
+
+
+
+/* css multistep ketika memiliki lebih dari satu modalbox  */
+
+
+/* detail network */
+.tab-addContainer {
     display: none;
 }
 
+.tab-addVirtualMachine {
+    display: none;
+}
+
+
+/* addcontainer */
 /* Make circles that indicate the steps of the form: */
-.step {
+.step-addContainer {
     height: 15px;
     width: 15px;
     margin: 0 2px;
@@ -39,11 +56,120 @@ input.invalid {
 }
 
 /* Mark the active step: */
-.step.active {
+.step-addContainer.active {
     opacity: 1;
 }
 
 /* Mark the steps that are finished and valid: */
-.step.finish {
+.step-addContainer.finish {
+    background-color: #04AA6D;
+}
+
+
+/* addcVitualMachine */
+/* Make circles that indicate the steps of the form: */
+.step-addVirtualMachine {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-addVirtualMachine.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-addVirtualMachine.finish {
+    background-color: #04AA6D;
+}
+
+
+/* network */
+.tab-LinuxBridge {
+    display: none;
+}
+
+/* network add linux bridge */
+/* Make circles that indicate the steps of the form: */
+.step-LinuxBridge {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-LinuxBridge.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-LinuxBridge.finish {
+    background-color: #04AA6D;
+}
+
+
+.tab-LinuxBond {
+    display: none;
+}
+
+/* network add linux Bond */
+/* Make circles that indicate the steps of the form: */
+.step-LinuxBond {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-LinuxBond.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-LinuxBond.finish {
+    background-color: #04AA6D;
+}
+
+
+.tab-LinuxVlan {
+    display: none;
+}
+
+/* network add linux Bond */
+/* Make circles that indicate the steps of the form: */
+.step-LinuxVlan {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-LinuxVlan.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-LinuxVlan.finish {
     background-color: #04AA6D;
 }

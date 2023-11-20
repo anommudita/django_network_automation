@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 # import model dari models.py
 from .models import Server, UserProfile
 
-
 # all form
 # from network_automation.forms import ServerForm
 from .forms import ServerForm, UpdateProfileAvatar, UpdateProfile, UpdateUserProfile
@@ -28,9 +27,13 @@ from django.contrib.auth.decorators import login_required
 import time
 import datetime
 
+# import enum
+from enum import Enum
+
 
 # get response json
 from django.http import JsonResponse
+
 
 import json
 
@@ -1035,7 +1038,14 @@ def networkNode(request, id_node):
 
         # get network by id 
         # pvesh get /nodes/{node}/network/{iface}
-        network1 = proxmox.nodes(id_node).network('vmbr0').get()
+        # network1 = proxmox.nodes(id_node).network('bond1').get()
+
+        # get_data = {
+        #                 "iface" : name,
+        #                 "type" : "bridge",
+        # }
+
+        # network1 = proxmox.nodes(id_node).network.get(**get_data)
 
         # get network
         network = proxmox.nodes(id_node).network.get()
@@ -1045,84 +1055,439 @@ def networkNode(request, id_node):
             'active_node': 'active',
             'network': network,
             'id_node': id_node,
-            'network1': network1,
         }
         return render(request, 'node/network.html', context )
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# delete group
+def NetworkApply(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    try :
+        proxmox.nodes(id_node).network.put()
+        time.sleep(1.5)
+        messages.success(request, "Apply Configuration successfully")
+        return redirect('node-network', id_node)
+    except Exception as e:
+        messages.error(request, f"Error apply configuration : {str(e)}")
+        return redirect('node-network', id_node)
+
 # network node
 @login_required(login_url='login')
-def addLinuxBridge(request, id_node, type):
+def addLinuxBridge(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
-
         # # id node                                                 
         id_node = id_node
-
         if request.method == "POST":
             name = request.POST.get('name')
             ipv4 = request.POST.get('ipv4')
-            ipv6 = request.POST.get('ipv6')
             netmask = request.POST.get('netmask')
-            netmask6 = request.POST.get('netmask6')
             gateway = request.POST.get('gateway_cidr4')
-            gateway6 = request.POST.get('gateway_cidr6')
-            autostart = request.POST.get('autostart')
             bridgePort = request.POST.get('bridgePort')
-
-            desimal_to_netmask = netmask_to_prefix(netmask)
 
             # cidr = ipv4 + '/' + netmask
             # cidr6 = ipv6 + '/' + netmask6
 
             # ketika vlan aware di centang
-            if 'vlan_Aware' in request.POST:
+            if 'vlanAware' in request.POST:
                 vlan_Aware = 1
             else:
                 vlan_Aware = 0
-            
 
+            # messages.success(request, "Mode " + type) 
+            
             # ketika autostar di centang atau default-nya 1
-            if autostart:
+            if 'autoStart' in request.POST:
                 autostart = 1
             else:
                 autostart = 0
-
 
             if not name or not ipv4 or not netmask :
                 messages.error(request, "Make sure all fields are valid")
                 return redirect('node-network', id_node)
             
-        
-            try:
-                proxmox.nodes(id_node).network.create(
-                        iface=name,
-                        type=type,
-                        address=ipv4,
-                        # address6=ipv6,
-                        # gateway='10.10.10.1',
-                        # gateway6=gateway6,
-                        netmask=desimal_to_netmask,
-                        # netmask6=netmask6,
-                        # cidr= ipv4 + ' ' +netmask,
-                        # cidr6= ipv6 + ' ' +netmask6,
-                        autostart=autostart,
-                        bridge_ports=bridgePort,
-                        bridge_vlan_aware=vlan_Aware,
-                    )
-                messages.success(request, "Network Linux Bridge added successfully")
-                return redirect('node-network', id_node)
-            except Exception as e:
-                messages.error(request, f"Error adding user : {str(e)}")
-                return redirect('node-network', id_node)
-        
+            # ketika ipv4 di isi 
+            if 'ipv4' in request.POST or 'netmask' in request.POST :
+                desimal_to_netmask = netmask_to_prefix(netmask)
 
+
+                # kondisi ketika gateway di isi 
+                if gateway != '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bridge",
+                        "address":ipv4,
+                        "gateway" : gateway,
+                        "netmask" : desimal_to_netmask,
+                        "autostart"  : autostart,
+                        "bridge_ports" : bridgePort,
+                        "bridge_vlan_aware" : vlan_Aware,
+                    }
+
+                # kondisi ketika gateway tidak di isi atau sama dengan null
+                if gateway == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bridge",
+                        "address":ipv4,
+                        # "gateway" : gateway,
+                        "netmask" : desimal_to_netmask,
+                        "autostart"  : autostart,
+                        "bridge_ports" : bridgePort,
+                        "bridge_vlan_aware" : vlan_Aware,
+                    }
+
+                try:
+                    proxmox.nodes(id_node).network.post(**post_data)
+                    messages.success(request, "Network Linux Bridge added successfully")
+                    return redirect('node-network', id_node)
+                except Exception as e:
+                    messages.error(request, f"Error adding network : {str(e)}")
+                    return redirect('node-network', id_node)
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
     
+
+# network mode linux bond
+@login_required(login_url='login')
+def addLinuxBond(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_bond')
+            ipv4 = request.POST.get('ipv4_bond')
+            netmask = request.POST.get('netmask_bond')
+            gateway = request.POST.get('gateway_bond')
+            slaves = request.POST.get('slave_bond')
+            mode = request.POST.get('mode_bond')
+
+            # bond_primary dan hash_policy
+            bond_primary = request.POST.get('bond_primary')
+            hash_policy = request.POST.get('hash_policy')
+            
+            # ketika autostar di centang atau default-nya 1
+            if 'autoStartBond' in request.POST:
+                autostart = 1
+            else:
+                autostart = 0
+
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            # ketika mode ballance-rr atau balance-alb atau balance-tlb
+            if mode == 'balance-rr' or mode == 'balance-alb' or mode == 'balance-tlb':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode active-backup
+            if mode == 'active-backup':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond-primary" : bond_primary,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond-primary" : bond_primary,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond-primary" : bond_primary,
+                        "bond_mode" : mode,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode balance-xor
+            if mode == 'balance-xor':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "bond_xmit_hash_policy" : hash_policy,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode broadcast
+            if mode == 'broadcast':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode 802.3ad
+            if mode == '802.3ad':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "bond_xmit_hash_policy" : hash_policy,
+                        "autostart"  : autostart,
+                    }
+
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network Linux Bond added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+# network mode linux vlan
+@login_required(login_url='login')
+def addLinuxVlan(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_vlan')
+            ipv4 = request.POST.get('ipv4_vlan')
+            netmask = request.POST.get('netmask_vlan')
+            gateway = request.POST.get('gateway_vlan')
+
+
+            # vlan
+            vlan_raw_device = request.POST.get('vlan_raw_device')
+            vlan_tag = request.POST.get('vlan_tag')
+            
+            # ketika autostar di centang atau default-nya 1
+            if 'autoStartVlan' in request.POST:
+                autostart = 1
+            else:
+                autostart = 0
+
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            # ketika mode ballance-rr atau balance-alb atau balance-tlb
+            if name :
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "vlan",
+                    "vlan-id" : vlan_tag,
+                    "vlan-raw-device" : vlan_raw_device,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "vlan",
+                    "vlan-id" : vlan_tag,
+                    "vlan-raw-device" : vlan_raw_device,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                    
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "vlan",
+                        "vlan-id" : vlan_tag,
+                        "vlan-raw-device" : vlan_raw_device,
+                        "autostart"  : autostart,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network Linux Bond added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# delete group
+def deleteNetwork(request, iface, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    try :
+        proxmox.nodes(id_node).network(iface).delete()
+        time.sleep(1.5)
+        messages.success(request, "Network deleted successfully")
+        return redirect('node-network', id_node)
+    except Exception as e:
+        messages.error(request, f"Error deleting iface: {str(e)}")
+        return redirect('node-network', id_node)
 
 
 
@@ -1146,8 +1511,9 @@ def detail_node(request, id_node):
         # ISO Container Templated
         iso_container = []
 
+        # container
         for item in templates:
-            if item['format'] == 'tzst':
+            if item['format'] == 'tzst' or item['format'] == 'tar.gz':
                 # volid :
                 volid = item['volid']
                 # format :
@@ -1163,9 +1529,44 @@ def detail_node(request, id_node):
                     'size': size,
                 })
 
-        # get network
-        network = proxmox.nodes(id_node).network.get()
+        # ISO Virtual Machine
+        iso_virtual_machine = []
 
+        for item in templates:
+            if item['format'] == 'iso':
+                # volid :
+                volid = item['volid']
+                # format :
+                format = item['format']
+                # size :
+                size = round(item['size'] / 1048576, 2)
+
+                
+                # disk_usage = round(disk_usage / 1073741824, 2)
+                iso_virtual_machine.append({
+                    'volid': volid,
+                    'format': format,
+                    'size': size,
+                })
+
+
+        # get network proxmox
+        network_proxmox = proxmox.nodes(id_node).network.get()
+
+        # get network berdasarkan type bridge
+        network = []
+
+        for item in network_proxmox:
+            if item['type'] == 'bridge':
+                # iface :
+                iface = item['iface']
+                # type :
+                type = item['type']
+                
+                network.append({
+                    'iface': iface,
+                    'type': type
+                })
 
 
         container = proxmox.nodes(id_node).lxc.get()
@@ -1182,6 +1583,7 @@ def detail_node(request, id_node):
             'active_node': 'active',
             'resource_pool': resource_pool,
             'iso_container': iso_container,
+            'iso_virtual_machine' : iso_virtual_machine,
             'network': network,
             'id_node': id_node,
             'container': container,
@@ -1197,15 +1599,9 @@ def detail_node(request, id_node):
 def addContainer(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
-
         # id node
         id_node = id_node
-
-        # get network
-        network = proxmox.nodes(id_node).network.get()
-
         if request.method == "POST":
-
             ct_id = request.POST.get('ct-id')
             hostname= request.POST.get('hostname')
             resource_pool = request.POST.get('resource-pool')
@@ -1219,46 +1615,261 @@ def addContainer(request, id_node):
             memory = request.POST.get('memory')
             memory_swap = request.POST.get('memory-swap')
             network_interface = request.POST.get('network_interfaces')
+            name_network = request.POST.get('name_network')
 
+            # tombol radio static ipv4
+            static_ipv4 = request.POST.get('static_ipv4')
+            static_ipv6 = request.POST.get('static_ipv6')
+
+            # tombol radio dhcp ipv4
+            dhcp_ipv4 = request.POST.get('dhcp_ipv4')
+            dhcp_ipv6 = request.POST.get('dhcp_ipv6')
+
+            # data ip address v4
+            ip = request.POST.get('ipv4_network')
+            gateway = request.POST.get('gateway_network')
+
+            # netmask
+            netmask = request.POST.get('netmask')
 
             #  form required in field
             if not ct_id or not hostname or not password or not template or not network_interface:
                 messages.error(request, "Make sure all fields are valid")
                 return redirect('detail-node', id_node)
             
+            # net0_str = "name=eth0,bridge={network_interface},firewall=1,ip=dhcp"
+
+            # kondisi ketika dhcp ipv4 di centang
+            if dhcp_ipv4 == "1":
+                net_config = {
+                                "name": "eth0",  # Nama antarmuka
+                                "bridge": network_interface,  # Nama bridge jika diperlukan
+                                "firewall": 1,  # Opsi firewall (1 untuk aktifkan, 0 untuk nonaktifkan)
+                                "ip": "dhcp" ,  # Alamat IPv4 (CIDR, dhcp, atau manual)
+                                # "gw": gateway,  # Gateway IPv4
+                                }
+                net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
+
+                post_data = {
+                    "vmid" : ct_id,
+                    "ostemplate" : template,
+                    "password":password,
+                    "cores" : cores,
+                    "hostname"  : hostname,
+                    "memory" : memory,
+                    "swap" : memory_swap,
+                    "storage": storage_disk,
+
+                    # interface
+                    # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
+                    "net0" : net0_str,
+                    "pool" : resource_pool,
+                    "ssh_public_keys":ssh_key
+                }
+            # kondisi ketika static ipv4 di centang
+            elif static_ipv4 == "1":
+                ip_address = ip + '/' + netmask
+                net_config = {
+                                "name": "eth0",  # Nama antarmuka
+                                "bridge": network_interface,  # Nama bridge jika diperlukan
+                                "firewall": 1,  # Opsi firewall (1 untuk aktifkan, 0 untuk nonaktifkan)
+                                "ip": str(ip_address) ,  # Alamat IPv4 (CIDR, dhcp, atau manual)
+                                "gw": str(gateway),  # Gateway IPv4
+                                }
+                net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},gw={net_config['gw']},ip={net_config['ip']}"
+
+                post_data = {
+                    "vmid" : ct_id,
+                    "ostemplate" : template,
+                    "password":password,
+                    "cores" : cores,
+                    "hostname"  : hostname,
+                    "memory" : memory,
+                    "swap" : memory_swap,
+                    "storage": storage_disk,
+
+                    # interface
+                    # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
+                    "net0" : net0_str,
+                    "pool" : resource_pool,
+                    "ssh_public_keys":ssh_key
+                }
+            # ketika nilai static dan dhcp ipv4 tidak di centang
+            elif static_ipv4 != "1" or dhcp_ipv4 != "1":
+                messages.error(request, "Make sure input Interface IPv4")
+                return redirect('detail-node', id_node)
+
             # insert container on proxmox with use api proxoxer
             try:
-                proxmox.nodes(id_node).lxc.create(
-                    vmid=ct_id,
-                    ostemplate=template,
-                    password=password,
-                    cores=cores,
-                    hostname=hostname,
-                    memory=memory,
-                    swap=memory_swap,
-                    storage=storage_disk,
-                    # net[0]=network_interface,
-                    pool=resource_pool,
-                    ssh_public_keys=ssh_key,
-                )
+                proxmox.nodes(id_node).lxc.post(**post_data)
                 messages.success(request, "Container added successfully")
                 return redirect('detail-node', id_node)
             except Exception as e:
                 messages.error(request, f"Error adding container : {str(e)}")
                 return redirect('detail-node', id_node)
-
-
-
-        
-        context = {
-            'title': 'Network',
-            'active_node': 'active',
-            'network': network,
-            'id_node': id_node,
-        }
-        return render(request, 'node/network.html', context )
+            
+        else:
+            # Redirect ke halaman eror jika koneksi gagal
+            return redirect('detail-node', id_node)
     else:
-        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+# add virtual machine 
+@login_required(login_url='login')
+def addVirtualMachine(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # id node
+        id_node = id_node
+        if request.method == "POST":
+
+            vm_id = request.POST.get('vm-id')
+            hostname= request.POST.get('name_vm')
+            resource_pool = request.POST.get('resource-pool_vm')
+            iso_images = request.POST.get('iso_images')
+            ostype = request.POST.get('ostype')
+
+            machine = request.POST.get('machine')
+            bios = request.POST.get('bios')
+            scsihw = request.POST.get('scsihw')
+            # qemuAgent = request.POST.get('qemuAgent')
+
+            storage_virtual_machine = request.POST.get('storage_virtual_machine')
+            disk_size_vm = request.POST.get('disk_size_vm')
+
+            sockets = request.POST.get('sockets')
+            cores = request.POST.get('cores_vm')
+
+            memory = request.POST.get('memory_vm')
+
+            bridge = request.POST.get('bridge_vm')
+            model_network = request.POST.get('model_network')
+
+            # checklist firewall
+            if 'firewall_vm' in request.POST:
+                    firewall = 1
+            else:
+                    firewall = 0
+
+            # checklist Qemu Agent
+            if 'qemuAgent' in request.POST:
+                    qemuAgent = 1
+            else:
+                    qemuAgent = 0
+
+
+            # tombol radio static ipv4
+            static_ipv4 = request.POST.get('static_ipv4_vm')
+            # tombol radio dhcp ipv4
+            dhcp_ipv4 = request.POST.get('dhcp_ipv4_vm')
+
+            # data ip address v4
+            ipv4 = request.POST.get('ipv4_network_vm')
+            netmask = request.POST.get('netmask_vm')
+            gateway = request.POST.get('gateway_network_vm')
+
+            #  form required in field
+            if not vm_id or not hostname or not iso_images or not bridge:
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('detail-node', id_node)
+            
+            
+            # kondisi ketika dhcp ipv4 di centang
+            if dhcp_ipv4 == "1":
+
+                # net interface objects
+                net_config = {
+                                "model": model_network,
+                                "bridge": bridge,
+                                "firewall" : firewall
+                            }
+                
+                net0_str = f"{model_network},bridge={net_config['bridge']},firewall={net_config['firewall']}"
+                # ipconfig object
+                # ip_address = ipv4 + '/' + netmask
+                ip_config = {
+                                "ip": "dhcp"  # IP + CIDR
+                            }
+                
+                ip0_str = f"ip={ip_config['ip']}"
+
+                post_data = {
+                    "vmid" : vm_id,
+                    "name" : hostname,
+                    "pool" : resource_pool,
+                    "ide2" : iso_images+',media=cdrom',
+                    "ostype" : ostype,
+                    "machine" : machine,
+                    "bios" : bios,
+                    "scsihw" : scsihw,
+                    "scsi0" : storage_virtual_machine + ':' + disk_size_vm + ',iothread=on',
+                    "agent" : qemuAgent,
+                    "sockets" : sockets,
+                    "cores" : cores,
+                    "memory" : memory,
+                    "net0" : net0_str,
+                    # ipconfig[n]
+                    "ipconfig0" : ip0_str
+                }
+            # kondisi ketika static ipv4 di centang
+            elif static_ipv4 == "1":
+
+                # net interface objects
+                net_config = {
+                                "model": model_network,
+                                "bridge": bridge,
+                                "firewall" : firewall
+                            }
+                
+                net0_str = f"{model_network},bridge={net_config['bridge']},firewall={net_config['firewall']}"
+
+
+                # ipconfig object
+                ip_address = ipv4 + '/' + netmask
+                ip_config = {
+                                "ip": ip_address,  # IP + CIDR
+                                "gw": gateway  # Gateway IPv4
+                            }
+                
+                ip0_str = f"ip={ip_config['ip']},gw={ip_config['gw']}"
+
+                post_data = {
+                    "vmid" : vm_id,
+                    "name" : hostname,
+                    "pool" : resource_pool,
+                    "ide2" : iso_images+',media=cdrom',
+                    "ostype" : ostype,
+                    "machine" : machine,
+                    "bios" : bios,
+                    "scsihw" : scsihw,
+                    "scsi0" : storage_virtual_machine + ':' + disk_size_vm + ',iothread=on',
+                    "agent" : qemuAgent,
+                    "sockets" : sockets,
+                    "cores" : cores,
+                    "memory" : memory,
+                    "net0" : net0_str,
+                    # ipconfig[n]
+                    "ipconfig0" : ip0_str
+                }
+            # ketika nilai static dan dhcp ipv4 tidak di centang
+            elif static_ipv4 != "1" or dhcp_ipv4 != "1":
+                messages.error(request, "Make sure input Interface IPv4")
+                return redirect('detail-node', id_node)
+
+            # insert virtual machine on proxmox with use api proxoxer
+            try:
+                proxmox.nodes(id_node).qemu.post(**post_data)
+                messages.success(request, "Virtual Machine added successfully")
+                return redirect('detail-node', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding Virtual Machine : {str(e)}")
+                return redirect('detail-node', id_node)
+            
+        else:
+            # Redirect ke halaman eror jika koneksi gagal
+            return redirect('detail-node', id_node)
+    else:
         return redirect('error_connection')
 
 
@@ -1312,6 +1923,22 @@ def rebootContainer(request, id_node, vmid):
     else :
         return('error_connection')
     
+# remove container
+@login_required(login_url='login')
+def removeContainer(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).lxc(vmid).delete()
+            messages.success(request, "Container removing successfully, wait a few moments to remove the container")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing container : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+    
 
 
 # start virtual machine 
@@ -1358,6 +1985,23 @@ def rebootVirtualMachine(request, id_node, vmid):
             return redirect('detail-node', id_node)
         except Exception as e:
             messages.error(request, f"Error rebooting virtual machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+    
+
+# remove container
+@login_required(login_url='login')
+def removeVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).delete()
+            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
             return redirect('detail-node', id_node)
     else :
         return('error_connection')

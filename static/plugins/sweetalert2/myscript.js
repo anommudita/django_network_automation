@@ -412,6 +412,67 @@ $('.remove-virtual_machine').on('click', function (e) {
 
 
 
+// delete  network
+$('.delete-network').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this interface?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove Interface!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove!',
+                'Success delete interface',
+                'success'
+            )
+        }
+    })
+});
+
+// network-apply
+$('.network-apply').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Do you want to apply pending network changes?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1CBB8C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Apply!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Network!',
+                'Success has been apply configuration',
+                'success'
+            )
+        }
+    })
+
+});
+
+
 
 
 
