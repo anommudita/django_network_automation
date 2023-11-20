@@ -1,4 +1,5 @@
 {% extends 'main.html' %}
+{% load static %}
 
 
 {% block content %}
@@ -43,6 +44,11 @@
 
         }
     </script> -->
+
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
     
     <!-- Script untuk auto refresh data resource -->
     <script>
@@ -155,11 +161,24 @@
                 const button = document.createElement('div');
                 button.classList.add('d-flex', 'justify-content-end', 'pt-3');
 
+                const rebootButton = document.createElement('a');
+                rebootButton.href = `/nodes/${nodeData.node_name}/reboot`;
+                rebootButton.classList.add('btn', 'btn-warning', 'me-1', 'reboot-node');
+                rebootButton.textContent = `Reboot`;
+
+                const shutdownButton = document.createElement('a');
+                shutdownButton.href = `/nodes/${nodeData.node_name}/shutdown`;
+                shutdownButton.classList.add('btn', 'btn-danger', 'me-1', 'shutdown-node');
+                shutdownButton.textContent = `Shutdown`;
+
                 const linkButton = document.createElement('a');
                 linkButton.href = `/detail-node/${nodeData.node_name}`;
                 linkButton.classList.add('btn', 'btn-primary');
                 linkButton.textContent = `Detail`;
-                
+
+
+                button.appendChild(shutdownButton);
+                button.appendChild(rebootButton);
                 button.appendChild(linkButton);
                 cardBody.appendChild(button);
 

@@ -14,7 +14,6 @@
         </div>
     </div>
     {% endfor %}
-    
     <div class="row">
         <!-- User -->
         <div class="col-xl-3 col-md-6 mb-4">
@@ -60,7 +59,17 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Cluster</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{cluster_name}}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if type == "cluster" %}
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#joinInfoModal">
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{cluster_name}}</div>
+                                    </a>
+                                {% else %}
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#clusterModal" class="btn btn-primary btn-sm">{{cluster_name}}</a>
+                                {% endif %}
+                                
+                                <!-- <a href="#" data-bs-toggle="modal" data-bs-target="#addUser" class="btn btn-primary ml-auto">insert</a> -->
+                            </div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-server fa-2x text-gray-300"></i>
@@ -176,6 +185,243 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="clusterModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center" id="clusterTitle">Create Cluster</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="createClusterForm">
+                                <form action="/createcluster" id="createCluster" method="post">
+                                    {% csrf_token %}
+                                    <!-- Common Fields -->
+                                    <!-- ... -->
+        
+                                    <!-- Name -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-circle-nodes fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="name" id="name" placeholder="Enter Cluster Name" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col">
+                                            <!-- Priority -->   
+                                            <div class="form-group mb-4">
+                                                <div class="input-group input-group-merge input-group-alternative">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                                    </div>
+                                                    <input class="form-control" name="priority" id="priority" placeholder="Link (Default = 0)"  type="number" autocomplete="off" value="" max="7" min="0">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <!-- IP -->
+                                            <div class="form-group mb-4">
+                                                <div class="input-group input-group-merge input-group-alternative">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                                    </div>
+                                                    <input class="form-control" name="ip" id="ip" placeholder="Enter IP Node" type="text" autocomplete="off" value="">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary" id="createClusterButton">Create Cluster</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div id="joinClusterForm" style="display: none;">
+                                <form action="/joincluster" id="joinCluster" method="post">
+                                    {% csrf_token %}
+                                    <!-- Common Fields -->
+                                    <!-- Name -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-location-dot fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="address" id="address" placeholder="Peer Address" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Password -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="password" id="password" placeholder="Peer Password" type="password" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Fingerprint -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-fingerprint fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="fingerprint" id="fingerprint" placeholder="Fingerprint" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col">
+                                            <!-- Priority -->   
+                                            <div class="form-group mb-4">
+                                                <div class="input-group input-group-merge input-group-alternative">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                                    </div>
+                                                    <input class="form-control" name="priority" id="priority" placeholder="Link (Default = 0)"  type="number" autocomplete="off" value="" max="7" min="0">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <!-- IP -->
+                                            <div class="form-group mb-4">
+                                                <div class="input-group input-group-merge input-group-alternative">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                                    </div>
+                                                    <input class="form-control" name="ip" id="ip" placeholder="Enter IP Node" type="text" autocomplete="off" value="">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary" id="joinClusterButton">Join Cluster</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <br>
+                            <div class="text-center">
+                                <button type="button" class="btn btn-secondary" id="toggleForm">Switch Form</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="joinInfoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center" id="clusterTitle">Join Information</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="" id="createCluster" method="get">
+                                {% csrf_token %}
+                                <!-- Common Fields -->
+                                <!-- ... -->
+    
+                                <!-- address -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="address" id="address" placeholder="" autocomplete="off" value="{{join_address}}" disabled>
+                                    </div>
+                                </div>
+
+                                <!-- fingerprint -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-fingerprint fa-2x"></i></span>
+                                        </div>
+                                        <textarea class="form-control" name="fingerprint" id="fingerprint" placeholder="" autocomplete="off" disabled>{{join_fingerprint}}</textarea>
+                                    </div>
+                                </div>
+                                {% if error_messages != "N/A" %} 
+                                    <div  class="alert alert-danger" > Error getting join cluster information : {{ error_messages }}</div>  
+                                {% endif %}                             
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    <script>
+        // document.getElementById('toggleForm').addEventListener('click', function() {
+        //     const createClusterForm = document.getElementById('createClusterForm');
+        //     const joinClusterForm = document.getElementById('joinClusterForm');
+            
+        //     if (createClusterForm.style.display !== 'none') {
+        //         createClusterForm.style.display = 'none';
+        //         joinClusterForm.style.display = 'block';
+        //         clusterTitle.textContent = 'Join Cluster';
+        //     } else {
+        //         createClusterForm.style.display = 'block';
+        //         joinClusterForm.style.display = 'none';
+        //         clusterTitle.textContent = 'Create Cluster';
+        //     }
+        // });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var toggleButton = document.getElementById("toggleForm");
+            var clusterTitle = document.getElementById("clusterTitle");
+            var createClusterForm = document.getElementById("createClusterForm");
+            var joinClusterForm = document.getElementById("joinClusterForm");
+
+            toggleButton.addEventListener("click", function() {
+                // Toggle tampilan form saat tombol ditekan
+                if (createClusterForm.style.display === "none") {
+                    createClusterForm.style.display = "block";
+                    joinClusterForm.style.display = "none";
+                    clusterTitle.textContent = "Create Cluster";
+                } else {
+                    createClusterForm.style.display = "none";
+                    joinClusterForm.style.display = "block";
+                    clusterTitle.textContent = "Join Cluster";
+                }
+            });
+        });
+
+
+    </script>
+    
+    <!-- Form -->
+
+    <!-- ketika mengirim form maka tombol tambah akan disable -->
+    <script>
+        document.getElementById("createCluster").addEventListener("submit", function() {
+            document.getElementById("createClusterButton").disabled = true;
+        });
+    </script>
+
+    <script>
+        document.getElementById("joinCluster").addEventListener("submit", function() {
+            document.getElementById("joinClusterButton").disabled = true;
+        });
+    </script>
 
     <!-- resource data center -->
 	<script>

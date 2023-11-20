@@ -544,9 +544,7 @@
         </div>
         </div>
         <!-- end modalbox tambah Virtual Machine-->
-
-
-
+        
         <!-- sweetalert2 -->
         <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
         <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
@@ -573,9 +571,14 @@
 
                 const detailLink = document.createElement('a');
                 detailLink.classList.add('btn', 'btn-primary', 'mt-3');
-                detailLink.href = `/detail-container/${ctData.container_vmid}`;
+                detailLink.href = `/detail-container/${idNode}/${ctData.container_vmid}`;
                 detailLink.textContent = 'Detail';
-                ctDetail.appendChild(detailLink);
+                // ctDetail.appendChild(detailLink);
+
+                // Logika untuk menentukan apakah tombol ditampilkan atau disembunyikan
+                if (ctData.container_status === "running") {
+                    ctDetail.appendChild(detailLink); // Menambahkan tombol hanya jika statusnya 'running'
+                }
 
                 const detailSpace = document.createElement('div');
                 detailSpace.innerHTML = '&nbsp; &nbsp; &nbsp;';
@@ -646,21 +649,24 @@
                 });
                 
                 const textCenterDiv = document.createElement('div');
-                textCenterDiv.classList.add('text-center', 'mt-2');
+                textCenterDiv.classList.add('text-center', 'mt-3');
                 cardRow.appendChild(textCenterDiv);
 
                 const buttons = [
-                    { label: 'Start', href: `/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success mr-3 start-container' },
-                    { label: 'Stop', href: `/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning mr-3 stop-container' },
-                    { label: 'Reboot', href: `/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary mr-3 reboot-container' },
+                    { label: 'Start', href: `/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success me-2 start-container' },
+                    { label: 'Reboot', href: `/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary me-2 reboot-container' },
+                    { label: 'Stop', href: `/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning me-2 stop-container' },
                     // { label: 'Remove', href: `/remove-container/${ctData.container_vmid}`, class: 'btn btn-danger mt-5 text remove-container' }
                 ];
 
                 buttons.forEach(buttonData => {
                     const button = document.createElement('a');
                     button.setAttribute('href', buttonData.href);
-                    button.classList.add(...buttonData.class.split(' ')); // Menambahkan kelas-kelas tombol
+                    button.className =  buttonData.class; // Menambahkan kelas-kelas tombol
                     button.textContent = buttonData.label;
+
+                    console.log(button)
+
                     textCenterDiv.appendChild(button);
                 });
 
@@ -797,38 +803,14 @@
                     tableBody.appendChild(row);
                 });
 
-                // const textCenterDiv = document.createElement('div');
-                // textCenterDiv.classList.add('text-center', 'mt-2');
-                // cardRow.appendChild(textCenterDiv);
-
-                // const startLink = document.createElement('a');
-                // startLink.setAttribute('href', `/start-container/${idNode}/${vmData.vm_vmid}`);
-                // startLink.classList.add('btn', 'btn-success', 'mr-3', 'start-container');
-                // startLink.textContent = 'Start';
-                // textCenterDiv.appendChild(startLink);
-
-                // const stopLink = document.createElement('a');
-                // stopLink.setAttribute('href', `/stop-container/${idNode}/${vmData.vm_vmid}`);
-                // stopLink.classList.add('btn', 'btn-warning', 'mr-3', 'stop-container');
-                // stopLink.textContent = 'Stop';
-                // textCenterDiv.appendChild(stopLink);
-
-                // const rebootLink = document.createElement('a');
-                // rebootLink.setAttribute('href', `/reboot-container/${idNode}/${vmData.vm_vmid}`);
-                // rebootLink.classList.add('btn', 'btn-primary', 'mr-3', 'reboot-container');
-                // rebootLink.textContent = 'Reboot';
-                // textCenterDiv.appendChild(rebootLink);
-
-                
-
                 const textCenterDiv = document.createElement('div');
                 textCenterDiv.classList.add('text-center', 'mt-2');
                 cardRow.appendChild(textCenterDiv);
 
                 const buttons = [
-                    { label: 'Start', href: `/start-container/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success mr-3 start-virtual_machine') },
-                    { label: 'Stop', href: `/stop-container/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning mr-3 stop-virtual_machine') },
-                    { label: 'Reboot', href: `/reboot-container/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary mr-3 reboot-virtual_machine') },
+                    { label: 'Start', href: `/start-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success me-1 start-virtual_machine') },
+                    {label: 'Reboot', href: `/reboot-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary me-1 reboot-virtual_machine') },
+                    { label: 'Stop', href: `/stop-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning me-1 stop-virtual_machine') },
                     // { label: 'Remove', href: `/remove-container/${vmData.container_vmid}`, class: ('btn', 'btn-danger', 'mt-3', 'text', 'remove-container') }
                 ];
 
@@ -845,7 +827,7 @@
                 cardRow.appendChild(removeDiv);
 
                 const removeLink = document.createElement('a');
-                removeLink.setAttribute('href', `/remove-container//${idNode}/${vmData.vm_vmid}`);
+                removeLink.setAttribute('href', `/remove-virtual_machine//${idNode}/${vmData.vm_vmid}`);
                 removeLink.classList.add('btn', 'btn-danger', 'mt-3', 'text', 'remove-virtual_machine');
                 removeLink.textContent = 'Remove';
                 removeDiv.appendChild(removeLink);
@@ -880,6 +862,7 @@
         // Atur interval untuk melakukan pembaruan data setiap 60 detik
         setInterval(ambilDataVmTerbaru, 1000); // 60000 ms = 60 detik
         </script>
+        
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <!-- scripts data history inputan -->
@@ -936,7 +919,7 @@
             document.getElementById("container_templated").addEventListener("change", updateConfirmationTable);
         </script>
 
-
+         
 
         <!-- script multistep -->
         <script>
@@ -1016,7 +999,9 @@
                 x[n].className += " active";
             }
         </script>
-
+        
+       
+        
 
 <!-- end konten -->
 {% endblock content %}

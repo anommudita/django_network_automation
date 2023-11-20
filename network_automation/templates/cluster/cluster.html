@@ -1,6 +1,30 @@
 {% extends 'main.html' %}
-
+{% load static %}
 
 {% block content %}
+
+<!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+    {% if error_message %}
+        <script>
+            // Ensure showErrorModal is defined globally
+            function showErrorModal(message) {
+                Swal.fire({
+                    title: 'Error',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#FCB92C',
+                });
+            }
+
+            // Call showErrorModal with the error_message
+            $(document).ready(function () {
+                showErrorModal('{{ error_message }}');
+            });
+        </script>
+{% endif %}
 
 {% endblock content %}

@@ -10,6 +10,8 @@ urlpatterns = [
 
     # halaman utama dan dashboard
     path('', views.home, name="home"),
+    path('createcluster', views.createCluster, name="createcluster"),
+    path('joincluster', views.joinCluster, name="joincluster"),
 
     # route error
     path('error', views.error_connection, name="error_connection"),
@@ -51,6 +53,11 @@ urlpatterns = [
     path('nodes', views.nodes, name="nodes"),
     path('detail-node/<str:id_node>', views.detail_node, name="detail-node"),
 
+    # route reboot node
+    path('nodes/<str:id_node>/reboot', views.rebootNode, name="reboot-node"),
+    #route shutdown node
+    path('nodes/<str:id_node>/shutdown', views.shutdownNode, name="shutdown-node"),
+
     # route node network
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
 
@@ -83,6 +90,8 @@ urlpatterns = [
     # route reboot virtual_machine 
     path('reboot-virtual_machine/<str:id_node>/<str:vmid>', views.rebootVirtualMachine, name="reboot-virtual_machine"),
 
+    # route detail container
+    path('detail-container/<str:id_node>/<str:vmid>', views.detail_container, name="detail-container"),
 
     # route cluster
     path('clusters', views.clusters, name="clusters"),

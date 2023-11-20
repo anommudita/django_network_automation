@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 # import model dari models.py
 from .models import Server, UserProfile
 
+#http response
+from django.http import HttpResponse
 
 # all form
 # from network_automation.forms import ServerForm
@@ -28,6 +30,9 @@ from django.contrib.auth.decorators import login_required
 import time
 import datetime
 
+# auto refresh
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 # get response json
 from django.http import JsonResponse
@@ -101,6 +106,28 @@ def get_proxmox_paramiko():
         print(e)
         return None
 
+def get_shell_paramiko():
+
+    # get data server
+    server = Server.objects.get(id=1)
+
+    try:
+        # setting datauser proxmox
+        host = server.ip_address
+        username = server.username
+        password = server.password
+
+        client = paramiko.client.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, username=username, password=password)
+        
+        # Start an interactive shell session
+        shell = client.invoke_shell()
+
+        return shell # Mengembalikan data sebagai struktur Python
+    except Exception as e:
+        print(e)
+        return None
 
 # wajib login untuk mengakses halaman ini
 @login_required(login_url='login')
@@ -400,6 +427,80 @@ def data_api(request):
                 else:
                     # Tanggapan jika id_node tidak diberikan
                     return JsonResponse({'error': 'ID node tidak diberikan'})
+                
+            case 'view_data_ct_log':
+                id_node = request.GET.get('id_node') 
+                id_ct = request.GET.get('id_ct')  # Mengambil ID node dari permintaan GET
+
+                if id_ct and id_node is not None:
+                    # setting datauser proxmox
+                    proxmox = get_proxmox()
+                    net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+                    ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+                    host = ip_address
+                    username = 'log'
+                    password = 'logs123'
+
+                    client = paramiko.client.SSHClient()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.connect(host, username=username, password=password)
+
+                    command = "journalctl --output json-pretty"
+
+                    stdin, stdout, stderr = client.exec_command(command)
+
+                    log = stdout.read().decode('utf-8')
+
+                    log_blocks = log.split('}')
+
+                    formatted_logs = []
+
+                    # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+                    for block in log_blocks[:-1]:
+                        formatted_logs.append(f"{block.strip() + '},'}\n")
+
+                    # Menambahkan blok terakhir tanpa koma
+                    # Menghilangkan tanda koma terakhir pada blok terakhir
+                    last_block = formatted_logs[-1].replace("},", "}")
+                    formatted_logs.append(f"{last_block}\n")
+
+                    client.close()
+
+                    # logs_json = "[" + formatted_logs + "]"
+                    logs_json = "[" + "".join(formatted_logs) + "]"
+                    # Hapus koma di luar tanda kurung
+                    logs_json = logs_json.replace(",]", "]")
+                    # print(logs_json)
+
+                    logs_list = json.loads(logs_json)
+                    
+                    for item in logs_list:
+                        # time
+                        date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+                        # You may need to parse the date_from_proxmox if it's in a specific format
+                        formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+                        hostname = item['_HOSTNAME']
+                        msg = item['MESSAGE']
+                        identifier = item['SYSLOG_IDENTIFIER']
+
+                    # Buat JSON response
+                    response = {
+                        'log': logs_list,
+                        'ct_time': formatted_time,
+                        'ct_hostname': hostname,
+                        'ct_msg': msg,
+                        'ct_identifier': identifier,
+                    }
+                    
+                    return JsonResponse(response)
+                else:
+                    # Tanggapan jika id_node tidak diberikan
+                    return JsonResponse({'error': 'ID node tidak diberikan'})
+                
             case 'view_data_network':
                 iface = request.GET.get('iface')
                 type = request.GET.get('type')
@@ -411,7 +512,7 @@ def data_api(request):
                     'message': 'Data successfully retrieved',
                     'data': network
                 }
-                return JsonResponse(response)
+                return JsonResponse(response)             
     except :
             return redirect('error_connection')
 
@@ -514,25 +615,46 @@ def config_by_user(request):
     
 
 
-# wajib login untuk mengakses halaman ini
 @login_required(login_url='login')
-# # halaman utama
 def home(request):
     proxmox = get_proxmox()
 
     if proxmox is not None:
-
-        # # jumlah data user
         users = proxmox.access.users.get()
         count_user = len(users)
 
         cluster = proxmox.cluster.status.get()
         cluster_status = cluster[0]
+
+        type = cluster_status['type']
         
-        if cluster_status['type'] == 'cluster':
+        if type == 'cluster':
             cluster_name = cluster_status['name']
+            address = "No address"
+            fingerprint = "No fingerprint"
+
+            # Pastikan untuk mengambil nilai join_address dan join_fingerprint hanya jika type adalah 'cluster'
+
+            try:
+                info = proxmox.cluster.config.join.get()
+                if 'nodelist' in info:
+                    address = info['nodelist'][0]['ring0_addr']
+                    fingerprint = info['nodelist'][0]['pve_fp']
+                    error = "N/A"
+                else:
+                    # Jika 'nodelist' tidak ada dalam info
+                    raise KeyError("'nodelist' not found in info")
+
+            except Exception as e:
+                # Menampilkan pesan kesalahan pada modal box atau output lainnya
+                error = str(e)
+                # Atau, sesuaikan dengan cara menampilkan pada modal box yang Anda miliki
+                # Misalnya, menggunakan library seperti tkinter, PyQt, dll.
         else:
-            cluster_name = '-'
+            cluster_name = 'Create / Join'
+            address = "N/A"
+            fingerprint = "N/A"
+            error = "N/A"
 
         if 'nodes' in cluster_status:
             node = cluster_status['nodes']
@@ -540,26 +662,105 @@ def home(request):
             node = cluster_status['name']
         
         node_online = 0
-
         for item in cluster:
             if 'online' in item:
                 node_online += item['online']
-
+        
         context = {
             'title': 'Dashboard',
             'active_home': 'active',
+            'type': type,
             'count_user': count_user,
             'cluster_name': cluster_name,
             'node': node,
             'cluster_online': node_online,
+            'join_address': address,
+            'join_fingerprint': fingerprint,
+            'error_messages': error,
         }
         return render(request, 'dashboard/home.html', context)
         
     else:
-        # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# add user
+def createCluster(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
 
+    if request.method == "POST":
+        name = request.POST.get('name')
+        priority = request.POST.get('priority')
+        ip = request.POST.get('ip')
+
+        if not name or not priority or not ip:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('home')
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        link_str =  f"address={ip},priority={priority}"
+
+        post_data = {
+            'clustername' : name,
+            'link0' : link_str,
+        }
+        
+        try:
+            proxmox.cluster.config.post(**post_data)
+            messages.success(request, "Create cluster successfully")
+            # return redirect('home')
+            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time(3))}")
+        except Exception as e:
+            messages.error(request, f"Error adding cluster : {str(e)}")
+            return redirect('home')
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# add user
+def joinCluster(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        hostname = request.POST.get('address')
+        password = request.POST.get('password')
+        fingerprint = request.POST.get('fingerprint')
+        priority = request.POST.get('priority')
+        ip = request.POST.get('ip')
+
+        # links = {
+        #     "address": ip, 
+        #     "priority": priority,
+        # }
+
+        link_str =  f"address={ip},priority={priority}"
+
+        post_data = {
+            'hostname': hostname,
+            'password': password,
+            'fingerprint': fingerprint,
+            'link0': link_str,
+        }
+
+        if not hostname or not password or not fingerprint:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('home')
+        
+        try:
+            proxmox.cluster.config.join.post(**post_data)
+            messages.success(request, "Join cluster successfully")
+            # return redirect('home')
+            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time(3))}")
+        except Exception as e:
+            messages.error(request, f"Error joining cluster : {str(e)}")
+            return redirect('home')
+        
 # wajib login untuk mengakses halaman ini
 @login_required(login_url='login')
 #  halaman user
@@ -1194,7 +1395,47 @@ def detail_node(request, id_node):
         return render(request, 'node/detail_node.html', context )
     else :
         return('error_connection')
+
+# reboot node 
+@login_required(login_url='login')
+def rebootNode(request, id_node):
+    proxmox = get_proxmox()
+    # time.sleep(1.5)
+
+    command  = {
+        'command': 'reboot',
+    }
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).status.post(**command)
+            messages.success(request, "Node reboot succesfully, wait a few moments")
+            return redirect('nodes')
+        except Exception as e:
+            messages.error(request, f"Error rebooting node : {str(e)}")
+            return redirect('nodes')
+    else :
+        return('error_connection')
     
+
+# reboot node 
+@login_required(login_url='login')
+def shutdownNode(request, id_node):
+    proxmox = get_proxmox()
+    # time.sleep(1.5)
+
+    command  = {
+        'command': 'shutdown',
+    }
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).status.post(**command)
+            messages.success(request, "Node shutdown succesfully, wait a few moments")
+            return redirect('nodes')
+        except Exception as e:
+            messages.error(request, f"Error stopping node : {str(e)}")
+            return redirect('nodes')
+    else :
+        return('error_connection')
 
 # add container 
 @login_required(login_url='login')
@@ -1224,48 +1465,62 @@ def addContainer(request, id_node):
             memory_swap = request.POST.get('memory-swap')
             network_interface = request.POST.get('network_interfaces')
 
-            # Cari lokasi file user_data.yaml dalam folder skrip
-            script_folder = Path(__file__).resolve().parent / 'scripts'
-            user_data_path = script_folder / "user_data.yaml"
-
-            # Pastikan file user_data.yaml ada dan baca kontennya
-            if user_data_path.is_file():
-                with open(user_data_path, 'r') as user_data_file:
-                    user_data_yaml = user_data_file.read()
-            else:
-                messages.error(request, "user_data.yaml file not found")
-                return redirect('detail-node', id_node)
-
             #  form required in field
             if not ct_id or not hostname or not password or not template or not network_interface:
                 messages.error(request, "Make sure all fields are valid")
                 return redirect('detail-node', id_node)
             
+            # # Cari lokasi file user_data.yaml dalam folder skrip
+            # script_folder = Path("network_automation/scripts/user-data.yaml").resolve().parent
+            # user_data_path = script_folder / "user-data.yaml"
+
+            # # Pastikan file user_data.yaml ada dan baca kontennya
+            # if user_data_path.is_file():
+            #     with open(user_data_path, 'r') as user_data_file:
+            #         user_data_yaml = user_data_file.read()
+            # else:
+            #     messages.error(request, "user_data.yaml file not found")
+            #     return redirect('detail-node', id_node)
+
+            
             # insert container on proxmox with use api proxoxer
+
+            ct_config ={
+                'vmid' : ct_id,
+                'ostemplate' : template,
+                'password' : password,
+                'cores' : cores,
+                'hostname' : hostname,
+                'memory' : memory,
+                'swap' : memory_swap,
+                'storage' : storage_disk,
+                # 'net' : network_interface,
+                'pool' : resource_pool,
+                'ssh_public_keys' : ssh_key,
+            }
             try:
                 proxmox.nodes(id_node).lxc.create(
-                    vmid=ct_id,
-                    ostemplate=template,
-                    password=password,
-                    cores=cores,
-                    hostname=hostname,
-                    memory=memory,
-                    swap=memory_swap,
-                    storage=storage_disk,
+                    # vmid=ct_id,
+                    # ostemplate=template,
+                    # password=password,
+                    # cores=cores,
+                    # hostname=hostname,
+                    # memory=memory,
+                    # swap=memory_swap,
+                    # storage=storage_disk,
                     # net[0]=network_interface,
-                    pool=resource_pool,
-                    ssh_public_keys=ssh_key,
-                    user_data= user_data_yaml,
+                    # pool=resource_pool,
+                    # ssh_public_keys=ssh_key,
+                    **ct_config
                 )
                 messages.success(request, "Container added successfully")
+
                 return redirect('detail-node', id_node)
+                
             except Exception as e:
                 messages.error(request, f"Error adding container : {str(e)}")
                 return redirect('detail-node', id_node)
 
-
-
-        
         context = {
             'title': 'Network',
             'active_node': 'active',
@@ -1284,7 +1539,7 @@ def addContainer(request, id_node):
 @login_required(login_url='login')
 def startContainer(request, id_node, vmid):
     proxmox = get_proxmox()
-    time.sleep(1.5)
+    # time.sleep(1.5)
     if proxmox is not None :
         try:
             proxmox.nodes(id_node).lxc(vmid).status.start.post()
@@ -1300,7 +1555,7 @@ def startContainer(request, id_node, vmid):
 @login_required(login_url='login')
 def stopContainer(request, id_node, vmid):
     proxmox = get_proxmox()
-    time.sleep(1.5)
+    # time.sleep(1.5)
     if proxmox is not None :
         try:
             proxmox.nodes(id_node).lxc(vmid).status.stop.post()
@@ -1334,7 +1589,7 @@ def rebootContainer(request, id_node, vmid):
 @login_required(login_url='login')
 def startVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
-    time.sleep(1.5)
+    # time.sleep(1.5)
     if proxmox is not None :
         try:
             proxmox.nodes(id_node).qemu(vmid).status.start.post()
@@ -1350,7 +1605,7 @@ def startVirtualMachine(request, id_node, vmid):
 @login_required(login_url='login')
 def stopVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
-    time.sleep(1.5)
+    # time.sleep(1.5)
     if proxmox is not None :
         try:
             proxmox.nodes(id_node).qemu(vmid).status.stop.post()
@@ -1366,7 +1621,7 @@ def stopVirtualMachine(request, id_node, vmid):
 @login_required(login_url='login')
 def rebootVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
-    time.sleep(1.5)
+    # time.sleep(1.5)
     if proxmox is not None :
         try:
             proxmox.nodes(id_node).qemu(vmid).status.reboot.post()
@@ -1378,6 +1633,81 @@ def rebootVirtualMachine(request, id_node, vmid):
     else :
         return('error_connection')
 
+@login_required(login_url='login')
+# halaman detail_container
+def detail_container(request, id_node, vmid):
+    proxmox = get_proxmox()
+
+    id_ct = vmid
+
+    if id_ct and id_node is not None:
+    # setting datauser proxmox
+        net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+        ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+        host = ip_address
+        username = 'log'
+        password = 'logs123'
+
+        client = paramiko.client.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, username=username, password=password)
+
+        command = "journalctl --output json-pretty"
+
+        stdin, stdout, stderr = client.exec_command(command)
+
+        log = stdout.read().decode('utf-8')
+
+        log_blocks = log.split('}')
+
+        formatted_logs = []
+
+        # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+        for block in log_blocks[:-1]:
+            formatted_logs.append(f"{block.strip() + '},'}\n")
+
+        # Menambahkan blok terakhir tanpa koma
+        # Menghilangkan tanda koma terakhir pada blok terakhir
+        last_block = formatted_logs[-1].replace("},", "}")
+        formatted_logs.append(f"{last_block}\n")
+
+        client.close()
+
+        # logs_json = "[" + formatted_logs + "]"
+        logs_json = "[" + "".join(formatted_logs) + "]"
+        # Hapus koma di luar tanda kurung
+        logs_json = logs_json.replace(",]", "]")
+        # print(logs_json)
+
+        logs_list = json.loads(logs_json)
+
+        for item in logs_list:
+            # time
+            date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+            # You may need to parse the date_from_proxmox if it's in a specific format
+            formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+            hostname = item['_HOSTNAME']
+            msg = item['MESSAGE']
+            identifier = item['SYSLOG_IDENTIFIER']
+        
+        context = {
+            'title': 'Detail Container',
+            'active_ct': 'active',
+            'id_node': id_node,
+            'id_ct': id_ct,
+            'date': date,
+            'time': formatted_time,
+            'hostname': hostname,
+            'msg': msg,
+            'identifier': identifier,
+        }
+        return render(request, 'node/container/detail_container.html', context)
+    else:
+        return('error_connection')
 
 
 # wajib login untuk mengakses halaman ini
@@ -1387,20 +1717,19 @@ def clusters(request):
     
     proxmox = get_proxmox()
 
-    if proxmox is not None :
-        roles = proxmox.access.roles.get()
-
-        privs = []
-
-        # menampilkan data select option dari data list roles
-        for item in roles:
-            if item['roleid'] == 'Administrator':
-                privs_string = item['privs']
-                privs = [priv.strip() for priv in privs_string.split(',')]  # Memisahkan privs dengan koma
+    try:
+        ceph = proxmox.cluster.ceph.status.get()
+    except Exception as e:
+        error_message = str(e)
+        if "binary not installed: /usr/bin/ceph-mon" in error_message:
+            error_message = "Ceph binary not installed. User opted not to install."
+            ceph = "N/A"
         
         context = {
-            'title': 'Clusters',
-            'active_cluster': 'active',
+            'title': 'Ceph',
+            'active_ceph': 'active',
+            'ceph': ceph,
+            'error_message': error_message,
         }
         return render(request, 'cluster/cluster.html', context )
     else :
