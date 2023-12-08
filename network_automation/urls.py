@@ -53,6 +53,19 @@ urlpatterns = [
     path('nodes', views.nodes, name="nodes"),
     path('detail-node/<str:id_node>', views.detail_node, name="detail-node"),
 
+    #route delnode
+    path('nodes/delnode/<str:node_name>', views.deleteNode, name="delete-nodes"),
+
+    # install ceph
+    path('detail-node/<str:id_node>/install-ceph', views.installCeph, name="install-ceph"),
+    path('detail-node/<str:id_node>/install-iptables', views.installIptables, name="install-iptables"),
+
+    # add pre and post route port forwarding
+    path('pre-route/<str:id_node>', views.preRoute, name="pre-route"),
+    path('post-route/<str:id_node>', views.postRoute, name="post-route"),
+
+    path('exec-paramiko/<str:id_node>', views.get_exec_paramiko, name="exec-paramiko"),
+
     # route reboot node
     path('nodes/<str:id_node>/reboot', views.rebootNode, name="reboot-node"),
     #route shutdown node
@@ -62,14 +75,27 @@ urlpatterns = [
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
 
     #  route add network linux bridge
-    path('add-linux-bridge/<str:id_node>/<str:type>', views.addLinuxBridge, name="add-linux-bridge"),
+    path('add-linux-bridge/<str:id_node>', views.addLinuxBridge, name="add-linux-bridge"),
 
+    #  route add network linux Bond
+    path('add-linux-bond/<str:id_node>', views.addLinuxBond, name="add-linux-bond"),
+
+    #  route add network linux Vlan
+    path('add-linux-vlan/<str:id_node>', views.addLinuxVlan, name="add-linux-vlan"),
+    
+
+    # route network apply
+    path('apply-network/<str:id_node>', views.NetworkApply, name="apply-network"),
+    
+    # route delete network
+    path('delete-network/<str:iface>/<str:id_node>', views.deleteNetwork, name="delete-network"),
 
 
     # route add container
     path('add-container/<str:id_node>', views.addContainer, name="add-container"),
 
     # route remove container
+    path('remove-container/<str:id_node>/<str:vmid>', views.removeContainer, name="remove-container"),
 
     # route start container
     path('start-container/<str:id_node>/<str:vmid>', views.startContainer, name="start-container"),
@@ -79,10 +105,12 @@ urlpatterns = [
     path('reboot-container/<str:id_node>/<str:vmid>', views.rebootContainer, name="reboot-container"),
 
 
-    # route add virtual_machine 
+    # route add virtual_machine
+    path('add-virtual-machine/<str:id_node>', views.addVirtualMachine, name="add-virtual-machine"), 
 
     # route remove virtual_machine
-
+    path('remove-virtual-machine/<str:id_node>/<str:vmid>', views.removeVirtualMachine, name="remove-virtual-machine"),
+    
     # route start virtual_machine
     path('start-virtual_machine/<str:id_node>/<str:vmid>', views.startVirtualMachine, name="start-virtual_machine"),
     # route stop virtual_machine 

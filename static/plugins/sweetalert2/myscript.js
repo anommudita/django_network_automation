@@ -157,7 +157,64 @@ $('.delete-role').on('click', function (e) {
 
 });
 
+// Install Ceph
+$('.install-ceph').on('click', function (e) {
 
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to install Ceph?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Install Ceph'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Success',
+                'Success Installing Ceph',
+                'success'
+            )
+        }
+    })
+
+});
+
+// $(document).on('click', '.install-ceph', function (e) {
+//     // e = event
+//     // mematikan funtion href yang seharusnya berjalan jika di klick
+//     e.preventDefault();
+
+//     //var href 
+//     const href = $(this).attr('href');
+
+//     Swal.fire({
+//         title: 'Are you sure?',
+//         text: "Want to reboot this node?",
+//         icon: 'warning',
+//         showCancelButton: true,
+//         confirmButtonColor: '#3085d6',
+//         cancelButtonColor: '#d33',
+//         confirmButtonText: 'Reboot Node!'
+//     }).then((result) => {
+//         if (result.isConfirmed) {
+//             document.location.href = href;
+//             Swal.fire(
+//                 'Reboot!',
+//                 'Success reboot node',
+//                 'success'
+//             )
+//         }
+//     });
+// });
 
 // start container
 // $('.start-container').on('click', function (e) {
@@ -690,6 +747,67 @@ $(document).on('click', '.remove-virtual_machine', function (e) {
     });
 });
 
+
+
+// delete  network
+$('.delete-network').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this interface?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove Interface!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove!',
+                'Success delete interface',
+                'success'
+            )
+        }
+    })
+});
+
+// network-apply
+$('.network-apply').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Do you want to apply pending network changes?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1CBB8C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Apply!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Network!',
+                'Success has been apply configuration',
+                'success'
+            )
+        }
+    })
+
+});
 
 
 

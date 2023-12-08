@@ -30,12 +30,22 @@ from django.contrib.auth.decorators import login_required
 import time
 import datetime
 
+# import enum
+from enum import Enum
+
+# auto refresh
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+# import enum
+from enum import Enum
+
 # auto refresh
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 # get response json
 from django.http import JsonResponse
+
 
 import json
 
@@ -105,6 +115,27 @@ def get_proxmox_paramiko():
     except Exception as e:
         print(e)
         return None
+    
+def get_exec_paramiko():
+
+    # get data server
+    server = Server.objects.get(id=1)
+    
+    try:
+        # setting datauser proxmox
+        host = server.ip_address
+        username = server.username
+        password = server.password
+
+        client = paramiko.client.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, username=username, password=password)
+
+        return client # Mengembalikan data sebagai struktur Python
+    except Exception as e:
+        print(e)
+        return None
+
 
 def get_shell_paramiko():
 
@@ -124,7 +155,7 @@ def get_shell_paramiko():
         # Start an interactive shell session
         shell = client.invoke_shell()
 
-        return shell # Mengembalikan data sebagai struktur Python
+        return shell, client # Mengembalikan data sebagai struktur Python
     except Exception as e:
         print(e)
         return None
@@ -1201,16 +1232,253 @@ def nodes(request):
     if proxmox is not None :
         nodes = proxmox.nodes.get()
 
+        prox_data = proxmox.cluster.status.get()
         
+        # Check if there is any element in prox_data with type 'cluster'
+        cluster_present = any(node.get('type') == 'cluster' for node in prox_data)
+
+        # Set the cluster variable accordingly
+        cluster = "ON" if cluster_present else "OFF"
+        
+        try:
+            ceph = proxmox.cluster.ceph.status.get()
+            error_message = "N/A"
+        except Exception as e:
+            error_message = str(e)
+            if "binary not installed: /usr/bin/ceph-mon" in error_message:
+                error_message = "Ceph binary not installed."
+                ceph = "N/A"
+            elif "Read timed out" in error_message:
+                error_message = "Got Timeout. Please Check Cluster and Node"
+                ceph = "N/A"
+            else:
+                error_message = str(e)
+                ceph = "N/A"
+
         context = {
             'title': 'Nodes',
             'active_node': 'active',
             'nodes': nodes,
+            'ceph': ceph,
+            'error_message': error_message,
+            'prox_data': prox_data,
+            'cluster': cluster,
         }
         return render(request, 'node/node.html', context )
     else :
         return('error_connection')
+
+# def get_exec_paramiko2(id_node):
+
+#     # get data server
+#     server = Server.objects.get(id=1)
+#     proxmox = get_proxmox()
+
+#     network_info = proxmox.nodes(id_node).network.get()
+
+#     # Find the IP address associated with the interface 'vmbr0'
+#     ip_address = None
+#     for interface in network_info:
+#         if interface.get('iface') == 'vmbr0':
+#             ip_address = interface.get('address')
+#             break
+#     try:
+#         # setting datauser proxmox
+#         host = ip_address
+#         username = server.username
+#         password = server.password
+
+#         client = paramiko.client.SSHClient()
+#         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#         client.connect(host, username=username, password=password)
+
+#         return client # Mengembalikan data sebagai struktur Python
+#     except Exception as e:
+#         print(e)
+#         return None
+
+# install ceph 
+@login_required(login_url='login')
+def deleteNode(request, node_name):
+    proxmox = get_proxmox()
+    # time.sleep(1.5)
     
+
+    if proxmox is not None :
+        try:
+            prox_data = proxmox.cluster.status.get()
+
+            # Check if there are nodes with type 'node'
+            nodes = [node for node in prox_data if node.get('type') == 'node']
+
+            # Check if there is more than one node
+            if len(nodes) > 1:
+                # Variable to track the number of nodes processed
+                nodes_processed = 0
+
+                # Variable to check if delnode operation has been executed
+                delnode_executed = False
+
+                # Extract IP address and node name from the data
+                for node in nodes:
+                    # Skip 'ceph1'
+                    if node.get('name') == node_name:
+                        continue
+
+                    # Check if the node is local
+                    # if node.get('local') == 1:
+                    #     messages.error(request, f"Error: Cannot remove the local node {node.get('name')}.") 
+                    #     continue
+
+                    ip_address = node.get('ip')
+                    node_name = node.get('name')
+
+                    host = f"{ip_address}"
+                    username = "root"
+                    password = "12345"
+
+                    client = paramiko.SSHClient()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.connect(host, username=username, password=password)
+
+                    client.exec_command(f"pvecm delnode {node_name}\n")
+                    
+                    # Close the SSH connection
+                    client.close()
+
+                    # Set the flag to True to indicate delnode operation is executed
+                    delnode_executed = True
+
+                    # Increment the count of processed nodes
+                    nodes_processed += 1
+
+                    # Break out of the loop if one node is processed
+                    if nodes_processed >= 1:
+                        break
+
+                # If delnode is executed, perform ceph1 removal operations
+                if delnode_executed:
+                    for node in nodes:
+                        if node.get('name') == node_name:
+                            ip_address = node.get('ip')
+                            node_name = node.get('name')
+
+                            host = f"{ip_address}"
+                            username = "root"
+                            password = "12345"
+
+                            client = paramiko.SSHClient()
+                            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                            client.connect(host, username=username, password=password)
+
+                            # Stop the services on the node
+                            commands = [
+                                "systemctl stop pve-cluster corosync",
+                                "pmxcfs -l",
+                                "rm /etc/corosync/*",
+                                "rm /etc/pve/corosync.conf",
+                                "killall pmxcfs",
+                                "systemctl start pve-cluster"
+                            ]
+
+                            for command in commands:
+                                shell = client.invoke_shell()
+                                shell.send(command + "\n")
+                                time.sleep(2)  # You may need to adjust the sleep duration
+                                output = shell.recv(65535).decode()
+                                print(output)
+
+                            # Close the SSH connection
+                            client.close()
+
+                            # Print success message
+                            messages.success(request, f"Node {node_name} has been removed from the cluster.")
+
+                            # Break out of the loop since we found the node
+                            break
+                    else:
+                        # Print error message if the node is not found
+                        messages.error(request, f"Node {node_name} not found in the cluster.")          
+            else:
+                messages.error(request, "There is only one node in the cluster. Skipping execution.")
+
+            return redirect('nodes')
+        except Exception as e:
+            messages.error(request, f"Error deleting node: {str(e)}")
+            return redirect('nodes')
+    else :
+        return('error_connection')
+
+# install ceph 
+@login_required(login_url='login')
+def installCephCluster(request):
+    server = Server.objects.get(id=1)
+    proxmox = get_proxmox()
+    client = get_exec_paramiko()
+    # time.sleep(1.5)
+    
+
+    if client and proxmox is not None :
+        try:
+            network = proxmox.cluster.status.get()
+
+            # Extract IP addresses from the data
+            ip_addresses = [node.get('ip') for node in network if 'ip' in node]
+            #Execute command
+
+            # Print the IP addresses
+            for ip_address in ip_addresses:
+            
+                host = f"{ip_address}"
+                username = server.username
+                password = server.password
+
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(host, username=username, password=password)
+
+                # Start an interactive shell session
+                shell = client.invoke_shell()
+
+                # Execute the pvecm add command
+                shell.send("pveceph install --repository no-subscription --version quincy\n")
+
+                # Wait for the command to execute
+                time.sleep(15)  # You may need to adjust the sleep duration
+
+                # Enter the superuser password
+                shell.send("y\n")
+
+                # Wait for the "Password:" prompt after entering the superuser password
+                time.sleep(360)  # You may need to adjust the sleep duration
+
+                # Enter "yes" to confirm
+                shell.send("pveceph init --network 192.168.2.0/27\n")
+
+                # Wait for the command to complete and capture the output
+                time.sleep(15)  # You may need to adjust the sleep duration
+
+                # Enter "yes" to confirm
+                shell.send("pveceph mon create\n")
+
+                # Wait for the command to complete and capture the output
+                time.sleep(15)  # You may need to adjust the sleep duration
+                output = shell.recv(65535).decode()
+
+                client.close()
+            
+            if output != "exception":
+                messages.success(request, "Ceph installing Success")
+            else:
+                messages.error(request, "Installing error")
+            return redirect('nodes')
+        except Exception as e:
+            messages.error(request, f"Error installing Ceph: {str(e)}")
+            return redirect('nodes')
+    else :
+        return('error_connection')
+
+
 
 # netmask to prefix || netmask to desimal
 def netmask_to_prefix(netmask):
@@ -1240,7 +1508,14 @@ def networkNode(request, id_node):
 
         # get network by id 
         # pvesh get /nodes/{node}/network/{iface}
-        network1 = proxmox.nodes(id_node).network('vmbr0').get()
+        # network1 = proxmox.nodes(id_node).network('bond1').get()
+
+        # get_data = {
+        #                 "iface" : name,
+        #                 "type" : "bridge",
+        # }
+
+        # network1 = proxmox.nodes(id_node).network.get(**get_data)
 
         # get network
         network = proxmox.nodes(id_node).network.get()
@@ -1250,84 +1525,439 @@ def networkNode(request, id_node):
             'active_node': 'active',
             'network': network,
             'id_node': id_node,
-            'network1': network1,
         }
         return render(request, 'node/network.html', context )
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# delete group
+def NetworkApply(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    try :
+        proxmox.nodes(id_node).network.put()
+        time.sleep(1.5)
+        messages.success(request, "Apply Configuration successfully")
+        return redirect('node-network', id_node)
+    except Exception as e:
+        messages.error(request, f"Error apply configuration : {str(e)}")
+        return redirect('node-network', id_node)
+
 # network node
 @login_required(login_url='login')
-def addLinuxBridge(request, id_node, type):
+def addLinuxBridge(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
-
         # # id node                                                 
         id_node = id_node
-
         if request.method == "POST":
             name = request.POST.get('name')
             ipv4 = request.POST.get('ipv4')
-            ipv6 = request.POST.get('ipv6')
             netmask = request.POST.get('netmask')
-            netmask6 = request.POST.get('netmask6')
             gateway = request.POST.get('gateway_cidr4')
-            gateway6 = request.POST.get('gateway_cidr6')
-            autostart = request.POST.get('autostart')
             bridgePort = request.POST.get('bridgePort')
-
-            desimal_to_netmask = netmask_to_prefix(netmask)
 
             # cidr = ipv4 + '/' + netmask
             # cidr6 = ipv6 + '/' + netmask6
 
             # ketika vlan aware di centang
-            if 'vlan_Aware' in request.POST:
+            if 'vlanAware' in request.POST:
                 vlan_Aware = 1
             else:
                 vlan_Aware = 0
-            
 
+            # messages.success(request, "Mode " + type) 
+            
             # ketika autostar di centang atau default-nya 1
-            if autostart:
+            if 'autoStart' in request.POST:
                 autostart = 1
             else:
                 autostart = 0
-
 
             if not name or not ipv4 or not netmask :
                 messages.error(request, "Make sure all fields are valid")
                 return redirect('node-network', id_node)
             
-        
-            try:
-                proxmox.nodes(id_node).network.create(
-                        iface=name,
-                        type=type,
-                        address=ipv4,
-                        # address6=ipv6,
-                        # gateway='10.10.10.1',
-                        # gateway6=gateway6,
-                        netmask=desimal_to_netmask,
-                        # netmask6=netmask6,
-                        # cidr= ipv4 + ' ' +netmask,
-                        # cidr6= ipv6 + ' ' +netmask6,
-                        autostart=autostart,
-                        bridge_ports=bridgePort,
-                        bridge_vlan_aware=vlan_Aware,
-                    )
-                messages.success(request, "Network Linux Bridge added successfully")
-                return redirect('node-network', id_node)
-            except Exception as e:
-                messages.error(request, f"Error adding user : {str(e)}")
-                return redirect('node-network', id_node)
-        
+            # ketika ipv4 di isi 
+            if 'ipv4' in request.POST or 'netmask' in request.POST :
+                desimal_to_netmask = netmask_to_prefix(netmask)
 
+
+                # kondisi ketika gateway di isi 
+                if gateway != '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bridge",
+                        "address":ipv4,
+                        "gateway" : gateway,
+                        "netmask" : desimal_to_netmask,
+                        "autostart"  : autostart,
+                        "bridge_ports" : bridgePort,
+                        "bridge_vlan_aware" : vlan_Aware,
+                    }
+
+                # kondisi ketika gateway tidak di isi atau sama dengan null
+                if gateway == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bridge",
+                        "address":ipv4,
+                        # "gateway" : gateway,
+                        "netmask" : desimal_to_netmask,
+                        "autostart"  : autostart,
+                        "bridge_ports" : bridgePort,
+                        "bridge_vlan_aware" : vlan_Aware,
+                    }
+
+                try:
+                    proxmox.nodes(id_node).network.post(**post_data)
+                    messages.success(request, "Network Linux Bridge added successfully")
+                    return redirect('node-network', id_node)
+                except Exception as e:
+                    messages.error(request, f"Error adding network : {str(e)}")
+                    return redirect('node-network', id_node)
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
     
+
+# network mode linux bond
+@login_required(login_url='login')
+def addLinuxBond(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_bond')
+            ipv4 = request.POST.get('ipv4_bond')
+            netmask = request.POST.get('netmask_bond')
+            gateway = request.POST.get('gateway_bond')
+            slaves = request.POST.get('slave_bond')
+            mode = request.POST.get('mode_bond')
+
+            # bond_primary dan hash_policy
+            bond_primary = request.POST.get('bond_primary')
+            hash_policy = request.POST.get('hash_policy')
+            
+            # ketika autostar di centang atau default-nya 1
+            if 'autoStartBond' in request.POST:
+                autostart = 1
+            else:
+                autostart = 0
+
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            # ketika mode ballance-rr atau balance-alb atau balance-tlb
+            if mode == 'balance-rr' or mode == 'balance-alb' or mode == 'balance-tlb':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode active-backup
+            if mode == 'active-backup':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond-primary" : bond_primary,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond-primary" : bond_primary,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond-primary" : bond_primary,
+                        "bond_mode" : mode,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode balance-xor
+            if mode == 'balance-xor':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "bond_xmit_hash_policy" : hash_policy,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode broadcast
+            if mode == 'broadcast':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "autostart"  : autostart,
+                    }
+
+            # ketika mode 802.3ad
+            if mode == '802.3ad':
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "bond",
+                    "slaves" : slaves,
+                    "bond_mode" : mode,
+                    "bond_xmit_hash_policy" : hash_policy,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "bond",
+                        "slaves" : slaves,
+                        "bond_mode" : mode,
+                        "bond_xmit_hash_policy" : hash_policy,
+                        "autostart"  : autostart,
+                    }
+
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network Linux Bond added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+# network mode linux vlan
+@login_required(login_url='login')
+def addLinuxVlan(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_vlan')
+            ipv4 = request.POST.get('ipv4_vlan')
+            netmask = request.POST.get('netmask_vlan')
+            gateway = request.POST.get('gateway_vlan')
+
+
+            # vlan
+            vlan_raw_device = request.POST.get('vlan_raw_device')
+            vlan_tag = request.POST.get('vlan_tag')
+            
+            # ketika autostar di centang atau default-nya 1
+            if 'autoStartVlan' in request.POST:
+                autostart = 1
+            else:
+                autostart = 0
+
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            # ketika mode ballance-rr atau balance-alb atau balance-tlb
+            if name :
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "vlan",
+                    "vlan-id" : vlan_tag,
+                    "vlan-raw-device" : vlan_raw_device,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "vlan",
+                    "vlan-id" : vlan_tag,
+                    "vlan-raw-device" : vlan_raw_device,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                    
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "vlan",
+                        "vlan-id" : vlan_tag,
+                        "vlan-raw-device" : vlan_raw_device,
+                        "autostart"  : autostart,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network Linux Bond added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# delete group
+def deleteNetwork(request, iface, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    try :
+        proxmox.nodes(id_node).network(iface).delete()
+        time.sleep(1.5)
+        messages.success(request, "Network deleted successfully")
+        return redirect('node-network', id_node)
+    except Exception as e:
+        messages.error(request, f"Error deleting iface: {str(e)}")
+        return redirect('node-network', id_node)
 
 
 
@@ -1351,8 +1981,9 @@ def detail_node(request, id_node):
         # ISO Container Templated
         iso_container = []
 
+        # container
         for item in templates:
-            if item['format'] == 'tzst':
+            if item['format'] == 'tzst' or item['format'] == 'tar.gz':
                 # volid :
                 volid = item['volid']
                 # format :
@@ -1368,9 +1999,44 @@ def detail_node(request, id_node):
                     'size': size,
                 })
 
-        # get network
-        network = proxmox.nodes(id_node).network.get()
+        # ISO Virtual Machine
+        iso_virtual_machine = []
 
+        for item in templates:
+            if item['format'] == 'iso':
+                # volid :
+                volid = item['volid']
+                # format :
+                format = item['format']
+                # size :
+                size = round(item['size'] / 1048576, 2)
+
+                
+                # disk_usage = round(disk_usage / 1073741824, 2)
+                iso_virtual_machine.append({
+                    'volid': volid,
+                    'format': format,
+                    'size': size,
+                })
+
+
+        # get network proxmox
+        network_proxmox = proxmox.nodes(id_node).network.get()
+
+        # get network berdasarkan type bridge
+        network = []
+
+        for item in network_proxmox:
+            if item['type'] == 'bridge':
+                # iface :
+                iface = item['iface']
+                # type :
+                type = item['type']
+                
+                network.append({
+                    'iface': iface,
+                    'type': type
+                })
 
 
         container = proxmox.nodes(id_node).lxc.get()
@@ -1380,6 +2046,21 @@ def detail_node(request, id_node):
             container = None
         if virtual_machine == []:
             virtual_machine = None
+
+        try:
+            ceph = proxmox.nodes(id_node).ceph.status.get()
+            error_message = "N/A"
+        except Exception as e:
+            error_message = str(e)
+            if "binary not installed: /usr/bin/ceph-mon" in error_message:
+                error_message = "Ceph binary not installed."
+                ceph = "N/A"
+            elif "Read timed out" in error_message:
+                error_message = "Got Timeout. Please Check Cluster and Node"
+                ceph = "N/A"
+            else:
+                error_message = str(e)
+                ceph = "N/A"
         
 
         context = {
@@ -1387,14 +2068,83 @@ def detail_node(request, id_node):
             'active_node': 'active',
             'resource_pool': resource_pool,
             'iso_container': iso_container,
+            'iso_virtual_machine' : iso_virtual_machine,
             'network': network,
             'id_node': id_node,
             'container': container,
             'virtual_machine': virtual_machine,
+            'ceph': ceph,
+            'error_message': error_message,
         }
         return render(request, 'node/detail_node.html', context )
     else :
         return('error_connection')
+
+# install ceph 
+@login_required(login_url='login')
+def installCeph(request, id_node):
+    shell, client= get_shell_paramiko()
+    # time.sleep(1.5)
+
+    if shell is not None :
+        try:
+            # Execute the pvecm add command
+            shell.send("pveceph install --repository no-subscription --version quincy\n")
+
+            # Wait for the command to execute
+            time.sleep(15)  # You may need to adjust the sleep duration
+
+            # Enter the superuser password
+            shell.send("y\n")
+
+            # Wait for the "Password:" prompt after entering the superuser password
+            time.sleep(360)  # You may need to adjust the sleep duration
+
+            # Enter "yes" to confirm
+            shell.send("pveceph init --network 192.168.2.0/27\n")
+
+            # Wait for the command to complete and capture the output
+            time.sleep(15)  # You may need to adjust the sleep duration
+
+            # Enter "yes" to confirm
+            shell.send("pveceph mon create\n")
+
+            # Wait for the command to complete and capture the output
+            time.sleep(15)  # You may need to adjust the sleep duration
+            output = shell.recv(65535).decode()
+
+            client.close()
+            
+            if output != "exception":
+                messages.success(request, "Ceph installing Success")
+            else:
+                messages.error(request, "Installing error")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error installing Ceph: {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
+# install iptables-persistance
+@login_required(login_url='login')
+def installIptables(request, id_node):
+    client = get_exec_paramiko()
+    # time.sleep(1.5)
+
+    if client is not None :
+        try:
+            #Execute the pvecm add command
+            client.exec_command("apt-get install iptables-persistent -y\n")
+            client.close()
+            messages.success(request, "Iptables-persistent installing Success")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error installing Iptables-persistent: {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
 
 # reboot node 
 @login_required(login_url='login')
@@ -1437,20 +2187,78 @@ def shutdownNode(request, id_node):
     else :
         return('error_connection')
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# preroute
+def postRoute(request, id_node):
+    # connect to proxmox via ssh
+    # proxmox = get_proxmox()
+    client = get_exec_paramiko()
+
+    if request.method == "POST":
+        dstip = request.POST.get('dst_ip')
+        srcip = request.POST.get('src_ip')
+        dstport = request.POST.get('dst_port')
+        interfaces = request.POST.get('network_interfaces')
+
+        if not interfaces or not dstip or not srcip or not dstport:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('detail-node', id_node)
+        
+        command = f"iptables -t nat -A POSTROUTING -o {interfaces} -p tcp --dport {dstport} -d {dstip} -j SNAT --to-source {srcip}\n"
+        ipforward = "sysctl -w net.ipv4.ip_forward=1"
+        try:
+            client.exec_command(command)
+            time.sleep(3)
+            client.exec_command(ipforward)
+            client.close()
+            messages.success(request, "Successfully add Post Route")
+            # return redirect('home')
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Post Route : {str(e)}")
+            return redirect('detail-node', id_node)
+
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+# preroute
+def preRoute(request, id_node):
+    # connect to proxmox via ssh
+    # proxmox = get_proxmox()
+    client = get_exec_paramiko()
+
+    if request.method == "POST":
+        interfaces = request.POST.get('network_interfaces')
+        srcport = request.POST.get('src_port')
+        ip = request.POST.get('ip')
+        port = request.POST.get('port')
+
+        if not interfaces or not srcport or not ip:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('detail-node', id_node)
+        
+        command = f"iptables -t nat -A PREROUTING -i {interfaces} -p tcp --dport {srcport} -j DNAT --to-destination {ip}:{port}\n"
+        ipforward = "sysctl -w net.ipv4.ip_forward=1"
+        try:
+            client.exec_command(command)
+            time.sleep(3)
+            client.exec_command(ipforward)
+            client.close()
+            messages.success(request, "Successfully add Pre Route")
+            # return redirect('home')
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Pre Route : {str(e)}")
+            return redirect('detail-node', id_node)
+
 # add container 
 @login_required(login_url='login')
 def addContainer(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
-
         # id node
         id_node = id_node
-
-        # get network
-        network = proxmox.nodes(id_node).network.get()
-
         if request.method == "POST":
-
             ct_id = request.POST.get('ct-id')
             hostname= request.POST.get('hostname')
             resource_pool = request.POST.get('resource-pool')
@@ -1464,6 +2272,22 @@ def addContainer(request, id_node):
             memory = request.POST.get('memory')
             memory_swap = request.POST.get('memory-swap')
             network_interface = request.POST.get('network_interfaces')
+            name_network = request.POST.get('name_network')
+
+            # tombol radio static ipv4
+            static_ipv4 = request.POST.get('static_ipv4')
+            static_ipv6 = request.POST.get('static_ipv6')
+
+            # tombol radio dhcp ipv4
+            dhcp_ipv4 = request.POST.get('dhcp_ipv4')
+            dhcp_ipv6 = request.POST.get('dhcp_ipv6')
+
+            # data ip address v4
+            ip = request.POST.get('ipv4_network')
+            gateway = request.POST.get('gateway_network')
+
+            # netmask
+            netmask = request.POST.get('netmask')
 
             #  form required in field
             if not ct_id or not hostname or not password or not template or not network_interface:
@@ -1483,6 +2307,68 @@ def addContainer(request, id_node):
             #     return redirect('detail-node', id_node)
 
             
+            # net0_str = "name=eth0,bridge={network_interface},firewall=1,ip=dhcp"
+
+            # kondisi ketika dhcp ipv4 di centang
+            if dhcp_ipv4 == "1":
+                net_config = {
+                                "name": "eth0",  # Nama antarmuka
+                                "bridge": network_interface,  # Nama bridge jika diperlukan
+                                "firewall": 1,  # Opsi firewall (1 untuk aktifkan, 0 untuk nonaktifkan)
+                                "ip": "dhcp" ,  # Alamat IPv4 (CIDR, dhcp, atau manual)
+                                # "gw": gateway,  # Gateway IPv4
+                                }
+                net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
+
+                post_data = {
+                    "vmid" : ct_id,
+                    "ostemplate" : template,
+                    "password":password,
+                    "cores" : cores,
+                    "hostname"  : hostname,
+                    "memory" : memory,
+                    "swap" : memory_swap,
+                    "storage": storage_disk,
+
+                    # interface
+                    # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
+                    "net0" : net0_str,
+                    "pool" : resource_pool,
+                    "ssh_public_keys":ssh_key
+                }
+            # kondisi ketika static ipv4 di centang
+            elif static_ipv4 == "1":
+                ip_address = ip + '/' + netmask
+                net_config = {
+                                "name": "eth0",  # Nama antarmuka
+                                "bridge": network_interface,  # Nama bridge jika diperlukan
+                                "firewall": 1,  # Opsi firewall (1 untuk aktifkan, 0 untuk nonaktifkan)
+                                "ip": str(ip_address) ,  # Alamat IPv4 (CIDR, dhcp, atau manual)
+                                "gw": str(gateway),  # Gateway IPv4
+                                }
+                net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},gw={net_config['gw']},ip={net_config['ip']}"
+
+                post_data = {
+                    "vmid" : ct_id,
+                    "ostemplate" : template,
+                    "password":password,
+                    "cores" : cores,
+                    "hostname"  : hostname,
+                    "memory" : memory,
+                    "swap" : memory_swap,
+                    "storage": storage_disk,
+
+                    # interface
+                    # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
+                    "net0" : net0_str,
+                    "pool" : resource_pool,
+                    "ssh_public_keys":ssh_key
+                }
+            # ketika nilai static dan dhcp ipv4 tidak di centang
+            elif static_ipv4 != "1" or dhcp_ipv4 != "1":
+                messages.error(request, "Make sure input Interface IPv4")
+                return redirect('detail-node', id_node)
+
             # insert container on proxmox with use api proxoxer
 
             ct_config ={
@@ -1513,6 +2399,7 @@ def addContainer(request, id_node):
                     # ssh_public_keys=ssh_key,
                     **ct_config
                 )
+                proxmox.nodes(id_node).lxc.post(**post_data)
                 messages.success(request, "Container added successfully")
 
                 return redirect('detail-node', id_node)
@@ -1520,16 +2407,169 @@ def addContainer(request, id_node):
             except Exception as e:
                 messages.error(request, f"Error adding container : {str(e)}")
                 return redirect('detail-node', id_node)
-
-        context = {
-            'title': 'Network',
-            'active_node': 'active',
-            'network': network,
-            'id_node': id_node,
-        }
-        return render(request, 'node/network.html', context )
+            
+        else:
+            # Redirect ke halaman eror jika koneksi gagal
+            return redirect('detail-node', id_node)
     else:
-        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+# add virtual machine 
+@login_required(login_url='login')
+def addVirtualMachine(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # id node
+        id_node = id_node
+        if request.method == "POST":
+
+            vm_id = request.POST.get('vm-id')
+            hostname= request.POST.get('name_vm')
+            resource_pool = request.POST.get('resource-pool_vm')
+            iso_images = request.POST.get('iso_images')
+            ostype = request.POST.get('ostype')
+
+            machine = request.POST.get('machine')
+            bios = request.POST.get('bios')
+            scsihw = request.POST.get('scsihw')
+            # qemuAgent = request.POST.get('qemuAgent')
+
+            storage_virtual_machine = request.POST.get('storage_virtual_machine')
+            disk_size_vm = request.POST.get('disk_size_vm')
+
+            sockets = request.POST.get('sockets')
+            cores = request.POST.get('cores_vm')
+
+            memory = request.POST.get('memory_vm')
+
+            bridge = request.POST.get('bridge_vm')
+            model_network = request.POST.get('model_network')
+
+            # checklist firewall
+            if 'firewall_vm' in request.POST:
+                    firewall = 1
+            else:
+                    firewall = 0
+
+            # checklist Qemu Agent
+            if 'qemuAgent' in request.POST:
+                    qemuAgent = 1
+            else:
+                    qemuAgent = 0
+
+
+            # tombol radio static ipv4
+            static_ipv4 = request.POST.get('static_ipv4_vm')
+            # tombol radio dhcp ipv4
+            dhcp_ipv4 = request.POST.get('dhcp_ipv4_vm')
+
+            # data ip address v4
+            ipv4 = request.POST.get('ipv4_network_vm')
+            netmask = request.POST.get('netmask_vm')
+            gateway = request.POST.get('gateway_network_vm')
+
+            #  form required in field
+            if not vm_id or not hostname or not iso_images or not bridge:
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('detail-node', id_node)
+            
+            
+            # kondisi ketika dhcp ipv4 di centang
+            if dhcp_ipv4 == "1":
+
+                # net interface objects
+                net_config = {
+                                "model": model_network,
+                                "bridge": bridge,
+                                "firewall" : firewall
+                            }
+                
+                net0_str = f"{model_network},bridge={net_config['bridge']},firewall={net_config['firewall']}"
+                # ipconfig object
+                # ip_address = ipv4 + '/' + netmask
+                ip_config = {
+                                "ip": "dhcp"  # IP + CIDR
+                            }
+                
+                ip0_str = f"ip={ip_config['ip']}"
+
+                post_data = {
+                    "vmid" : vm_id,
+                    "name" : hostname,
+                    "pool" : resource_pool,
+                    "ide2" : iso_images+',media=cdrom',
+                    "ostype" : ostype,
+                    "machine" : machine,
+                    "bios" : bios,
+                    "scsihw" : scsihw,
+                    "scsi0" : storage_virtual_machine + ':' + disk_size_vm + ',iothread=on',
+                    "agent" : qemuAgent,
+                    "sockets" : sockets,
+                    "cores" : cores,
+                    "memory" : memory,
+                    "net0" : net0_str,
+                    # ipconfig[n]
+                    "ipconfig0" : ip0_str
+                }
+            # kondisi ketika static ipv4 di centang
+            elif static_ipv4 == "1":
+
+                # net interface objects
+                net_config = {
+                                "model": model_network,
+                                "bridge": bridge,
+                                "firewall" : firewall
+                            }
+                
+                net0_str = f"{model_network},bridge={net_config['bridge']},firewall={net_config['firewall']}"
+
+
+                # ipconfig object
+                ip_address = ipv4 + '/' + netmask
+                ip_config = {
+                                "ip": ip_address,  # IP + CIDR
+                                "gw": gateway  # Gateway IPv4
+                            }
+                
+                ip0_str = f"ip={ip_config['ip']},gw={ip_config['gw']}"
+
+                post_data = {
+                    "vmid" : vm_id,
+                    "name" : hostname,
+                    "pool" : resource_pool,
+                    "ide2" : iso_images+',media=cdrom',
+                    "ostype" : ostype,
+                    "machine" : machine,
+                    "bios" : bios,
+                    "scsihw" : scsihw,
+                    "scsi0" : storage_virtual_machine + ':' + disk_size_vm + ',iothread=on',
+                    "agent" : qemuAgent,
+                    "sockets" : sockets,
+                    "cores" : cores,
+                    "memory" : memory,
+                    "net0" : net0_str,
+                    # ipconfig[n]
+                    "ipconfig0" : ip0_str
+                }
+            # ketika nilai static dan dhcp ipv4 tidak di centang
+            elif static_ipv4 != "1" or dhcp_ipv4 != "1":
+                messages.error(request, "Make sure input Interface IPv4")
+                return redirect('detail-node', id_node)
+
+            # insert virtual machine on proxmox with use api proxoxer
+            try:
+                proxmox.nodes(id_node).qemu.post(**post_data)
+                messages.success(request, "Virtual Machine added successfully")
+                return redirect('detail-node', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding Virtual Machine : {str(e)}")
+                return redirect('detail-node', id_node)
+            
+        else:
+            # Redirect ke halaman eror jika koneksi gagal
+            return redirect('detail-node', id_node)
+    else:
         return redirect('error_connection')
 
 
@@ -1583,8 +2623,22 @@ def rebootContainer(request, id_node, vmid):
     else :
         return('error_connection')
     
-
-
+# remove container
+@login_required(login_url='login')
+def removeContainer(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).lxc(vmid).delete()
+            messages.success(request, "Container removing successfully, wait a few moments to remove the container")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing container : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+    
 # start virtual machine 
 @login_required(login_url='login')
 def startVirtualMachine(request, id_node, vmid):
@@ -1629,6 +2683,112 @@ def rebootVirtualMachine(request, id_node, vmid):
             return redirect('detail-node', id_node)
         except Exception as e:
             messages.error(request, f"Error rebooting virtual machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+# remove container
+@login_required(login_url='login')
+def removeVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).delete()
+            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+@login_required(login_url='login')
+# halaman detail_container
+def detail_container(request, id_node, vmid):
+    proxmox = get_proxmox()
+
+    id_ct = vmid
+
+    if id_ct and id_node is not None:
+    # setting datauser proxmox
+        net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+        ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+        host = ip_address
+        username = 'log'
+        password = 'logs123'
+
+        client = paramiko.client.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, username=username, password=password)
+
+        command = "journalctl --output json-pretty"
+
+        stdin, stdout, stderr = client.exec_command(command)
+
+        log = stdout.read().decode('utf-8')
+
+        log_blocks = log.split('}')
+
+        formatted_logs = []
+
+        # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+        for block in log_blocks[:-1]:
+            formatted_logs.append(f"{block.strip() + '},'}\n")
+
+        # Menambahkan blok terakhir tanpa koma
+        # Menghilangkan tanda koma terakhir pada blok terakhir
+        last_block = formatted_logs[-1].replace("},", "}")
+        formatted_logs.append(f"{last_block}\n")
+
+        client.close()
+
+        # logs_json = "[" + formatted_logs + "]"
+        logs_json = "[" + "".join(formatted_logs) + "]"
+        # Hapus koma di luar tanda kurung
+        logs_json = logs_json.replace(",]", "]")
+        # print(logs_json)
+
+        logs_list = json.loads(logs_json)
+
+        for item in logs_list:
+            # time
+            date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+            # You may need to parse the date_from_proxmox if it's in a specific format
+            formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+            hostname = item['_HOSTNAME']
+            msg = item['MESSAGE']
+            identifier = item['SYSLOG_IDENTIFIER']
+        
+        context = {
+            'title': 'Detail Container',
+            'active_ct': 'active',
+            'id_node': id_node,
+            'id_ct': id_ct,
+            'date': date,
+            'time': formatted_time,
+            'hostname': hostname,
+            'msg': msg,
+            'identifier': identifier,
+        }
+        return render(request, 'node/container/detail_container.html', context)
+    else:
+        return('error_connection')
+
+# remove container
+@login_required(login_url='login')
+def removeVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).delete()
+            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
             return redirect('detail-node', id_node)
     else :
         return('error_connection')
@@ -1717,14 +2877,18 @@ def clusters(request):
     
     proxmox = get_proxmox()
 
-    try:
-        ceph = proxmox.cluster.ceph.status.get()
-    except Exception as e:
-        error_message = str(e)
-        if "binary not installed: /usr/bin/ceph-mon" in error_message:
-            error_message = "Ceph binary not installed. User opted not to install."
-            ceph = "N/A"
-        
+    if proxmox is not None :
+        try:
+            ceph = proxmox.cluster.ceph.status.get()
+            error_message = "N/A"
+        except Exception as e:
+            error_message = str(e)
+            if "binary not installed: /usr/bin/ceph-mon" in error_message:
+                error_message = "Ceph binary not installed. User opted not to install."
+                ceph = "N/A"
+            else:
+                error_message = str(e)
+            
         context = {
             'title': 'Ceph',
             'active_ceph': 'active',

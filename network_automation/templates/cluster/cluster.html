@@ -8,7 +8,8 @@
     <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
 
-    {% if error_message %}
+    {{ ceph }}
+    {% if error_message != 'N/A' %}
         <script>
             // Ensure showErrorModal is defined globally
             function showErrorModal(message) {
