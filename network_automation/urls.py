@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from network_automation import views
 
 urlpatterns = [
     # route login dan login
@@ -54,6 +54,9 @@ urlpatterns = [
     # route node network
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
 
+    # route install ovs node
+    path('install-ovs/<str:id_node>', views.install_ovs_switch, name="install-ovs"),
+
     #  route add network linux bridge
     path('add-linux-bridge/<str:id_node>', views.addLinuxBridge, name="add-linux-bridge"),
 
@@ -62,6 +65,15 @@ urlpatterns = [
 
     #  route add network linux Vlan
     path('add-linux-vlan/<str:id_node>', views.addLinuxVlan, name="add-linux-vlan"),
+
+    #  route add network ovs bridge
+    path('add-ovs-bridge/<str:id_node>', views.addOVSBridge, name="add-ovs-bridge"),
+
+    #  route add network ovs bond
+    path('add-ovs-bond/<str:id_node>', views.addOVSBond, name="add-ovs-bond"),
+
+    #  route add network ovs intport
+    path('add-ovs-intport/<str:id_node>', views.addOVSIntPort, name="add-ovs-intport"),
     
 
     # route network apply
@@ -119,7 +131,8 @@ urlpatterns = [
 
 
     # route config
-    path('config', views.config, name="config"),
+    path('config/', views.config, name="config"),
+    
     # route config_by_user
     path('config_by_user', views.config_by_user, name="config_by_user"),
 

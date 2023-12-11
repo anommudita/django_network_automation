@@ -27,5 +27,12 @@ urlpatterns = [
 
     # local apps / insialiasi app(list app)
     path('', include('network_automation.urls')),
+
+    # local apps / insialiasi app(list app)
+    path('test/', include('users.urls')),
+
+    # login
+    path('accounts/', include('allauth.urls')),
+    # path('accounts/', include('django.contrib.auth.urls')),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

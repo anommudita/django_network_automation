@@ -54,7 +54,16 @@
 										</div>
 										<div class="d-grid gap-2 mt-3">
 											<button class="btn btn-lg btn-primary" type="submit">login</button>
-										
+
+
+                                            {% load socialaccount %}
+                                                <a href="{% provider_login_url 'google'%}?next=/" class="btn btn-danger">Login with Google</a>
+
+                                            {% if user.authenticated %}
+                                                <!-- <a href="{% url 'socialaccount_connections' %}" class="btn btn-warning">Social Account Connections</a> -->
+
+                                                <p>You are signed in as {{ user.email }}</p>
+                                            {% endif %}
 										</div>
 									</form>
 								</div>

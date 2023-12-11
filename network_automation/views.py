@@ -77,10 +77,8 @@ def get_proxmox():
         return None
     
 def get_proxmox_paramiko():
-
     # get data server
     server = Server.objects.get(id=1)
-
     try:
         # setting datauser proxmox
         host = server.ip_address
@@ -99,7 +97,6 @@ def get_proxmox_paramiko():
     except Exception as e:
         print(e)
         return None
-
 
 # wajib login untuk mengakses halaman ini
 @login_required(login_url='login')
@@ -417,7 +414,6 @@ def data_api(request):
 # halamn login
 def login(request):
     
-
     # mengambil data dari form login
     if request.method == "POST":
         username = request.POST.get('username')
@@ -456,6 +452,10 @@ def login(request):
             # return render(request, 'login.html')
     
 def logout(request):
+
+    # jika tidak ada session di browser
+    if not request.user.is_authenticated:
+        return redirect('error_connection')
 
     # menghapus session di browser
     auth_logout(request)
@@ -564,7 +564,7 @@ def home(request):
 #  halaman user
 def  user(request):
 
-    proxmox = get_proxmox()
+    proxmox = get_proxmox() 
 
     if proxmox is not None:
         # user
@@ -988,7 +988,6 @@ def deleteRole(request, roleid):
         return redirect('roles')
 
 
-
 # wajib login untuk mengakses halaman ini
 @login_required(login_url='login')
 # halaman node
@@ -1025,38 +1024,106 @@ def netmask_to_prefix(netmask):
     return netmask_str
 
 
+# wajib login untuk mengakses halaman ini
+@login_required(login_url='login')
+def install_ovs_switch(request, id_node):
+    id_node = id_node
+    proxmox = get_proxmox()
+
+    if proxmox is not None:
+        try:
+            server = Server.objects.get(id=1)
+
+            host = server.ip_address
+            username = server.username
+            password = server.password
+
+            client = paramiko.client.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host, username=username, password=password)
+            _stdin, _stdout, _stderr = client.exec_command("apt install openvswitch-switch -y")
+            exit_status = _stdout.channel.recv_exit_status()  # Mengambil exit status dari perintah
+
+            client.close()
+            if exit_status == 0:
+                messages.success(request, "Success install OVS Switch")
+            else:
+                messages.error(request, "Failed to install OVS Switch")
+
+            
+        except Server.DoesNotExist:
+            # Tangani jika Server dengan id=1 tidak ditemukan
+            messages.error(request, "Server not found")
+            return redirect('node-network', id_node)
+        except Exception as e:
+            # Tangani kesalahan saat koneksi atau eksekusi perintah SSH
+            messages.error(request, f"Error install OVS : {str(e)}")
+            
+        return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+    
+
 
 # network node
 @login_required(login_url='login')
 def networkNode(request, id_node):
+    id_node = id_node
     proxmox = get_proxmox()
+
     if proxmox is not None:
+        try:
+            server = Server.objects.get(id=1)
 
-        # id node
-        id_node = id_node
+            host = server.ip_address
+            username = server.username
+            password = server.password
 
+            client = paramiko.client.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host, username=username, password=password)
+            _stdin, _stdout, _stderr = client.exec_command("ovs-vsctl --version")
+            data = _stdout.read().decode()
 
-        # get network by id 
-        # pvesh get /nodes/{node}/network/{iface}
-        # network1 = proxmox.nodes(id_node).network('bond1').get()
+            # messages.success(request, data)
+            if data == '':
+                disableInstallOVS = ""
+            else:
+                disableInstallOVS = "disabled"
+            client.close()
+        except Server.DoesNotExist:
+            # Tangani jika Server dengan id=1 tidak ditemukan
+            messages.error(request, "Server not found")
+            return redirect('node-network', id_node)
+        except Exception as e:
+            # Tangani kesalahan saat koneksi atau eksekusi perintah SSH
+            print(f"Error: {e}")
 
-        # get_data = {
-        #                 "iface" : name,
-        #                 "type" : "bridge",
-        # }
-
-        # network1 = proxmox.nodes(id_node).network.get(**get_data)
-
-        # get network
+        # Ambil data jaringan
         network = proxmox.nodes(id_node).network.get()
-        
+
+        # OVS Type Network bridge
+        ovs_bridge = []
+
+        for item in network:
+            if item['type'] == 'OVSBridge':
+                iface = item['iface']
+
+                ovs_bridge.append({
+                    'iface': iface,
+                })
+
         context = {
             'title': 'Network',
             'active_node': 'active',
             'network': network,
             'id_node': id_node,
+            'ovs_bridge': ovs_bridge,
+            'disable': disableInstallOVS,
         }
-        return render(request, 'node/network.html', context )
+        return render(request, 'node/network.html', context)
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
@@ -1472,7 +1539,233 @@ def addLinuxVlan(request, id_node):
         return redirect('error_connection')
     
 
+# network mode OVS Bridge
+@login_required(login_url='login')
+def addOVSBridge(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_ovs_bridge')
+            ipv4 = request.POST.get('ipv4_ovs_bridge')
+            netmask = request.POST.get('netmask_ovs_bridge')
+            gateway = request.POST.get('gateway_ovs_bridge')
 
+            # ovs bridge
+            bridgePorts = request.POST.get('bridge_ports')
+            ovsOptions = request.POST.get('ovs_options')
+            
+            # ketika autostar di centang atau default-nya 1
+            if 'autoStartOVSBridge' in request.POST:
+                autostart = 1
+            else:
+                autostart = 0
+
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            if name :
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBridge",
+                    "bridge_ports" : bridgePorts,
+                    "ovs_options" : ovsOptions,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBridge",
+                    "bridge_ports" : bridgePorts,
+                    "ovs_options" : ovsOptions,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                    
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSBridge",
+                        "bridge_ports" : bridgePorts,
+                        "ovs_options" : ovsOptions,
+                        "autostart"  : autostart,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network OVS Bridge added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+# network mode OVS Bond
+@login_required(login_url='login')
+def addOVSBond(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node   
+        if request.method == "POST":
+            name = request.POST.get('name_ovs_bond')
+            mode_bond = request.POST.get('mode_ovs_bond')
+            slaves = request.POST.get('slave_ovs_bond')
+            vlan_tag = request.POST.get('vlan_tag_ovs_bond')
+            # ovs bridge
+            ovs_bridge = request.POST.get('ovs_bridge_bond')
+            ovs_option = request.POST.get('ovs_options_bond')
+            
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            if name :
+                # ketika slave , vlan tag, OVS Options dikosongkan
+                if slaves =='' and vlan_tag =='' and ovs_option =='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    }
+
+                # ketika slave di isi
+                if slaves !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "slaves" : slaves,
+                    }
+
+                # ketika vlan di isi
+                if vlan_tag !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "ovs_tag" : vlan_tag,
+                    }
+
+                
+                # ketika vlan di isi
+                if ovs_option !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "ovs_options" : ovs_option,
+                    }
+
+                # ketika slave , vlan tag, OVS Options diisi
+                if slaves !='' and vlan_tag !='' and ovs_option !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "slaves" : slaves,
+                    "ovs_tag" : vlan_tag,
+                    "ovs_options" : ovs_option,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network OVS Bond added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+# network mode OVS IntPort
+@login_required(login_url='login')
+def addOVSIntPort(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_ovs_intport')
+            ipv4 = request.POST.get('ipv4_ovs_intport')
+            netmask = request.POST.get('netmask_ovs_intport')
+            gateway = request.POST.get('gateway_ovs_intport')
+
+            # ovs bridge
+            OVSBridge = request.POST.get('ovs_bridge_ovs_intport')
+            vlan_tag = request.POST.get('vlan_tag_ovs_intport')
+            OVSOptions = request.POST.get('ovs_options_ovs_intport')
+            
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            if name :
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSIntPort",
+                        "ovs_bridge" : OVSBridge,
+                        "ovs_tag" : vlan_tag,
+                        "ovs_options" : OVSOptions,
+                        "address":ipv4,
+                        "netmask" : desimal_to_netmask,
+                    }
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSIntPort",
+                        "ovs_bridge" : OVSBridge,
+                        "ovs_tag" : vlan_tag,
+                        "ovs_options" : OVSOptions,
+                        "address":ipv4,
+                        "netmask" : desimal_to_netmask,
+                        "gateway" : gateway,
+                    }
+                    
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '' and vlan_tag =='':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSIntPort",
+                        "ovs_bridge" : OVSBridge,
+                        "ovs_options" : OVSOptions,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network OVS IntPort added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
 
 # wajib login untuk mengakses halaman ini
 @login_required(login_url='login')
@@ -1488,7 +1781,6 @@ def deleteNetwork(request, iface, id_node):
     except Exception as e:
         messages.error(request, f"Error deleting iface: {str(e)}")
         return redirect('node-network', id_node)
-
 
 
 @login_required(login_url='login')
@@ -1821,9 +2113,7 @@ def addVirtualMachine(request, id_node):
                                 "bridge": bridge,
                                 "firewall" : firewall
                             }
-                
                 net0_str = f"{model_network},bridge={net_config['bridge']},firewall={net_config['firewall']}"
-
 
                 # ipconfig object
                 ip_address = ipv4 + '/' + netmask
