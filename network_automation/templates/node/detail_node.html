@@ -14,15 +14,33 @@
             </div>
         </div>
         {% endfor %}
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
     <!-- end flash message -->
-    
-    <div class="d-flex justify-content-end pt-3">
-        <a href="/node-network/{{id_node}}"  class="btn btn-success">Add Network</a>
-        <div>&nbsp;&nbsp;</div>
-        <a  class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContainer" data-modal="addContainer">Add Container</a>
-        <div>&nbsp;&nbsp;</div>
-        <a  class="btn btn-primary ml-2" data-bs-toggle="modal" data-bs-target="#addVirtualMachine" data-modal="addVirtualMachine">Add Virtual Machine</a>
+    <div class="d-flex pt-3 mb-4">
+        <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+            Install
+        </button>
+
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+            {% if ceph == 'N/A' %}
+                <li><a href="/detail-node/{{id_node}}/install-ceph" class="dropdown-item install-ceph">Ceph</a></li>
+            {% else %}
+                <li><button type="button" class="dropdown-item" disabled>Ceph Already Instal</button></li>
+            {% endif %}
+            <li><a href="/detail-node/{{id_node}}/install-iptables" class="dropdown-item">Iptables-persistent</a></li>
+        </ul>
+
+        <div class="ms-auto">
+            <a class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#portforwarding">Port Forwarding</a>
+            <a href="/node-network/{{id_node}}" class="btn btn-success mr-2">Add Network</a>
+            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContainer" data-modal="addContainer">Add Container</a>
+            <a class="btn btn-primary ml-2" data-bs-toggle="modal" data-bs-target="#addVirtualMachine" data-modal="addVirtualMachine">Add Virtual Machine</a>
+        </div>
     </div>
+    
 
 
 
@@ -199,6 +217,138 @@
         {% endfor%}   -->
         
     {% endif%}
+        <div class="modal fade" id="portforwarding" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center" id="routeTitle">Post Routing</h2>
+                            </div>
+                            <div class="card-body">
+                                <div id="postRouteForm" >
+                                    <form action="{% url 'post-route' id_node=id_node %}" id="postRouting" method="post">
+                                        {% csrf_token %}
+                                        <!-- Common Fields -->
+                                        <!-- Name -->
+
+                                        <!-- Password -->
+                                        <div class="form-group mb-4">
+                                            <label>Interfaces : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                                </div>
+                                                <select name="network_interfaces" class="form-control" id="network_interfaces">
+                                                    <option value="">Pilih..</option>
+                                                    {% for row in network %}
+                                                        <option value="{{row.iface}}">{{row.iface}} - {{row.type}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label>Destination Port : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="fa-solid fa-ethernet fa-2x "></i></span>
+                                                </div>
+                                                <input class="form-control" name="dst_port" id="dst_port" placeholder="Enter Dest Port" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label>Destination IP : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">IP</span>
+                                                </div>
+                                                <input class="form-control" name="dst_ip" id="dst_ip" placeholder="Enter Dest IP" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label>Source IP : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">IP</span>
+                                                </div>
+                                                <input class="form-control" name="src_ip" id="src_ip" placeholder="Enter Src IP" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-primary" id="postRouteButton">Submit</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div id="preRouteForm" style="display: none;">
+                                    <form action="{% url 'pre-route' id_node=id_node %}" id="preRouting" method="post">
+                                        {% csrf_token %}
+                                        <!-- Common Fields -->
+                                        <!-- ... -->
+            
+                                        <!-- Name -->
+                                        <div class="form-group mb-4">
+                                            <label>Interfaces : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                                </div>
+                                                <select name="network_interfaces" class="form-control" id="network_interfaces">
+                                                    <option value="">Pilih..</option>
+                                                    {% for row in network %}
+                                                        <option value="{{row.iface}}">{{row.iface}} - {{row.type}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label>Source Port : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="fa-solid fa-ethernet fa-2x "></i></span>
+                                                </div>
+                                                <input class="form-control" name="src_port" id="src_port" placeholder="Enter Src Port" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label>IP:Port : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">IP</span>
+                                                </div>
+                                                <input class="form-control" name="ip" id="ip" placeholder="Enter IP" type="text" autocomplete="off" value="">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text">:</span>
+                                                </div>
+                                                <input class="form-control" name="port" id="port" placeholder="Port" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-primary" id="preRouteButton">Submit</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                
+                                <br>
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-secondary" id="toggleForm">Switch Form</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- modalbox tambah Container -->
         <div class="modal fade" id="addContainer" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -1025,6 +1175,44 @@
         <!-- end modalbox tambah Virtual Machine-->
 
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var toggleButton = document.getElementById("toggleForm");
+                var routeTitle = document.getElementById("routeTitle");
+                var preRouteForm = document.getElementById("preRouteForm");
+                var postRouteForm= document.getElementById("postRouteForm");
+    
+                toggleButton.addEventListener("click", function() {
+                    // Toggle tampilan form saat tombol ditekan
+                    if (postRouteForm.style.display === "none") {
+                        preRouteForm.style.display = "none";
+                        postRouteForm.style.display = "block";
+                        routeTitle.textContent = "Post Routing";
+                    } else {
+                        preRouteForm.style.display = "block";
+                        postRouteForm.style.display = "none";
+                        routeTitle.textContent = "Pre Routing";
+                    }
+                });
+            });
+    
+    
+        </script>
+        
+        <!-- Form -->
+    
+        <!-- ketika mengirim form maka tombol tambah akan disable -->
+        <script>
+            document.getElementById("preRouting").addEventListener("submit", function() {
+                document.getElementById("preRouteButton").disabled = true;
+            });
+        </script>
+    
+        <script>
+            document.getElementById("postRouting").addEventListener("submit", function() {
+                document.getElementById("postRouteButton").disabled = true;
+            });
+        </script>
 
         <!-- sweetalert2 -->
         <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
@@ -1113,9 +1301,14 @@
 
                 const detailLink = document.createElement('a');
                 detailLink.classList.add('btn', 'btn-primary', 'mt-3');
-                detailLink.href = `/detail-container/${ctData.container_vmid}`;
+                detailLink.href = `/detail-container/${idNode}/${ctData.container_vmid}`;
                 detailLink.textContent = 'Detail';
-                ctDetail.appendChild(detailLink);
+                // ctDetail.appendChild(detailLink);
+
+                // Logika untuk menentukan apakah tombol ditampilkan atau disembunyikan
+                if (ctData.container_status === "running") {
+                    ctDetail.appendChild(detailLink); // Menambahkan tombol hanya jika statusnya 'running'
+                }
 
                 const detailSpace = document.createElement('div');
                 detailSpace.innerHTML = '&nbsp; &nbsp; &nbsp;';
@@ -1187,21 +1380,24 @@
                 });
                 
                 const textCenterDiv = document.createElement('div');
-                textCenterDiv.classList.add('text-center', 'mt-2');
+                textCenterDiv.classList.add('text-center', 'mt-3');
                 cardRow.appendChild(textCenterDiv);
 
                 const buttons = [
-                    { label: 'Start', href: `/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success mr-3 start-container' },
-                    { label: 'Stop', href: `/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning mr-3 stop-container' },
-                    { label: 'Reboot', href: `/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary mr-3 reboot-container' },
+                    { label: 'Start', href: `/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success me-2 start-container' },
+                    { label: 'Reboot', href: `/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary me-2 reboot-container' },
+                    { label: 'Stop', href: `/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning me-2 stop-container' },
                     // { label: 'Remove', href: `/remove-container/${ctData.container_vmid}`, class: 'btn btn-danger mt-5 text remove-container' }
                 ];
 
                 buttons.forEach(buttonData => {
                     const button = document.createElement('a');
                     button.setAttribute('href', buttonData.href);
-                    button.classList.add(...buttonData.class.split(' ')); // Menambahkan kelas-kelas tombol
+                    button.className =  buttonData.class; // Menambahkan kelas-kelas tombol
                     button.textContent = buttonData.label;
+
+                    console.log(button)
+
                     textCenterDiv.appendChild(button);
                 });
 
@@ -1283,7 +1479,7 @@
 
                 const vmStatus = document.createElement('span');
                 vmStatus.classList.add('badge', vmData.container_status === "running" ? 'bg-success' : 'bg-danger');
-                vmStatus.textContent = vmData.container_status;
+                vmStatus.textContent = vmData.vm_status;
                 cardHeader.appendChild(vmStatus);
 
                 const chartContainer = document.createElement('div');
@@ -1336,38 +1532,15 @@
                     tableBody.appendChild(row);
                 });
 
-                // const textCenterDiv = document.createElement('div');
-                // textCenterDiv.classList.add('text-center', 'mt-2');
-                // cardRow.appendChild(textCenterDiv);
-
-                // const startLink = document.createElement('a');
-                // startLink.setAttribute('href', `/start-container/${idNode}/${vmData.vm_vmid}`);
-                // startLink.classList.add('btn', 'btn-success', 'mr-3', 'start-container');
-                // startLink.textContent = 'Start';
-                // textCenterDiv.appendChild(startLink);
-
-                // const stopLink = document.createElement('a');
-                // stopLink.setAttribute('href', `/stop-container/${idNode}/${vmData.vm_vmid}`);
-                // stopLink.classList.add('btn', 'btn-warning', 'mr-3', 'stop-container');
-                // stopLink.textContent = 'Stop';
-                // textCenterDiv.appendChild(stopLink);
-
-                // const rebootLink = document.createElement('a');
-                // rebootLink.setAttribute('href', `/reboot-container/${idNode}/${vmData.vm_vmid}`);
-                // rebootLink.classList.add('btn', 'btn-primary', 'mr-3', 'reboot-container');
-                // rebootLink.textContent = 'Reboot';
-                // textCenterDiv.appendChild(rebootLink);
-
-                
-
                 const textCenterDiv = document.createElement('div');
                 textCenterDiv.classList.add('text-center', 'mt-2');
                 cardRow.appendChild(textCenterDiv);
 
                 const buttons = [
-                    { label: 'Start', href: `/start-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success mr-3 start-virtual_machine') },
-                    { label: 'Stop', href: `/stop-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning mr-3 stop-virtual_machine') },
-                    { label: 'Reboot', href: `/reboot-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary mr-3 reboot-virtual_machine') },
+                    { label: 'Start', href: `/start-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success me-1 start-virtual_machine') },
+                    {label: 'Reboot', href: `/reboot-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary me-1 reboot-virtual_machine') },
+                    { label: 'Stop', href: `/stop-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning me-1 stop-virtual_machine') },
+                    // { label: 'Remove', href: `/remove-container/${vmData.container_vmid}`, class: ('btn', 'btn-danger', 'mt-3', 'text', 'remove-container') }
                 ];
 
                 buttons.forEach(buttonData => {
@@ -1383,7 +1556,7 @@
                 cardRow.appendChild(removeDiv);
 
                 const removeLink = document.createElement('a');
-                removeLink.setAttribute('href', `/remove-virtual-machine/${idNode}/${vmData.vm_vmid}`);
+                removeLink.setAttribute('href', `/remove-virtual_machine//${idNode}/${vmData.vm_vmid}`);
                 removeLink.classList.add('btn', 'btn-danger', 'mt-3', 'text', 'remove-virtual_machine');
                 removeLink.textContent = 'Remove';
                 removeDiv.appendChild(removeLink);
@@ -1418,6 +1591,7 @@
         // Atur interval untuk melakukan pembaruan data setiap 60 detik
         setInterval(ambilDataVmTerbaru, 1000); // 60000 ms = 60 detik
         </script>
+        
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <!-- scripts data history inputan -->
@@ -1664,7 +1838,9 @@
                 x[n].className += " active";
             }
         </script>
-
+        
+       
+        
 
 <!-- end konten -->
 {% endblock content %}

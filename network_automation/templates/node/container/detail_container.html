@@ -1,0 +1,93 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+<!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+    <!-- end flash message -->
+
+    <input class="id_node" type="text" value="{{id_node}}" hidden>
+    <input class="id_ct" type="text" value="{{id_ct}}" hidden>
+
+    {{id_node}}
+    {{id_ct}}
+    {{date}}
+    {{time}}
+    {{hostname}}
+    {{msg}}
+    {{identifier}}
+    
+
+    <!-- log -->
+    <div class="col-12 col-lg-12 col-xxl-12 order-xxl-4">
+        <div class="card flex-fill">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Log Data Center</h5>
+        </div>
+        <table class="table table-hover my-0">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th class="d-none d-xl-table-cell">Hostname</th>
+                    <th>Identifier</th>
+                    <th>Messege</th>
+                </tr>
+            </thead>
+            <tbody id="log-table-body">
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <script>
+        let idNode = '';
+        let idCt = '';
+    
+        function ambilLogTerbaru() {
+            const idNodeInput = document.querySelector('.id_node');
+            const idCtInput = document.querySelector('.id_ct');
+    
+            idNode = idNodeInput.value;
+            idCt = idCtInput.value;
+    
+            fetch(`/data_api?action=view_data_ct_log&id_node=${idNode}&id_ct=${idCt}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const tbody = document.getElementById('log-table-body');
+    
+                    const newRow = tbody.insertRow(0);
+                    const logTime = newRow.insertCell(0);
+                    const logHostname = newRow.insertCell(1);
+                    const logIdentifier = newRow.insertCell(2);
+                    const logMsg = newRow.insertCell(3);
+    
+                    logTime.textContent = data.ct_time;
+                    logHostname.textContent = data.ct_hostname;
+                    logIdentifier.textContent = data.ct_identifier;
+                    logMsg.textContent = data.ct_msg;
+    
+                    if (tbody.rows.length > 10) {
+                        tbody.deleteRow(-1);
+                    }
+                })
+                .catch(error => console.error('Gagal mengambil data terbaru:', error));
+        }
+    
+        setInterval(ambilLogTerbaru, 5000);
+    </script>
+    
+<!-- end konten -->
+{% endblock content %}

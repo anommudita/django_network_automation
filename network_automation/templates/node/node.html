@@ -1,4 +1,5 @@
 {% extends 'main.html' %}
+{% load static %}
 
 
 {% block content %}
@@ -6,10 +7,30 @@
     
     <!-- {% for col in nodes %} 
     {% endfor %} -->
-
-
+    <div class="d-flex pt-3 mb-4">
+        {% if ceph == 'N/A' %}
+            <a href="" class="btn btn-danger mr-2 mb-3 install-ceph">Install Ceph</a>
+        {% else %}
+            <button type="button" class="btn btn-outline-danger mr-2 mb-3" disabled>Ceph Already Instal</button>
+        {% endif %}
     <!-- <div class="loading-nodes" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
     </div> -->
+    {% if cluster == 'OFF'%}
+
+    {% else %}
+        <div class="ms-auto">
+            <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                Delete Node from Cluster
+            </button>
+
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                {% for name in nodes %}
+                    <li><a href="nodes/delnode/{{name.node}}" class="dropdown-item">{{ name.node }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    </div>
 
     <div id="data-container">
     </div>
@@ -42,6 +63,28 @@
 
 
         }
+    </script> -->
+
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+    <!-- <script>
+        // Ensure showErrorModal is defined globally
+        function showErrorModal(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#FCB92C',
+            });
+        }
+
+        // Call showErrorModal with the error_message
+        $(document).ready(function () {
+            showErrorModal('{{node_name}}');
+        });
     </script> -->
     
     <!-- Script untuk auto refresh data resource -->
@@ -155,11 +198,24 @@
                 const button = document.createElement('div');
                 button.classList.add('d-flex', 'justify-content-end', 'pt-3');
 
+                const rebootButton = document.createElement('a');
+                rebootButton.href = `/nodes/${nodeData.node_name}/reboot`;
+                rebootButton.classList.add('btn', 'btn-warning', 'me-1', 'reboot-node');
+                rebootButton.textContent = `Reboot`;
+
+                const shutdownButton = document.createElement('a');
+                shutdownButton.href = `/nodes/${nodeData.node_name}/shutdown`;
+                shutdownButton.classList.add('btn', 'btn-danger', 'me-1', 'shutdown-node');
+                shutdownButton.textContent = `Shutdown`;
+
                 const linkButton = document.createElement('a');
                 linkButton.href = `/detail-node/${nodeData.node_name}`;
                 linkButton.classList.add('btn', 'btn-primary');
                 linkButton.textContent = `Detail`;
-                
+
+
+                button.appendChild(shutdownButton);
+                button.appendChild(rebootButton);
                 button.appendChild(linkButton);
                 cardBody.appendChild(button);
 
