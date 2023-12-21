@@ -54,7 +54,10 @@ urlpatterns = [
     path('detail-node/<str:id_node>', views.detail_node, name="detail-node"),
 
     #route delnode
-    path('nodes/delnode/<str:node_name>', views.deleteNode, name="delete-nodes"),
+    path('nodes/delnode/<str:id_node>', views.deleteNode, name="delete-nodes"),
+
+    #route install ceph cluster
+    path('nodes/install-ceph-cluster', views.installCephCluster, name="install-ceph-cluster"),
 
     # install ceph
     path('detail-node/<str:id_node>/install-ceph', views.installCeph, name="install-ceph"),

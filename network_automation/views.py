@@ -746,7 +746,7 @@ def createCluster(request):
             proxmox.cluster.config.post(**post_data)
             messages.success(request, "Create cluster successfully")
             # return redirect('home')
-            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time(3))}")
+            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
         except Exception as e:
             messages.error(request, f"Error adding cluster : {str(e)}")
             return redirect('home')
@@ -787,7 +787,7 @@ def joinCluster(request):
             proxmox.cluster.config.join.post(**post_data)
             messages.success(request, "Join cluster successfully")
             # return redirect('home')
-            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time(3))}")
+            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
         except Exception as e:
             messages.error(request, f"Error joining cluster : {str(e)}")
             return redirect('home')
@@ -1299,17 +1299,22 @@ def nodes(request):
 
 # install ceph 
 @login_required(login_url='login')
-def deleteNode(request, node_name):
+def deleteNode(request, id_node):
     proxmox = get_proxmox()
     # time.sleep(1.5)
     
 
     if proxmox is not None :
         try:
+            # Fetch cluster status
             prox_data = proxmox.cluster.status.get()
 
             # Check if there are nodes with type 'node'
             nodes = [node for node in prox_data if node.get('type') == 'node']
+
+            # lennode = len(nodes) - 1
+
+            # print(lennode)
 
             # Check if there is more than one node
             if len(nodes) > 1:
@@ -1322,13 +1327,17 @@ def deleteNode(request, node_name):
                 # Extract IP address and node name from the data
                 for node in nodes:
                     # Skip 'ceph1'
-                    if node.get('name') == node_name:
+                    if node.get('name') == id_node:
                         continue
 
-                    # Check if the node is local
+                    # # Check if the node is local
                     # if node.get('local') == 1:
-                    #     messages.error(request, f"Error: Cannot remove the local node {node.get('name')}.") 
+                    #     print(f"Error: Cannot remove the local node {node.get('name')}.")
                     #     continue
+
+                    # Break out of the loop if one node is processed
+                    if nodes_processed >= 1:
+                        break
 
                     ip_address = node.get('ip')
                     node_name = node.get('name')
@@ -1341,8 +1350,24 @@ def deleteNode(request, node_name):
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                     client.connect(host, username=username, password=password)
 
-                    client.exec_command(f"pvecm delnode {node_name}\n")
-                    
+                    shell = client.invoke_shell()
+
+                    # shell.send(f"pvecm expected {lennode}\n")
+                    # time.sleep(2)
+
+                    shell.send("pvecm nodes\n")
+                    time.sleep(5)
+
+                    shell.send(f"pvecm delnode {id_node}\n")
+                    time.sleep(20)  # You may need to adjust the sleep duration
+
+                    output = shell.recv(65535).decode()
+                    print(output)
+                    # Stop the services on the node
+                    # _stdin, _stdout,_stderr = client.exec_command(f"pvecm delnode {node_name}\n")
+
+                    # print(_stdout.read().decode())
+
                     # Close the SSH connection
                     client.close()
 
@@ -1352,14 +1377,12 @@ def deleteNode(request, node_name):
                     # Increment the count of processed nodes
                     nodes_processed += 1
 
-                    # Break out of the loop if one node is processed
-                    if nodes_processed >= 1:
-                        break
+                    
 
                 # If delnode is executed, perform ceph1 removal operations
                 if delnode_executed:
                     for node in nodes:
-                        if node.get('name') == node_name:
+                        if node.get('name') == id_node:
                             ip_address = node.get('ip')
                             node_name = node.get('name')
 
@@ -1392,16 +1415,51 @@ def deleteNode(request, node_name):
                             client.close()
 
                             # Print success message
-                            messages.success(request, f"Node {node_name} has been removed from the cluster.")
+                            print(f"Node {node_name} has been removed from the cluster.")
 
                             # Break out of the loop since we found the node
                             break
                     else:
                         # Print error message if the node is not found
-                        messages.error(request, f"Node {node_name} not found in the cluster.")          
+                        print(f"Node {node_name} not found in the cluster.")
             else:
-                messages.error(request, "There is only one node in the cluster. Skipping execution.")
+                for node in nodes:
+                    ip_address = node.get('ip')
+                    node_name = node.get('name')
 
+                    host = f"{ip_address}"
+                    username = "root"
+                    password = "12345"
+
+                    client = paramiko.SSHClient()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.connect(host, username=username, password=password)
+
+                    # Stop the services on the node
+                    commands = [
+                        "systemctl stop pve-cluster corosync",
+                        "pmxcfs -l",
+                        "rm /etc/corosync/*",
+                        "rm /etc/pve/corosync.conf",
+                        "killall pmxcfs",
+                        "systemctl start pve-cluster"
+                    ]
+
+                    for command in commands:
+                        shell = client.invoke_shell()
+                        shell.send(command + "\n")
+                        time.sleep(2)  # You may need to adjust the sleep duration
+                        output = shell.recv(65535).decode()
+                        print(output)
+
+                    # Close the SSH connection
+                    client.close()
+
+                    # Print success message
+                    print(f"Node {node_name} has been removed from the cluster.")
+
+                    # Break out of the loop since we found the node
+                    break                    
             return redirect('nodes')
         except Exception as e:
             messages.error(request, f"Error deleting node: {str(e)}")
@@ -1453,7 +1511,7 @@ def installCephCluster(request):
                 time.sleep(360)  # You may need to adjust the sleep duration
 
                 # Enter "yes" to confirm
-                shell.send("pveceph init --network 192.168.2.0/27\n")
+                shell.send("pveceph init --network 192.168.43.0/24\n")
 
                 # Wait for the command to complete and capture the output
                 time.sleep(15)  # You may need to adjust the sleep duration
@@ -2101,7 +2159,7 @@ def installCeph(request, id_node):
             time.sleep(360)  # You may need to adjust the sleep duration
 
             # Enter "yes" to confirm
-            shell.send("pveceph init --network 192.168.2.0/27\n")
+            shell.send("pveceph init --network 192.168.1.0/24\n")
 
             # Wait for the command to complete and capture the output
             time.sleep(15)  # You may need to adjust the sleep duration
