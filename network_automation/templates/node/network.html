@@ -116,7 +116,7 @@
                                     <td>{{ row.gateway }}</td> 
                                     <td>
                                         <a href="#" class="btn btn-success btnEdit disabled" data-iface="{{row.iface}}" data-type="{{row.type}}" data-id_node="{{id_node}}">Edit</a>
-                                        <a href="/delete-network/{{ row.iface }}/{{id_node}}" class="btn btn-danger delete-network">Delete</a>
+                                        <a href="{% url 'delete-network' row.iface id_node%}" class="btn btn-danger delete-network">Delete</a>
                                     </td>  
                                 </tr>
                             {% endfor %} 

@@ -30,6 +30,39 @@ $('.logout-notif').on('click', function (e) {
 });
 
 
+// logout-notifikasi role user
+$('.logout-notif-user').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Apakah anda yakin',
+        text: "Ingin keluar dari Cloud E-Ganesha?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Logout'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Keluar!',
+                'Berhasil logout dari Cloud E-Ganesha',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+
 
 // tombol delete user
 $('.delete-user').on('click', function(e){

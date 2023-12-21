@@ -1,0 +1,39 @@
+<!-- load static file -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud E-Ganesha</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="{% static 'img/photos/logo_undiksha.png' %}" />
+
+	<link href="{% static 'css/app.css' %}" rel="stylesheet">
+    <link href="{% static 'css/loading.css' %}" rel="stylesheet">
+    <link href="{% static 'css/multistep.css' %}" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- JS Bootstrap 5 -->
+    <script src="{% static 'bootstrap_5/js/bootstrap.bundle.min.js' %}"></script>
+    
+    <!-- Fontawesome Icon -->
+    <link href="{% static 'plugins/fontawesome-free-6.4.2-web/css/fontawesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'plugins/fontawesome-free-6.4.2-web/css/all.css' %}" rel="stylesheet">
+</head>
+
+<body>
+
+    {% block content %}
+
+    {% endblock %}
+
+	<script src="{% static 'js/app.js' %}"></script>
+
+    <!-- loading js -->
+    <script src="{% static 'js/loader-hander.js' %}"></script>
+
+</body>
+
+</html>

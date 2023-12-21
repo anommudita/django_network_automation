@@ -199,17 +199,17 @@
                 button.classList.add('d-flex', 'justify-content-end', 'pt-3');
 
                 const rebootButton = document.createElement('a');
-                rebootButton.href = `/nodes/${nodeData.node_name}/reboot`;
+                rebootButton.href = `nodes/${nodeData.node_name}/reboot`;
                 rebootButton.classList.add('btn', 'btn-warning', 'me-1', 'reboot-node');
                 rebootButton.textContent = `Reboot`;
 
                 const shutdownButton = document.createElement('a');
-                shutdownButton.href = `/nodes/${nodeData.node_name}/shutdown`;
+                shutdownButton.href = `nodes/${nodeData.node_name}/shutdown`;
                 shutdownButton.classList.add('btn', 'btn-danger', 'me-1', 'shutdown-node');
                 shutdownButton.textContent = `Shutdown`;
 
                 const linkButton = document.createElement('a');
-                linkButton.href = `/detail-node/${nodeData.node_name}`;
+                linkButton.href = `detail-node/${nodeData.node_name}`;
                 linkButton.classList.add('btn', 'btn-primary');
                 linkButton.textContent = `Detail`;
 
@@ -293,7 +293,7 @@
         function ambilDataTerbaru() {
             // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
             // Pastikan URL endpoint yang sesuai
-            fetch('/data_api?action=view_data_nodes_resources')
+            fetch('data_api?action=view_data_nodes_resources')
                 .then(response => response.json())
                 .then(data => {
                     const dataContainer = document.getElementById('data-container');

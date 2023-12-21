@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django.contrib.auth.decorators', # import auth decorator
+
     # define app network_automation
     'network_automation.apps.NetworkAutomationConfig',
 
@@ -64,11 +66,14 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
 
     # google akun login
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
+    # 'django.contrib.sites',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.google',
+
+    # django verify email
+    # "verify_email.apps.VerifyEmailConfig",
 ]
 
 
@@ -93,7 +98,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
     # google akun login
-    "allauth.account.middleware.AccountMiddleware"
+    # "allauth.account.middleware.AccountMiddleware"
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -194,18 +199,34 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# menambahkan kolom di user model 
+# AUTH_USER_MODEL = 'users.CustomUser'
 
+
+
+
+# base url
+BASE_URL = 'http://127.0.0.1:8000/'
 
 
 # autentikasi login menggunakan google
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-)
+# AUTHENTICATION_BACKENDS = (
+#     'django.contrib.auth.backends.ModelBackend',
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# )
 
 # # login menggunakan google
-LOGIN_REDIRECT_URL = '/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+# LOGIN_REDIRECT_URL = '/'
+# ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+
+# email verify django
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('bagus.anom@undiksha.ac.id') 
+# EMAIL_HOST_PASSWORD = os.environ.get('Singaraja')
 
 
 

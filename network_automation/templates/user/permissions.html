@@ -75,7 +75,7 @@
                                     {% endif %}
                                 </td>          
                                 <td>
-                                    <a href="/delete-permissions/{{ row.path }}/{{row.roleid}}/{{row.type}}/{{row.ugid}}" class="btn btn-danger delete-permissions">Delete</a>
+                                    <a href="delete-permissions/{{ row.path }}/{{row.roleid}}/{{row.type}}/{{row.ugid}}" class="btn btn-danger delete-permissions">Delete</a>
                                 </td>
                             </tr>
                         {% endfor %} 
@@ -103,7 +103,7 @@
                             <h2 class="card-heading text-center">Add Permissions Group</h2>
                         </div>
                         <div class="card-body">
-                            <form action="/add-permission-group" id="addFormPermissionGroup" method="post">
+                            <form action="{% url 'add-permission-group'%}" id="addFormPermissionGroup" method="post">
                                 {% csrf_token %}
 
                                 <!-- Path -->
@@ -185,7 +185,7 @@
                             <h2 class="card-heading text-center">Add Permissions User</h2>
                         </div>
                         <div class="card-body">
-                            <form action="/add-permission-user" id="addFormPermissionUser" method="post">
+                            <form action="{% url 'add-permission-user' %}" id="addFormPermissionUser" method="post">
                                 {% csrf_token %}
 
                                 <!-- Path -->
@@ -267,7 +267,7 @@
                             <h2 class="card-heading text-center">Add Permissions API Token</h2>
                         </div>
                         <div class="card-body">
-                            <form action="/add-permission-api" id="addFormPermissionAPI" method="post">
+                            <form action="{% url 'add-permission-api'%}" id="addFormPermissionAPI" method="post">
                                 {% csrf_token %}
 
                                 <!-- Path -->

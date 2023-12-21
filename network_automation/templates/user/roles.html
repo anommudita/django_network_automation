@@ -70,7 +70,7 @@
                                     <td><a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#privileges{{row.roleid}}"><i class="fa fa-info"></i></a></td>  
                                     <td>
                                         <a href="#" class="btn btn-success btnEdit" data-id="{{row.roleid}}">Edit</a>
-                                        <a href="/delete-role/{{ row.roleid }}" class="btn btn-danger delete-role">Delete</a>
+                                        <a href="delete-role/{{ row.roleid }}" class="btn btn-danger delete-role">Delete</a>
                                     </td>  
                                 </tr>
                             {% endfor %} 
@@ -121,7 +121,7 @@
                             <h2 class="card-heading text-center">Add Role</h2>
                         </div>
                         <div class="card-body">
-                            <form action="/addrole" id="addFormRole" method="post">
+                            <form action="{% url 'addrole'%}" id="addFormRole" method="post">
                                 {% csrf_token %}
 
                                 <!-- Name -->

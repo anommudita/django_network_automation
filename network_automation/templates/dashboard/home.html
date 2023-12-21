@@ -199,7 +199,7 @@
                         </div>
                         <div class="card-body">
                             <div id="createClusterForm">
-                                <form action="/createcluster" id="createCluster" method="post">
+                                <form action="{% url 'createcluster' %}" id="createCluster" method="post">
                                     {% csrf_token %}
                                     <!-- Common Fields -->
                                     <!-- ... -->
@@ -536,7 +536,7 @@
     function ambilDataTerbaru() {
         // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
         // Pastikan URL endpoint yang sesuai
-        fetch('/data_api?action=view_data_cluster_resources')
+        fetch('data_api?action=view_data_cluster_resources')
             .then(response => response.json())
             .then(data => {
                 // Perbarui elemen HTML dengan data terbaru
@@ -562,7 +562,7 @@
     function ambilLogTerbaru() {
         // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
         // Pastikan URL endpoint yang sesuai
-        fetch('/data_api?action=view_data_cluster_log')
+        fetch('data_api?action=view_data_cluster_log')
             .then(response => response.json())
             .then(data => {
                 // Dapatkan elemen <tbody> untuk memasukkan baris baru
