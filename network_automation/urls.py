@@ -150,5 +150,32 @@ urlpatterns = [
     # route config_by_user
     path('config_by_user', views.config_by_user, name="config_by_user"),
 
+    # package price
+    path('package_price', views.package_price, name="package_price"),
+
+    # route add package price
+    path('add-package-price', views.addPackagePrice, name="add-package-price"),
+
+    # route delete package price
+    path('delete-package-price/<str:id_package_price>', views.deletePackagePrice, name="delete-package-price"), 
+
+    # route edit package price
+    path('edit-package-price/<str:id>', views.updatePackagePrice, name="edit-package-price"),
+
+
+    # users all
+    path('users_all', views.users_all, name="users_all"),
+
+    # route add user client
+    path('add-user-client', views.addUserClient, name="add-user-client"),
+
+    # route delete user client
+    path('delete-user-client/<str:id_user>', views.deleteUserClient, name="delete-user-client"), 
+
+    # route active user client
+    path('active-user-client/<str:id_user>', views.activeUserClient, name="active-user-client"),
+
+    # route edit user client
+    path('edit-user-client/<str:id_user>', views.updateUserClient, name="edit-user-client"),
 
 ]

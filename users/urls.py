@@ -19,7 +19,7 @@ urlpatterns = [
     path('dashboard', views.dashboard, name='dashboard'),
 
     # route halaman profile user
-    path('user_profile/<str:username>/<str:id>', views.user_profile, name='user_profile'),
+    path('user_profile/<str:username>/<str:id>/', views.user_profile, name='user_profile'),
 
     # route halaman edit profile user
     path('user_profile/settings', views.edit_user_profile, name='edit_user_profile'),

@@ -3,7 +3,7 @@
     <div class="row mb-5">
 
         <!-- Paket A -->
-        <div class="col-xl-4 col-md-6 mb-4">
+        <!-- <div class="col-xl-4 col-md-6 mb-4">
             <h2 class="text-danger">Paket A</h2>
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body d-flex">
@@ -36,10 +36,10 @@
                         </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Paket B -->
-        <div class="col-xl-4 col-md-6 mb-4">
+        <!-- <div class="col-xl-4 col-md-6 mb-4">
         <h2 class="text-primary">Paket B</h2>
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body d-flex">
@@ -72,59 +72,73 @@
                         </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Paket C -->
+        {% for row in package_price %}
         <div class="col-xl-4 col-md-6 mb-4">
-        <h2 class="text-success">Paket C</h2>
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body d-flex">
-                        <div class="align-self-center w-100">
-                            <table class="table mb-0">
-                                <tbody>
-                                    <p id="">Data akan ditampilkan di sini</p>
-                                    <tr>
-                                        <td>CPU</td>
-                                        <td class="text-end" id="cpu"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Memori</td>
-                                        <td class="text-end" id="memori"></td>
 
-                                    </tr>
-                                    <tr>
-                                        <td>Storage</td>
-                                        <td class="text-end" id="disk"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            {% if forloop.counter == 1 %}
+                <h2 class="text-danger">{{ row.nama_paket }}</h2>
+            {% elif forloop.counter == 2 %}
+                <h2 class="text-primary">{{ row.nama_paket }}</h2>
+            {% else %}
+                <h2 class="text-success">{{ row.nama_paket }}</h2>
+            {% endif %}
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body d-flex">
+                            <div class="align-self-center w-100">
+                                <table class="table mb-0">
+                                    <tbody>
+                                        <p id="">{{ row.keterangan }}</p>
+                                        <tr>
+                                            <td>CPU</td>
+                                            <td class="text-end" id="cpu">{{ row.cpu }} Core</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Memori</td>
+                                            <td class="text-end" id="memori">{{ row.ram }} GB</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Storage</td>
+                                            <td class="text-end" id="disk">{{ row.storage }} GB</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
 
-                            <div class=" pt-5">
-                                <div class="text-center">
-                                    <button class="btn btn-success"><h1 class="text-white">Rp.150.000</h1></button>
+                                <div class=" pt-5">
+                                    <div class="text-center">
+                                        {% if forloop.counter == 1 %}
+                                            <button class="btn btn-danger"><h1 class="text-white">Rp.{{ row.harga }}</h1></button>
+                                        {% elif forloop.counter == 2 %}
+                                            <button class="btn btn-primary"><h1 class="text-white">Rp.{{ row.harga }}</h1></button>
+                                        {% else %}
+                                            <button class="btn btn-success"><h1 class="text-white">Rp.{{ row.harga }}</h1></button>
+                                        {% endif %}
+                                    </div>
                                 </div>
+                                
                             </div>
-                            
-                        </div>
+                    </div>
                 </div>
-            </div>
         </div>
+        {% endfor %}
+
     </div>
 
     <!-- tombol tambah -->
     <div class="col-lg-6 col-5 text-right mb-4">
         <a href="{% url 'user'%}" class="btn btn-primary fs-4">Pesanan</a>
-        <a href="{% url 'groups' %}"  class="btn btn-outline-success fs-4">Invoice</a>
     </div>
 
     <!-- flash message -->
     {% for message in messages %}
-    <div class="container-fluid p-0">
-        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="container-fluid p-0">
+            <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         </div>
-    </div>
     {% endfor %}
 
     <!-- table -->
@@ -133,37 +147,36 @@
         <!-- DataTales Example -->
             <div class="card flex-fill">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Data User</h5>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#addUser" class="btn btn-primary ml-auto">Tambah</a>
+                    <h5 class="card-title mb-0">Data Pesanan</h5>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#addPesanan" class="btn btn-primary ml-auto">Tambah</a>
                 </div>
                 <table class="table table-hover my-0" id="dataTable" style="width: 100%">
                     <thead>
                         <tr>
                             <th class="d-none d-xl-table-cell" scope="col" width="5%">No</th>
-                            <th class="d-none d-xl-table-cell" scope="col" width="25%">Name</th>
-                            <th scope="col" width="15%">Username</th>
-                            <th scope="col" width="20%">Email</th>
-                            <th scope="col" width="10%">Role</th>
-                            <!-- <th scope="col" width="15%">Groups</th> -->
+                            <th class="d-none d-xl-table-cell" scope="col" width="15%">Nama Paket</th>
+                            <th scope="col" width="10%">Core</th>
+                            <th scope="col" width="10%">RAM</th>
+                            <th scope="col" width="10%">Storage</th>
+                            <th scope="col" width="10%">OS</th>
+                            <th scope="col" width="10%">Username</th>
+                            <th scope="col" width="10%">Penyewaan</th>
                             <th scope="col" width="15%">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for row in users %}  
+                        {% for row in pesanan %}  
                             <tr>
                                 <td class="no_urut">{{ forloop.counter }}</td>
-                                <td>{{ row.firstname }} {{ row.lastname }}</td>
-                                <td>{{ row.userid }}</td>  
-                                <td>{{ row.email }}</td>
+                                <td>{{ row.harga_paket }}</td>
+                                <td>{{ row.cpu }} core</td>  
+                                <td>{{ row.ram }} GB</td>
+                                <td>{{ row.storage }} GB</td>
+                                <td>{{ row.os }}</td>
+                                <td>{{ row.username }}</td>
+                                <td>{{ row.perbulan }} Bulan</td>
                                 <td>
-                                    {% if row.userid == "root@pam" %}
-                                        @pam
-                                    {% else %}
-                                        @pve
-                                    {% endif %}
-                                </td>
-                                <!-- <td>{{ row.group }}</td>     -->
-                                <td>
+                                    <a href="#" class="btn btn-primary" data-id="{{row.userid}}">Invoice</a>
                                     <a href="#" class="btn btn-success btnEdit" data-id="{{row.userid}}">Edit</a>
                                     <a href="delete-user/{{ row.userid }}" class="btn btn-danger delete-user">Delete</a>
                                 </td>  
@@ -175,5 +188,159 @@
         </div>
     </div>
 
+
+    <!-- modalbox tambah -->
+        <div class="modal fade" id="addPesanan" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">Tambah Pesanan</h2>
+                            </div>
+                            <div class="card-body">
+                                <form action="{% url 'add-package-price'%}" id="addFormPackagePrice" method="post">
+                                    {% csrf_token %}
+
+                                    <!-- Paket -->
+                                    <label for="container_templated">Pilih Paket : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                        </div>
+
+                                        <select name="container_templated" class="form-control" id="pilih_paket">
+                                            <option value="">Pilih..</option>
+                                            {% for row in package_price %}
+                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <br>
+
+                                    <!-- CPU -->
+                                    <label for="cores">Cores : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="cpu" id="cpu" placeholder="Enter the number of CPUs" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- Ram -->
+                                    <label for="memory">RAM (GiB): </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="ram" id="ram" placeholder="Enter the number of RAM" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- Storage -->
+                                    <label for="disk_size">Storage (GiB): </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="storage" id="storage" placeholder="Enter Storage" type="number" autocomplete="off" value="">
+                                    </div>   
+                                    <br>
+
+                                    <!-- OS -->
+                                    <label for="memory">OS : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-money-bill fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="price" id="price" placeholder="Enter Package Price" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- username -->
+                                    <label for="container_templated">Username : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                        </div>
+
+                                        <select name="container_templated" class="form-control" id="pilih_paket">
+                                            <option value="">Pilih..</option>
+                                            {% for row in package_price %}
+                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <br>
+
+
+
+                                    <!-- password -->
+                                    <label for="container_templated">Password : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                        </div>
+
+                                        <select name="container_templated" class="form-control" id="pilih_paket">
+                                            <option value="">Pilih..</option>
+                                            {% for row in package_price %}
+                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <br>
+
+
+                                    <!-- penyewaan -->
+                                    <label for="container_templated">Penyewaan : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                        </div>
+
+                                        <select name="container_templated" class="form-control" id="pilih_paket">
+                                            <option value="">Pilih..</option>
+                                            {% for row in package_price %}
+                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <br>
+
+
+                                    <!-- Information -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="form-floating">
+                                                <textarea class="form-control" id="information" name="information"></textarea>
+                                                <label for="information">Information</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <br>
+                                    <div class="float-start">
+                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Tutup</button>
+                                        </div>
+                                        <div class="float-end">
+                                            <button type="submit" class="btn btn-primary " id="addButtonPackagePrice">Pesan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+    <!-- end modalbox tambah -->
 
 {% endblock content %}

@@ -1,0 +1,382 @@
+
+<!-- file dari config html -->
+{% extends 'main.html' %}
+
+<!-- load static -->
+{% load static %}
+
+<!-- wrapping content -->
+{% block content %}
+
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div class="row">
+        <div class="col">
+        <!-- DataTales Example -->
+            <div class="card flex-fill">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Data Package Price</h5>
+                    {% if packages > 0 and packages < 3 %}
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#addPrice" class="btn btn-primary ml-auto">Insert</a>
+                    {% else %}
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#addPrice" class="btn btn-primary ml-auto disabled">Insert</a>
+                    {% endif %}
+
+                </div>
+                <table class="table table-hover my-0" id="dataTable" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-xl-table-cell" scope="col" width="5%">No</th>
+                            <th class="d-none d-xl-table-cell" scope="col" width="15%">Package Name</th>
+                            <th scope="col" width="10%">CPU</th>
+                            <th scope="col" width="10%">Ram</th>
+                            <th scope="col" width="10%">Storage</th>
+                            <th scope="col" width="10%">Harga</th>
+                            <th scope="col" width="10%">Information</th>
+                            <th scope="col" width="15%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in package_price %}  
+                            <tr>
+                                <td class="no_urut">{{ forloop.counter }}</td>
+                                <td>{{ row.nama_paket }}</td>
+                                <td>{{ row.cpu }} Core</td>  
+                                <td>{{ row.ram }} GB</td>
+                                <td>{{ row.storage }} GB</td>
+                                <td>{{ row.harga }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#information{{row.id}}"><i class="fa fa-info"></i></a>
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-success btnEdit" data-id="{{row.id}}">Edit</a>
+                                    <a href="delete-package-price/{{ row.id }}" class="btn btn-danger delete-package-price">Delete</a>
+                                </td>  
+                            </tr>
+                        {% endfor %} 
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- modal detail package price -->
+        {% for row in package_price %}
+            <div class="modal fade" id="information{{row.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card bg-white border-0 mb-0">
+                                <div class="card-header bg-transparent">
+                                    <h2 class="card-heading text-center">Information</h2>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                    <textarea class="form-control" id="message-text" rows="12">{{row.keterangan}}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    <!-- end modal detail package price -->
+
+
+    <!-- modal box edit data -->
+    <div class="modal fade" id="editPackagePriceModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Edit Group</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="" id="editFormPackagePrice" method="post">
+                                {% csrf_token %}
+
+                                <input type="text" class="edit_id" hidden>
+
+                                <!-- Name Package -->
+                                <label for="cores">Name Package : </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_name_package" id="edit_name_package" placeholder="Enter Name Package" type="text" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- CPU -->
+                                <label for="cores">Cores : </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_cpu" id="edit_cpu" placeholder="Enter the number of CPUs" type="number" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Ram -->
+                                <label for="memory">RAM (GiB): </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_ram" id="edit_ram" placeholder="Enter the number of RAM" type="number" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Storage -->
+                                <label for="disk_size">Storage (GiB): </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_storage" id="edit_storage" placeholder="Enter Storage" type="number" autocomplete="off" value="">
+                                </div>   
+                                <br>
+
+                                <!-- Price -->
+                                <label for="memory">Price : </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-money-bill fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_price" id="edit_price" placeholder="Enter Package Price" type="number" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Information -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="form-floating">
+                                            <textarea class="form-control" id="edit_information" name="edit_information"></textarea>
+                                            <label for="information">Information</label>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-success" id="editButtonPackagePrice">Edit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    <!-- end modal box edit data -->
+
+
+
+    <!-- modalbox tambah -->
+    <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Add Package Price</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'add-package-price'%}" id="addFormPackagePrice" method="post">
+                                {% csrf_token %}
+
+                                <!-- Name Package -->
+                                <label for="cores">Name Package : </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="name_package" id="name_package" placeholder="Enter Name Package" type="text" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- CPU -->
+                                <label for="cores">Cores : </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="cpu" id="cpu" placeholder="Enter the number of CPUs" type="number" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Ram -->
+                                <label for="memory">RAM (GiB): </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="ram" id="ram" placeholder="Enter the number of RAM" type="number" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Storage -->
+                                <label for="disk_size">Storage (GiB): </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="storage" id="storage" placeholder="Enter Storage" type="number" autocomplete="off" value="">
+                                </div>   
+                                <br>
+
+                                <!-- Price -->
+                                <label for="memory">Price : </label>
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-money-bill fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="price" id="price" placeholder="Enter Package Price" type="number" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Information -->
+                                <div class="form-group mb-4">
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="form-floating">
+                                            <textarea class="form-control" id="information" name="information"></textarea>
+                                            <label for="information">Information</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                <br>
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-primary " id="addButtonPackagePrice">Insert</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    <!-- end modalbox tambah -->
+
+
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+
+    <!-- script merapikan data -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Mendapatkan semua baris tabel ke dalam array
+            var rows = $("tbody").find("tr").toArray();
+
+            // Mengurutkan baris berdasarkan data yang ingin Anda urutkan (misalnya, berdasarkan groupid)
+            rows.sort(function (a, b) {
+                var keyA = $(a).find(".d-none.d-xl-table-cell").eq(0).text();
+                var keyB = $(b).find(".d-none.d-xl-table-cell").eq(0).text();
+
+                return keyA.localeCompare(keyB);
+            });
+
+            // Mengganti urutan baris dalam tabel
+            $("tbody").empty();
+            for (var i = 0; i < rows.length; i++) {
+                $("tbody").append(rows[i]);
+                // Memperbarui nomor urut
+                $(rows[i]).find(".no_urut").text(i + 1);
+            }
+        });
+    </script>
+
+    <!-- scirpts ajax get data by group id -->
+    <script>
+        const myModal =  new bootstrap.Modal('#editPackagePriceModal')
+        $(document).ready(function($) {
+            $(document).on('click', '.btnEdit', function() {
+                var id = $(this).data('id');
+
+                $.ajax({
+                    method: 'GET',
+                    url: 'data_api?action=view_data_package_price',
+                    data: {
+                        id: id
+                    },
+                    success: function(res) {
+                        if (res.data) {
+                            var d = res.data;
+                            // console.log(d);
+                            $('#edit_name_package').val(d.name_package);
+                            $('#edit_cpu').val(d.cpu);
+                            $('#edit_ram').val(d.ram);
+                            $('#edit_storage').val(d.storage);
+                            $('#edit_price').val(d.price);
+                            $('#edit_information').val(d.information);
+                            $('.edit_id').val(id);
+
+                            
+                            
+                            myModal.show()
+                        }
+                    }
+                });
+            });
+        
+        });
+
+        //  edit data user
+        document.getElementById("editFormPackagePrice").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var id = document.querySelector('.edit_id').value;
+            var editForm = document.getElementById("editFormPackagePrice");
+            editForm.action = 'edit-package-price/' + id; // Change the action URL
+            editForm.submit(); // Submit the form
+        });
+    </script>
+
+
+    <!-- ketika mengirim form maka tombol tambah akan disable -->
+    <script>
+        document.getElementById("addFormPackagePrice").addEventListener("submit", function() {
+            document.getElementById("addButtonPackagePrice").disabled = true;
+        });
+    </script>
+
+    <!-- ketika mengirim form maka tombol edit akan disable --> 
+    <script>
+        document.getElementById("editFormPackagePrice").addEventListener("submit", function() {
+            document.getElementById("editButtonPackagePrice").disabled = true;
+        });
+    </script>
+
+
+{% endblock content %}
+
+

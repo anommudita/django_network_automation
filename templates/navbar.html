@@ -1,6 +1,6 @@
     <nav id="sidebar" class="sidebar js-sidebar">
         <div class="sidebar-content js-simplebar">
-            <a class="sidebar-brand" href="/">
+            <a class="sidebar-brand" href="{% url 'proxmox' %}">
                 <span class="align-middle">Cloud E-Ganesha</span>
             </a>
             <ul class="sidebar-nav">
@@ -42,21 +42,20 @@
                     </a>
                 </li>
 
-
                 <!-- users -->
                 <li class="sidebar-header">
                     MENU USERS
                 </li>
 
-                <li class="sidebar-item {{active_monitor}}">
-                    <a class="sidebar-link" href="{% url 'monitors'%}">
+                <li class="sidebar-item {{active_users}}">
+                    <a class="sidebar-link" href="{% url 'users_all'%}">
                     <i class="align-middle" data-feather="users"></i> <span class="align-middle">Users</span>
                     </a>
                 </li>
 
-                <li class="sidebar-item {{active_monitor}}">
-                    <a class="sidebar-link" href="{% url 'monitors'%}">
-                    <i class="align-middle" data-feather="dollar-sign"></i> <span class="align-middle">Order</span>
+                <li class="sidebar-item {{active_package}}">
+                    <a class="sidebar-link" href="{% url 'package_price'%}">
+                    <i class="align-middle" data-feather="dollar-sign"></i> <span class="align-middle">Package Price</span>
                     </a>
                 </li>
             </ul>

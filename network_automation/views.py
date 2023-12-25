@@ -25,6 +25,8 @@ from django.contrib.auth.decorators import login_required
 # time
 import time
 import datetime
+# import timezone
+from django.utils import timezone
 
 # auto refresh
 from django.http import HttpResponseRedirect
@@ -57,7 +59,10 @@ from pathlib import Path
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
+from users.models import Pesanan, HargaPaket
 
+# import group 
+from django.contrib.auth.models import Group
 
 from functools import wraps
 
@@ -212,6 +217,39 @@ def data_api(request):
                     'status': 'success',
                     'message': 'Data successfully retrieved',
                     'data': role
+                }
+                return JsonResponse(response)
+            case 'view_data_package_price':
+                id = request.GET.get('id')
+                package_price = HargaPaket.objects.get(id=id)
+                package_price_all = {
+                    'id': package_price.id,
+                    'name_package': package_price.nama_paket,
+                    'cpu': package_price.cpu,
+                    'ram': package_price.ram,
+                    'storage': package_price.storage,
+                    'price': package_price.harga,
+                    'information': package_price.keterangan,
+                }
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': package_price_all
+                }
+                return JsonResponse(response)
+            case 'view_data_user_client':
+                id = request.GET.get('id')
+                user_ = User.objects.get(id=id)
+                user = {
+                    'id': user_.id,
+                    'fullname': user_.first_name,
+                    'email': user_.email,
+                    'username': user_.username
+                }
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': user
                 }
                 return JsonResponse(response)
             case 'view_data_cluster_resources':
@@ -3391,5 +3429,289 @@ def settings(request):
     
 
 
+# package price 
+@admin_access_required
+def package_price(request):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        # package price
+        package_price = HargaPaket.objects.all()
+
+        packages = len(package_price)
+        
+        context = {
+        'title': 'Package Price',
+        'active_package': 'active',
+        'package_price': package_price,
+        'packages': packages,
+        }
+        return render(request, 'users/packages_price.html', context )
+    else:
+        return redirect(error_connection)
+    
+# add package price
+@admin_access_required
+def addPackagePrice(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            name_package = request.POST.get('name_package')
+            cpu = request.POST.get('cpu')
+            ram = request.POST.get('ram')
+            storage = request.POST.get('storage')
+            price = request.POST.get('price')
+            information = request.POST.get('information')
+
+            if not name_package or not cpu or not ram or not storage or not price :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('package_price')
+            
+            try:
+                # insert data to database
+                package_price = HargaPaket.objects.create(
+                    nama_paket=name_package,
+                    cpu=cpu,
+                    ram=ram,
+                    storage=storage,
+                    harga=price,
+                    keterangan=information
+                )
+
+                # save
+                package_price.save()
+                messages.success(request, "Package price added successfully")
+                return redirect('package_price')
+            except Exception as e:
+                messages.error(request, f"Error adding package price : {str(e)}")
+                return redirect('package_price')
+    else:
+        return redirect(error_connection)
 
 
+
+# delete package price
+@admin_access_required
+def deletePackagePrice(request, id_package_price):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # delete data to database
+            package_price = HargaPaket.objects.get(id=id_package_price)
+            package_price.delete()
+            time.sleep(1.5)
+            messages.success(request, "Package price deleted successfully")
+            return redirect('package_price')
+        except Exception as e:
+            messages.error(request, f"Error deleted package price : {str(e)}")
+            return redirect('package_price')
+    else:
+        return redirect(error_connection)
+    
+@admin_access_required
+def  updatePackagePrice(request, id):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            name_package = request.POST.get('edit_name_package')
+            cpu = request.POST.get('edit_cpu')
+            ram = request.POST.get('edit_ram')
+            storage = request.POST.get('edit_storage')
+            price = request.POST.get('edit_price')
+            information = request.POST.get('edit_information')
+
+            if not name_package or not cpu or not ram or not storage or not price :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('package_price')
+            
+            try:
+                # update data to database
+                package_price = HargaPaket.objects.get(id=id)
+                package_price.nama_paket = name_package
+                package_price.cpu = cpu
+                package_price.ram = ram
+                package_price.storage = storage
+                package_price.harga = price
+                package_price.keterangan = information
+
+                # save
+                package_price.save()
+                messages.success(request, "Package price updated successfully")
+                return redirect('package_price')
+            except Exception as e:
+                messages.error(request, f"Error updated package price : {str(e)}")
+                return redirect('package_price')
+    else:
+        return redirect(error_connection)
+    
+
+
+# package price 
+@admin_access_required
+def users_all(request):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        # get data user exclude superuser
+        users = User.objects.exclude(is_superuser=True)
+        
+        context = {
+        'title': 'Users Client',
+        'active_users': 'active',
+        'users': users,
+        }
+        return render(request, 'users/users.html', context )
+    else:
+        return redirect(error_connection)
+    
+
+# add package price
+@admin_access_required
+def addUserClient(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            fullname = request.POST.get('fullname')
+            email = request.POST.get('email')
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+
+            if not fullname or not email or not username or not password :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('users_all')
+            
+            # Check apakah username sudah ada dalam database
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "already used username. Please use another username.")
+                return redirect('users_all')
+        
+            if User.objects.filter(email=email).exists():
+                messages.error(request, "already used email. Please use another email.")
+                return redirect('users_all')
+
+            try:
+                # insert user data to database
+                user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                    email=email,
+                    first_name=fullname,
+                    is_active=False,
+                    date_joined=timezone.now()
+                )
+
+                # Mendapatkan atau membuat grup yang diinginkan (misalnya, 'Member')
+                group, created = Group.objects.get_or_create(name='user')
+
+                # Menambahkan user ke dalam grup yang diinginkan
+                group.user_set.add(user)
+            
+                # Simpan user
+                user.save()
+
+                messages.success(request, "User Client added successfully")
+                return redirect('users_all')
+            except Exception as e:
+                messages.error(request, f"Error adding user client : {str(e)}")
+                return redirect('users_all')
+    else:
+        return redirect(error_connection)
+
+
+# delete user client
+@admin_access_required
+def deleteUserClient(request, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # delete data user to database
+            user = User.objects.get(id=id_user)
+            user.delete()
+            time.sleep(1.5)
+            messages.success(request, "User Client deleted successfully")
+            return redirect('users_all')
+        except Exception as e:
+            messages.error(request, f"Error deleted user client : {str(e)}")
+            return redirect('users_all')
+    else:
+        return redirect(error_connection)
+    
+
+# actice user client
+@admin_access_required
+def activeUserClient(request, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # active data user to database
+            user = User.objects.get(id=id_user)
+            user.is_active = True
+            user.save()
+            time.sleep(1.5)
+            messages.success(request, "User Client activated successfully")
+            return redirect('users_all')
+        except Exception as e:
+            messages.error(request, f"Error activated user client : {str(e)}")
+            return redirect('users_all')
+    else:
+        return redirect(error_connection)
+    
+# update user client
+@admin_access_required
+def  updateUserClient(request, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            fullname = request.POST.get('edit_fullname')
+            email = request.POST.get('edit_email')
+            username = request.POST.get('edit_username')
+            password = request.POST.get('edit_password')
+
+            if not fullname or not email or not username:
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('users_all')
+            
+            try:
+                if password == "":
+                    # update data to database
+                    user = User.objects.get(id=id_user)
+                    user.first_name = fullname
+                    user.email = email
+                    user.username = username
+
+                    # save
+                    user.save()
+                    messages.success(request, "User Client updated successfully")
+                    return redirect('users_all')
+                else:
+
+                    # hash password
+                    hashed_password = make_password(password)
+
+                    # update data to database
+                    user = User.objects.get(id=id_user)
+                    user.first_name = fullname
+                    user.email = email
+                    user.username = username
+                    user.password = hashed_password
+
+                    # save
+                    user.save()
+                    messages.success(request, "User Client updated successfully")
+                    return redirect('users_all')
+            except Exception as e:
+                messages.error(request, f"Error updated user client : {str(e)}")
+                return redirect('users_all')
+    else:
+        return redirect(error_connection)

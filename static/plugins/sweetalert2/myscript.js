@@ -876,6 +876,93 @@ $('.notif-install-ovs').on('click', function (e) {
 });
 
 
+// delete  network
+$('.delete-package-price').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this package price?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove Package!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove!',
+                'Success delete package price',
+                'success'
+            )
+        }
+    })
+});
+
+
+// delete  user client
+$('.delete-user-client').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this user client?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove User!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove!',
+                'Success delete user client',
+                'success'
+            )
+        }
+    })
+});
+
+$('.active-user-client').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to active this user client?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Active User!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Activated!',
+                'Success actived user client',
+                'success'
+            )
+        }
+    })
+});
+
 
 
 // $('.notif').on('click', function(e){

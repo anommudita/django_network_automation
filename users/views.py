@@ -15,7 +15,7 @@ from django.template.loader import render_to_string
 # from users .forms import UserClientForm
 
 # import model apps users
-# from users .models import UserClient
+from users .models import Pesanan, HargaPaket
 
 # import model user django
 from django.contrib.auth.models import User
@@ -177,10 +177,19 @@ def dashboard(request):
     email = logged_in_user.email
     id = logged_in_user.id
 
+    # package price
+    package_price = HargaPaket.objects.all()
+
+    # get data pesanan by user id
+    pesanan = Pesanan.objects.filter(user_id=id)
+
     context = {
         'username': username,
         'email': email,
         'id': id,
+        'active_dashboard': 'active',
+        'package_price': package_price,
+        'pesanan' : pesanan,
     }
 
     # return HttpResponse("About page")
