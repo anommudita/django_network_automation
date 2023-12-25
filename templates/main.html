@@ -7,9 +7,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Automation</title>
+    <title>Cloud E-Ganesha</title>
     <link rel="preconnect" href="https://fonts.gstatic.com">
-	<link rel="shortcut icon" href="{% static 'img/icons/icon-48x48.png' %}" />
+	<link rel="shortcut icon" href="{% static 'img/photos/logo_undiksha.png' %}" />
 
 	<link href="{% static 'css/app.css' %}" rel="stylesheet">
     <link href="{% static 'css/loading.css' %}" rel="stylesheet">
@@ -99,8 +99,137 @@
         <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
 
         <!-- Multi Select2 -->
-        <!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        
+        <!-- start script select2 user-role -->
+        <script>
+            $(document).ready(function() {
+                
+                // Inisialisasi Select2 setelah modal terbuka
+                $('#addRole').on('shown.bs.modal', function () {
+                    $('#privileges').select2({
+                        placeholder: "Select Privileges",
+                        allowClear: true
+                    });
+                });
+
+                // Inisialisasi Select2 pada elemen dengan id "edit_privileges"
+                $('#editRoleModal').on('shown.bs.modal', function () {
+                    $('#edit_privileges').select2({
+                        placeholder: "Select Privileges",
+                        allowClear: true
+                    });
+                });
+
+                //  tanpa render namun tampilan kecil
+                // $('#privileges').select2({
+                //     placeholder: "Select Privileges",
+                //     allowClear: true
+                // });
+
+                // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
+                $('#addFormRole').submit(function() {
+                    // Ambil nilai yang dipilih dari Select2
+                    var selectedValues = $('#privileges').val();
+                    
+                    // Ubah nilai menjadi string dengan koma
+                    var privilegesString = selectedValues.join(',');
+
+                    // Assign nilai sebagai nilai dari input dengan name "privileges"
+                    $('input[name="privileges"]').val(privilegesString);
+                });
+                
+                });
+
+        </script>
+
+        <script>
+            const myModal = new bootstrap.Modal('#editRoleModal');
+            $(document).ready(function($) {
+                // Inisialisasi elemen Select2
+                $('#edit_privileges').select2();
+
+                $(document).on('click', '.btnEdit', function() {
+                    var id = $(this).data('id');
+
+                    $.ajax({
+                        method: 'GET',
+                        url: 'data_api?action=view_data_role',
+                        data: {
+                            id: id
+                        },
+                        success: function(res) {
+                            $('#edit_name').val(id);
+                            $('.edit_id').val(id);
+                            if (res.data) {
+                                var d = res.data;
+
+                                // Mengambil data izin dari respons
+                                var privileges = JSON.stringify(d);
+
+                                // Menghapus ":1" dari setiap data
+                                privileges = privileges.replace(/":1/g, '');
+
+                                // Menghapus tanda kutip ganda awal dan akhir
+                                privileges = privileges.replace(/"/g, '');
+
+                                // Menghapus tanda kurung kurawal "{" dan "}"
+                                privileges = privileges.substring(1, privileges.length - 1);
+
+                                // Mengatur nilai dari edit_privileges
+                                $('#edit_privileges').val(privileges.split(',')).trigger('change');
+
+                                // Membuka modal setelah Select2 diperbarui
+                                myModal.show();
+                            }
+                        }
+                    });
+                });
+            });
+
+
+
+            // menampilkan option pilihan melalui edit_privileges diselect 2
+            
+
+
+            // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
+            $('#editFormRole').submit(function() {
+                // Ambil nilai yang dipilih dari Select2
+                var selectedValues = $('#edit_privileges').val();
+                
+                // Ubah nilai menjadi string dengan koma
+                var privilegesString = selectedValues.join(',');
+
+                // Assign nilai sebagai nilai dari input dengan name "privileges"
+                $('input[name="edit_privileges"]').val(privilegesString);
+            });
+
+            
+            // menonaktifkan Select2 pada elemen dengan id "privileges" setelah modal tambah ditutup
+            $('#addRole').on('hidden.bs.modal', function () {
+                $('#privileges').select2('destroy');
+            });
+
+            // menonaktifkan Select2 pada elemen dengan id "edit_privileges" setelah modal edit ditutup
+            $('#editRoleModal').on('hidden.bs.modal', function () {
+                $('#edit_privileges').select2('destroy');
+            });
+
+            //  edit data role
+            document.getElementById("editFormRole").addEventListener("submit", function(event) {
+                event.preventDefault(); // Prevent the default form submission
+                var id = document.querySelector('.edit_id').value;
+                var editForm = document.getElementById("editFormRole");
+                editForm.action = 'edit-role/' + id; // Change the action URL
+                editForm.submit(); // Submit the form
+            });
+
+
+        </script>
+        <!--  end script select2 user-role -->
 
         <!-- plugin datatable -->
         <script src="{% static 'plugins/datatable/datatables.js' %}"></script>

@@ -16,6 +16,9 @@ from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
 
+# apps users 
+# from users.apps import UsersConfig
+
 MESSAGE_TAGS = {
         messages.DEBUG: 'alert-secondary',
         messages.INFO: 'alert-info',
@@ -43,6 +46,9 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+
+SITE_ID = 1
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -51,9 +57,36 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django.contrib.auth.decorators', # import auth decorator
+
     # define app network_automation
     'network_automation.apps.NetworkAutomationConfig',
+
+    # define user
+    'users.apps.UsersConfig',
+
+    # google akun login
+    # 'django.contrib.sites',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.google',
+
+    # django verify email
+    # "verify_email.apps.VerifyEmailConfig",
 ]
+
+
+# google akun login
+SOCIALACCOUNT_PROVIDERS = {
+    "google" : {
+        "SCOPE" : [
+            "profile",
+            "email"
+        ],
+        "AUTH_PARAMS": {"access_type" : "online"}
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,6 +96,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    # google akun login
+    # "allauth.account.middleware.AccountMiddleware"
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -161,3 +197,36 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# menambahkan kolom di user model 
+# AUTH_USER_MODEL = 'users.CustomUser'
+
+
+
+
+# base url
+BASE_URL = 'http://127.0.0.1:8000/'
+
+
+# autentikasi login menggunakan google
+# AUTHENTICATION_BACKENDS = (
+#     'django.contrib.auth.backends.ModelBackend',
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# )
+
+# # login menggunakan google
+# LOGIN_REDIRECT_URL = '/'
+# ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+
+# email verify django
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('bagus.anom@undiksha.ac.id') 
+# EMAIL_HOST_PASSWORD = os.environ.get('Singaraja')
+
+
+

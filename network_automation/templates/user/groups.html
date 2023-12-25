@@ -50,7 +50,7 @@
                         <td class="d-none d-xl-table-cell">{{ row.users }}</td>
                         <td>
                             <a href="#" class="btn btn-success btnEdit" data-id="{{row.groupid}}">Edit</a>
-                            <a href="/delete-group/{{ row.groupid }}" class="btn btn-danger delete-group">Delete</a>
+                            <a href="delete-group/{{ row.groupid }}" class="btn btn-danger delete-group">Delete</a>
                         </td>  
                     </tr>
                     {% endfor %} 
@@ -119,7 +119,7 @@
                             <h2 class="card-heading text-center">Add Group</h2>
                         </div>
                         <div class="card-body">
-                            <form action="/addgroup" id="addFormGroup" method="post">
+                            <form action="{% url 'addgroup'%}" id="addFormGroup" method="post">
                                 {% csrf_token %}
 
                                 <!-- Name-->
@@ -202,7 +202,7 @@
 
                 $.ajax({
                     method: 'GET',
-                    url: '/data_api?action=view_data_group',
+                    url: 'data_api?action=view_data_group',
                     data: {
                         id: id
                     },
@@ -226,7 +226,7 @@
             event.preventDefault(); // Prevent the default form submission
             var id = document.querySelector('.edit_id').value;
             var editForm = document.getElementById("editFormGroup");
-            editForm.action = '/edit-group/' + id; // Change the action URL
+            editForm.action = 'edit-group/' + id; // Change the action URL
             editForm.submit(); // Submit the form
         });
     </script>

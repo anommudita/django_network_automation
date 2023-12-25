@@ -5,15 +5,17 @@
 
 <!-- main konten -->
     <!-- flash message -->
-        {% for message in messages %}
-        <div class="container-fluid p-0">
+    {% for message in messages %}
+    <div class="container-fluid p-0">
 
-            <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        {% endfor %}
+    </div>
+    {% endfor %}
+
+    
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
@@ -26,16 +28,16 @@
 
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
             {% if ceph == 'N/A' %}
-                <li><a href="/detail-node/{{id_node}}/install-ceph" class="dropdown-item install-ceph">Ceph</a></li>
+                <li><a href="detail-node/{{id_node}}/install-ceph" class="dropdown-item install-ceph">Ceph</a></li>
             {% else %}
                 <li><button type="button" class="dropdown-item" disabled>Ceph Already Instal</button></li>
             {% endif %}
-            <li><a href="/detail-node/{{id_node}}/install-iptables" class="dropdown-item">Iptables-persistent</a></li>
+            <li><a href="detail-node/{{id_node}}/install-iptables" class="dropdown-item">Iptables-persistent</a></li>
         </ul>
 
         <div class="ms-auto">
             <a class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#portforwarding">Port Forwarding</a>
-            <a href="/node-network/{{id_node}}" class="btn btn-success mr-2">Add Network</a>
+            <a href="{% url 'node-network' id_node=id_node %}" class="btn btn-success mr-2">Add Network</a>
             <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContainer" data-modal="addContainer">Add Container</a>
             <a class="btn btn-primary ml-2" data-bs-toggle="modal" data-bs-target="#addVirtualMachine" data-modal="addVirtualMachine">Add Virtual Machine</a>
         </div>
@@ -1383,10 +1385,11 @@
                 textCenterDiv.classList.add('text-center', 'mt-3');
                 cardRow.appendChild(textCenterDiv);
 
+                const baseUrl = ""
                 const buttons = [
-                    { label: 'Start', href: `/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success me-2 start-container' },
-                    { label: 'Reboot', href: `/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary me-2 reboot-container' },
-                    { label: 'Stop', href: `/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning me-2 stop-container' },
+                    { label: 'Start', href: `{{ settings.BASE_URL }}/proxmox/start-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-success me-2 start-container' },
+                    { label: 'Reboot', href: `{{ settings.BASE_URL }}/proxmox/reboot-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-primary me-2 reboot-container' },
+                    { label: 'Stop', href: `{{ settings.BASE_URL }}/proxmox/stop-container/${idNode}/${ctData.container_vmid}`, class: 'btn btn-warning me-2 stop-container' },
                     // { label: 'Remove', href: `/remove-container/${ctData.container_vmid}`, class: 'btn btn-danger mt-5 text remove-container' }
                 ];
 
@@ -1406,7 +1409,7 @@
                 cardRow.appendChild(removeDiv);
 
                 const removeLink = document.createElement('a');
-                removeLink.setAttribute('href', `/remove-container/${idNode}/${ctData.container_vmid}`);
+                removeLink.setAttribute('href', `{{ settings.BASE_URL }}/proxmox/remove-container/${idNode}/${ctData.container_vmid}`);
                 removeLink.classList.add('btn', 'btn-danger', 'mt-3', 'text', 'remove-container');
                 removeLink.textContent = 'Remove';
                 removeDiv.appendChild(removeLink);
@@ -1419,7 +1422,7 @@
                 const idNodeInput = document.querySelector('.id_node'); // Ambil elemen input dengan class 'id_node'
                 idNode = idNodeInput.value; // Ambil nilai dari input
     
-                fetch(`/data_api?action=view_data_ct_resources&id_node=${idNode}`, {
+                fetch(`{{ settings.BASE_URL }}/proxmox/data_api?action=view_data_ct_resources&id_node=${idNode}`, {
                     method: 'GET',
                 })
                 .then(response => response.json())
@@ -1474,8 +1477,8 @@
 
                 const vmName = document.createElement('h5');
                 vmName.classList.add('card-title', 'mb-0', 'pb-2');
-                vmName.textContent = vmData.vm_name + ' - ' + vmData.vm_vmid;
-                cardHeader.appendChild(vmName);
+                vmName.textContent = vmData.vm_name + ' - ' +vmData.vm_vmid;
+                cardHeader.appendChild(vmName); 
 
                 const vmStatus = document.createElement('span');
                 vmStatus.classList.add('badge', vmData.container_status === "running" ? 'bg-success' : 'bg-danger');
@@ -1537,9 +1540,9 @@
                 cardRow.appendChild(textCenterDiv);
 
                 const buttons = [
-                    { label: 'Start', href: `/start-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success me-1 start-virtual_machine') },
-                    {label: 'Reboot', href: `/reboot-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary me-1 reboot-virtual_machine') },
-                    { label: 'Stop', href: `/stop-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning me-1 stop-virtual_machine') },
+                    { label: 'Start', href: `{{ settings.BASE_URL }}/proxmox/start-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-success me-1 start-virtual_machine') },
+                    {label: 'Reboot', href: `{{ settings.BASE_URL }}/proxmox/reboot-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-primary me-1 reboot-virtual_machine') },
+                    { label: 'Stop', href: `{{ settings.BASE_URL }}/proxmox/stop-virtual_machine/${idNode}/${vmData.vm_vmid}`, class: ('btn btn-warning me-1 stop-virtual_machine') },
                     // { label: 'Remove', href: `/remove-container/${vmData.container_vmid}`, class: ('btn', 'btn-danger', 'mt-3', 'text', 'remove-container') }
                 ];
 
@@ -1556,7 +1559,7 @@
                 cardRow.appendChild(removeDiv);
 
                 const removeLink = document.createElement('a');
-                removeLink.setAttribute('href', `/remove-virtual_machine//${idNode}/${vmData.vm_vmid}`);
+                removeLink.setAttribute('href', `{{ settings.BASE_URL }}/proxmox/remove-virtual-machine/${idNode}/${vmData.vm_vmid}`);
                 removeLink.classList.add('btn', 'btn-danger', 'mt-3', 'text', 'remove-virtual_machine');
                 removeLink.textContent = 'Remove';
                 removeDiv.appendChild(removeLink);
@@ -1566,7 +1569,7 @@
 
         function ambilDataVmTerbaru() {
 
-            fetch(`/data_api?action=view_data_vm_resources&id_node=${idNode}`, {
+            fetch(`{{ settings.BASE_URL }}/proxmox/data_api?action=view_data_vm_resources&id_node=${idNode}`, {
                 method: 'GET',
             })
             .then(response => response.json())

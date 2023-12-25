@@ -32,6 +32,7 @@
             <div class="card flex-fill">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Data Network</h5>
+                    {{ data }}
                     <!-- dropdown -->
                         <div class="dropdown">
                             <!-- apply configuration -->
@@ -46,9 +47,18 @@
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#LinuxBridge" data-modal="LinuxBridge">Linux Bridge</a></li>
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#LinuxBond" data-modal="LinuxBond">Linux Bond</a></li>
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#LinuxVlan" data-modal="LinuxVlan">Linux VLAN</a></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addOVSBridge">OVS Bridge</a></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addOVSBond">OVS Bond</a></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addOVSIntPort">OVS IntPort</a></li>
+                                
+                                {% if disable == "" %}
+                                    <li><a href="{% url 'install-ovs' id_node=id_node %}" class="dropdown-item bg-danger text-white disable notif-install-ovs">Install OVS</a></li>
+                                {% endif %}
+
+                                {% if disable != "" %}
+                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#OVSBridge">OVS Bridge</a></li>
+                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#OVSBond">OVS Bond</a></li>
+                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#OVSIntPort">OVS IntPort</a></li>
+                                {% endif %}
+
+
                             </ul>
                         </div>
                 </div>
@@ -99,14 +109,14 @@
                                         {% endif %}
                                     </td>  
     
-                                    <td>{{row.bridge_ports}}{{row.slaves}}</td>
+                                    <td>{{row.bridge_ports}}{{row.slaves}}{{row.ovs_ports}}</td>
     
                                     <td>{{ row.address }}</td> 
                                     <td>{{ row.cidr }}</td>
                                     <td>{{ row.gateway }}</td> 
                                     <td>
-                                        <a href="#" class="btn btn-success btnEdit" data-iface="{{row.iface}}" data-type="{{row.type}}" data-id_node="{{id_node}}">Edit</a>
-                                        <a href="/delete-network/{{ row.iface }}/{{id_node}}" class="btn btn-danger delete-network">Delete</a>
+                                        <a href="#" class="btn btn-success btnEdit disabled" data-iface="{{row.iface}}" data-type="{{row.type}}" data-id_node="{{id_node}}">Edit</a>
+                                        <a href="{% url 'delete-network' row.iface id_node%}" class="btn btn-danger delete-network">Delete</a>
                                     </td>  
                                 </tr>
                             {% endfor %} 
@@ -116,7 +126,6 @@
             </div>
         </div>
     </div>
-
 
 
 
@@ -477,7 +486,337 @@
                 </div>
         </div>
         </div>
-    <!-- endmodal tambah linux bond -->
+    <!-- endmodal tambah linux vlan -->
+
+
+
+    {% if disable != "" %}
+        <!-- modalbox tambah OVS Bridge -->
+            <div class="modal fade" id="OVSBridge" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card bg-white border-0 mb-0">
+                                <div class="card-header bg-transparent">
+                                    <h2 class="card-heading text-center">OVS Bridge</h2>
+                                </div>
+
+                                <!-- circles -->
+                                <div style="text-align:center;margin-top:40px;">
+                                    <span class="step-OVSBridge"></span>
+                                    <span class="step-OVSBridge"></span>
+                                </div>
+
+                                <!-- card body -->
+                                <div class="card-body">
+                                    <form action="{% url 'add-ovs-bridge' id_node=id_node %}" id="formOVSBridge" method="post">
+                                        {% csrf_token %}
+
+                                        <!-- Tab 1 -->
+                                        <div class="form-group mb-4 tab tab-OVSBridge">
+                                            <!-- name interface -->
+                                            <label for="name_ovs_bridge">Name Interface : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="name_ovs_bridge" id="name_ovs_bridge" placeholder="Enter Name Your Interface" type="text" autocomplete="off" >
+                                            </div>
+                                            <br>
+
+                                            <!-- IPv4/CIDR -->
+                                            <div class="form-group">
+                                                <label for="ipv4_ovs_bridge">IPv4 CIDR : </label>
+                                                <div class="input-group input-group-merge input-group-alternative">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">IPv4</span>
+                                                    </div>
+                                                    <input class="form-control" name="ipv4_ovs_bridge" id="ipv4_ovs_bridge" placeholder="Enter IP Address V4" type="text" autocomplete="off" value="">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text">/</span>
+                                                    </div>
+                                                    <input class="form-control" name="netmask_ovs_bridge" id="netmask_ovs_bridge" placeholder="Netmask" type="text" autocomplete="off" value="">
+                                                </div>
+                                            </div>
+
+                                            <br>
+                                            <!-- Gateaway CIDR4 -->
+                                            <label for="gateway_ovs_bridge">Gateaway (IPv4) : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="gateway_ovs_bridge" id="gateway_ovs_bridge" placeholder="Enter Gateaway IPv4" type="text" autocomplete="off">
+                                            </div>
+
+                                            <br>
+                                        </div>
+
+                                        <!-- Tab 2 -->
+                                        <div class="form-group mb-4 tab tab-OVSBridge">
+
+                                            <!-- Auto Start -->
+                                            <div class="form-group mb-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="1" id="autoStartOVSBridge" name="autoStartOVSBridge" checked>
+                                                    <label class="form-check-label" for="autoStarOVSBridge">
+                                                        Auto Start
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- Bridge Ports -->
+                                            <label for="bridge_ports">Bridge Ports : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="bridge_ports" id="bridge_ports" placeholder="Enter Bridge Ports" type="text" autocomplete="off" value="">
+                                            </div>
+                                            <br>
+
+                                            <!-- OVS Options -->
+                                            <label for="ovs_options">OVS Options : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="ovs_options" id="ovs_options" placeholder="Enter OVS Options" type="text" autocomplete="off">
+                                            </div>
+                                        </div>
+
+                                        <div style="overflow:auto;">
+                                            <div style="float:right;">
+                                            <button class="btn btn-primary" type="button" id="prevBtn_OVSBridge" onclick="nextPrev(-1, 'OVSBridge')">Previous</button>
+                                            <button class="btn btn-success" type="button" id="nextBtn_OVSBridge" onclick="nextPrev(1, 'OVSBridge')">Next</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            </div>
+        <!-- endmodal tambah OVS Bridge -->
+
+        <!-- modalbox tambah OVS Bond -->
+            <div class="modal fade" id="OVSBond" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card bg-white border-0 mb-0">
+                                <div class="card-header bg-transparent">
+                                    <h2 class="card-heading text-center">OVS Bond</h2>
+                                </div>
+
+                                <!-- circles -->
+                                <div style="text-align:center;margin-top:40px;">
+                                    <span class="step-OVSBond"></span>
+                                    <span class="step-OVSBond"></span>
+                                </div>
+
+                                <!-- card body -->
+                                <div class="card-body">
+                                    <form action="{% url 'add-ovs-bond' id_node=id_node %}" id="formOVSBond" method="post">
+                                        {% csrf_token %}
+
+                                        <!-- Tab 1 -->
+                                        <div class="form-group mb-4 tab tab-OVSBond">
+
+                                            <!-- name interface -->
+                                            <label for="name_ovs_bond">Name Interface : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="name_ovs_bond" id="name_ovs_bond" placeholder="Enter Name Your Interface" type="text" autocomplete="off" >
+                                            </div>
+                                            <br>
+
+                                            <!-- mode ovs bond-->
+                                            <label for="mode_ovs_bond">Mode : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <select name="mode_ovs_bond" class="form-control" id="mode_ovs_bond">
+                                                    <option value="active-backup" selected>active-backup</option>
+                                                    <option value="balance-slb">balance-slb</option>
+                                                    <option value="lacp-balance-slb">LACP (balance-slb)</option>
+                                                    <option value="lacp-balance-tcp">LACP (balance-tcp)</option>
+                                                </select>
+                                            </div>
+
+                                            <br>
+
+                                            <!-- Slave -->
+                                            <label for="slave_ovs_bond">Slave : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="slave_ovs_bond" id="slave_ovs_bond" placeholder="Enter Slave" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+
+                                        <!-- Tab 2 -->
+                                        <div class="form-group mb-4 tab tab-OVSBond">
+
+                                            <!-- OVS Bridge -->
+                                            <label for="ovs_bridge_bond">OVS Bridge : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <select name="ovs_bridge_bond" class="form-control" id="ovs_bridge_bond">
+
+                                                    {% for row in ovs_bridge %}
+                                                        <option value="{{ row.iface }}">{{ row.iface }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <br>
+
+                                            <!-- Vlan Tag -->
+                                            <label for="vlan_tag_ovs_bond">Vlan Tag : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="vlan_tag_ovs_bond" id="vlan_tag_ovs_bond" placeholder="Enter Vlan Tag" type="text" autocomplete="off" value="">
+                                            </div>
+                                            <br>
+
+                                            <!-- OVS Options -->
+                                            <label for="ovs_options_bond">OVS Options : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" name="ovs_options_bond" id="ovs_options_bond" placeholder="Enter OVS Options" type="text" autocomplete="off">
+                                            </div>
+                                        </div>
+
+                                        <div style="overflow:auto;">
+                                            <div style="float:right;">
+                                            <button class="btn btn-primary" type="button" id="prevBtn_OVSBond" onclick="nextPrev(-1, 'OVSBond')">Previous</button>
+                                            <button class="btn btn-success" type="button" id="nextBtn_OVSBond" onclick="nextPrev(1, 'OVSBond')">Next</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            </div>
+        <!-- endmodal tambah OVS Bond -->
+
+        <!-- modalbox tambah OVS IntPort -->
+            <div class="modal fade" id="OVSIntPort" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">OVS IntPort</h2>
+                            </div>
+
+                            <!-- circles -->
+                            <div style="text-align:center;margin-top:40px;">
+                                <span class="step-OVSIntPort"></span>
+                                <span class="step-OVSIntPort"></span>
+                            </div>
+
+                            <!-- card body -->
+                            <div class="card-body">
+                                <form action="{% url 'add-ovs-intport' id_node=id_node %}" id="formOVSIntPort" method="post">
+                                    {% csrf_token %}
+
+                                    <!-- Tab 1 -->
+                                    <div class="form-group mb-4 tab tab-OVSIntPort">
+                                        
+                                        <!-- name interface -->
+                                        <label for="name_ovs_intport">Name Interface : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            </div>
+                                            <input class="form-control" name="name_ovs_intport" id="name_ovs_intport" placeholder="Enter Name Your Interface" type="text" autocomplete="off" >
+                                        </div>
+                                        <br>
+
+                                        <!-- IPv4/CIDR -->
+                                        <div class="form-group">
+                                            <label for="ipv4_ovs_bridge">IPv4 CIDR : </label>
+                                            <div class="input-group input-group-merge input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">IPv4</span>
+                                                </div>
+                                                <input class="form-control" name="ipv4_ovs_intport" id="ipv4_ovs_intport" placeholder="Enter IP Address V4" type="text" autocomplete="off" value="">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text">/</span>
+                                                </div>
+                                                <input class="form-control" name="netmask_ovs_intport" id="netmask_ovs_intport" placeholder="Netmask" type="text" autocomplete="off" value="">
+                                            </div>
+                                        </div>
+
+                                        <br>
+                                        <!-- Gateaway CIDR4 -->
+                                        <label for="gateway_ovs_intport">Gateaway (IPv4) : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            </div>
+                                            <input class="form-control" name="gateway_ovs_intport" id="gateway_ovs_intport" placeholder="Enter Gateaway IPv4" type="text" autocomplete="off">
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Tab 2 -->
+                                    <div class="form-group mb-4 tab tab-OVSIntPort">
+
+                                        <!-- OVS Bridge -->
+                                        <label for="ovs_bridge_ovs_intport">OVS Bridge : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <select name="ovs_bridge_ovs_intport" class="form-control" id="ovs_bridge_ovs_intport">
+
+                                                {% for row in ovs_bridge %}
+                                                    <option value="{{ row.iface }}">{{ row.iface }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <br>
+
+                                        <!-- Vlan Tag -->
+                                        <label for="vlan_tag_ovs_intport">Vlan Tag : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            </div>
+                                            <input class="form-control" name="vlan_tag_ovs_intport" id="vlan_tag_ovs_intport" placeholder="Enter Vlan Tag" type="text" autocomplete="off" value="">
+                                        </div>
+                                        <br>
+
+                                        <!-- OVS Options -->
+                                        <label for="ovs_options_ovs_intport">OVS Options : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            </div>
+                                            <input class="form-control" name="ovs_options_ovs_intport" id="ovs_options_ovs_intport" placeholder="Enter OVS Options" type="text" autocomplete="off">
+                                        </div>
+
+                                    </div>
+
+                                    <div style="overflow:auto;">
+                                        <div style="float:right;">
+                                        <button class="btn btn-primary" type="button" id="prevBtn_OVSIntPort" onclick="nextPrev(-1, 'OVSIntPort')">Previous</button>
+                                        <button class="btn btn-success" type="button" id="nextBtn_OVSIntPort" onclick="nextPrev(1, 'OVSIntPort')">Next</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+    <!-- endmodal tambah OVS IntPort -->
+    {% endif %}
 
 
     <!-- sweetalert2 -->
@@ -553,134 +892,160 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- script multistep -->
-        <script>
-            var currentTab = {
-                LinuxBridge: 0,
-                LinuxBond: 0,
-                LinuxVlan: 0
-            };
+    <script>
+        var currentTab = {
+            LinuxBridge: 0,
+            LinuxBond: 0,
+            LinuxVlan: 0,
+            OVSBridge : 0, 
+            OVSBond : 0,
+            OVSIntPort : 0,
+        };
 
-            window.onload = function () {
+        window.onload = function () {
 
-                // start linux bridge
-                var modalName = "LinuxBridge";
-                if(modalName === "LinuxBridge"){
-                    showTab(0, modalName); // Tampilkan tab awal saat halaman dimuat
-                    var prevBtn = document.getElementById("prevBtn_" + modalName);
-                    prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
-                }
-
-                // start linux bond
-                var modalName2 = "LinuxBond";
-                if(modalName2 === "LinuxBond"){
-                    showTab(0, modalName2); // Tampilkan tab awal saat halaman dimuat
-                    var prevBtn = document.getElementById("prevBtn_" + modalName2);
-                    prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
-                }
-
-
-                 // start linux vlan
-                var modalName3 = "LinuxVlan";
-                if(modalName3 === "LinuxVlan"){
-                    showTab(0, modalName3); // Tampilkan tab awal saat halaman dimuat
-                    var prevBtn = document.getElementById("prevBtn_" + modalName3);
-                    prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
-                }
-            };
-
-            function showTab(n, modalName) {
-                // This function will display the specified tab of the form...
-                var x = document.getElementsByClassName("tab-" + modalName);
-
-                // console.log("var x = "+ x);
-                x[n].style.display = "block";
-
+            // start linux bridge
+            var modalName = "LinuxBridge";
+            if(modalName === "LinuxBridge"){
+                showTab(0, modalName); // Tampilkan tab awal saat halaman dimuat
                 var prevBtn = document.getElementById("prevBtn_" + modalName);
-                var nextBtn = document.getElementById("nextBtn_" + modalName);
+                prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
+            }
 
-                // ... and fix the Previous/Next buttons:
-                if (n == 0) {
-                    var prevBtn = document.getElementById("prevBtn_" + modalName);
-                    prevBtn.style.display = "none";
-                } else {
-                    prevBtn.style.display = "inline";
+            // start linux bond
+            var modalName2 = "LinuxBond";
+            if(modalName2 === "LinuxBond"){
+                showTab(0, modalName2); // Tampilkan tab awal saat halaman dimuat
+                var prevBtn = document.getElementById("prevBtn_" + modalName2);
+                prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
+            }
+
+                // start linux vlan
+            var modalName3 = "LinuxVlan";
+            if(modalName3 === "LinuxVlan"){
+                showTab(0, modalName3); // Tampilkan tab awal saat halaman dimuat
+                var prevBtn = document.getElementById("prevBtn_" + modalName3);
+                prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
+            }
+
+
+            // start OVS Bridge
+            var modalName4 = "OVSBridge";
+            if(modalName4 === "OVSBridge"){
+                showTab(0, modalName4); // Tampilkan tab awal saat halaman dimuat
+                var prevBtn = document.getElementById("prevBtn_" + modalName4);
+                prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
+            }
+
+            // start OVS Bridge
+            var modalName5 = "OVSBond";
+            if(modalName5 === "OVSBond"){
+                showTab(0, modalName5); // Tampilkan tab awal saat halaman dimuat
+                var prevBtn = document.getElementById("prevBtn_" + modalName5);
+                prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
+            }
+
+            // start OVS Int
+            var modalName6 = "OVSIntPort";
+            if(modalName6 === "OVSIntPort"){
+                showTab(0, modalName6); // Tampilkan tab awal saat halaman dimuat
+                var prevBtn = document.getElementById("prevBtn_" + modalName6);
+                prevBtn.style.display = "none"; // Sembunyikan tombol "Previous" pada tab pertama
+            }
+        };
+
+        function showTab(n, modalName) {
+            // This function will display the specified tab of the form...
+            var x = document.getElementsByClassName("tab-" + modalName);
+
+            // console.log("var x = "+ x);
+            x[n].style.display = "block";
+
+            var prevBtn = document.getElementById("prevBtn_" + modalName);
+            var nextBtn = document.getElementById("nextBtn_" + modalName);
+
+            // ... and fix the Previous/Next buttons:
+            if (n == 0) {
+                var prevBtn = document.getElementById("prevBtn_" + modalName);
+                prevBtn.style.display = "none";
+            } else {
+                prevBtn.style.display = "inline";
+            }
+            
+            if (n == (x.length - 1)) {
+                nextBtn.innerHTML = "Submit";
+            } else {
+                nextBtn.innerHTML = "Next";
+            }
+            // ... and run a function that will display the correct step indicator:
+            fixStepIndicator(n, modalName);
+        }
+
+        function nextPrev(n, modalName) {
+            // This function will figure out which tab to display
+            var x = document.getElementsByClassName("tab-" + modalName);
+
+            // Exit the function if any field in the current tab is invalid:
+            // if (n == 1 && !validateForm()) return false;
+
+            // Hide the current tab:
+            x[currentTab[modalName]].style.display = "none";
+
+            // Increase or decrease the current tab by 1:
+            currentTab[modalName] = currentTab[modalName] + n;
+
+            // if you have reached the end of the form...
+            if (currentTab[modalName] >= x.length) {
+                // ... the form gets submitted:
+                var formId = "form" + modalName; 
+                document.getElementById(formId).submit();
+
+                // Optional: Close the modal after submit
+                var modal = document.getElementById(modalName);
+                if (modal) {
+                    modal.style.display = "none";
                 }
                 
-                if (n == (x.length - 1)) {
-                    nextBtn.innerHTML = "Submit";
-                } else {
-                    nextBtn.innerHTML = "Next";
-                }
-                // ... and run a function that will display the correct step indicator:
-                fixStepIndicator(n, modalName);
+                return false;
             }
+            // Otherwise, display the correct tab:
+            showTab(currentTab[modalName], modalName);
+        }
 
-            function nextPrev(n, modalName) {
-                // This function will figure out which tab to display
-                var x = document.getElementsByClassName("tab-" + modalName);
+        function validateForm(modalName) {
+            // This function deals with the validation of the form fields
+            var x, y, i, valid = true;
+            x = document.getElementsByClassName("tab-"+ modalName);
+            y = x[currentTab[modalName]].getElementsByTagName("input");
 
-                // Exit the function if any field in the current tab is invalid:
-                // if (n == 1 && !validateForm()) return false;
 
-                // Hide the current tab:
-                x[currentTab[modalName]].style.display = "none";
-
-                // Increase or decrease the current tab by 1:
-                currentTab[modalName] = currentTab[modalName] + n;
-
-                // if you have reached the end of the form...
-                if (currentTab[modalName] >= x.length) {
-                    // ... the form gets submitted:
-                    var formId = "form" + modalName; 
-                    document.getElementById(formId).submit();
-
-                    // Optional: Close the modal after submit
-                    var modal = document.getElementById(modalName);
-                    if (modal) {
-                        modal.style.display = "none";
-                    }
-                    
-                    return false;
+            // A loop that checks every input field in the current tab:
+            for (i = 0; i < y.length; i++) {
+                // If a field is empty...
+                if (y[i].value == "") {
+                    // add an "invalid" class to the field:
+                    y[i].className += " invalid";
+                    // and set the current valid status to false
+                    valid = false;
                 }
-                // Otherwise, display the correct tab:
-                showTab(currentTab[modalName], modalName);
             }
-
-            function validateForm(modalName) {
-                // This function deals with the validation of the form fields
-                var x, y, i, valid = true;
-                x = document.getElementsByClassName("tab-"+ modalName);
-                y = x[currentTab[modalName]].getElementsByTagName("input");
-
-
-                // A loop that checks every input field in the current tab:
-                for (i = 0; i < y.length; i++) {
-                    // If a field is empty...
-                    if (y[i].value == "") {
-                        // add an "invalid" class to the field:
-                        y[i].className += " invalid";
-                        // and set the current valid status to false
-                        valid = false;
-                    }
-                }
-                // If the valid status is true, mark the step as finished and valid:
-                if (valid) {
-                    document.getElementsByClassName("step")[currentTab[modalName]].className += " finish";
-                }
-                return valid; // return the valid status
+            // If the valid status is true, mark the step as finished and valid:
+            if (valid) {
+                document.getElementsByClassName("step")[currentTab[modalName]].className += " finish";
             }
+            return valid; // return the valid status
+        }
 
-            function fixStepIndicator(n, modalName) {
-                // This function removes the "active" class of all steps...
-                var i, x = document.getElementsByClassName("step-"+ modalName);
-                for (i = 0; i < x.length; i++) {
-                    x[i].className = x[i].className.replace(" active", "");
-                }
-                //... and adds the "active" class to the current step:
-                x[n].className += " active";
+        function fixStepIndicator(n, modalName) {
+            // This function removes the "active" class of all steps...
+            var i, x = document.getElementsByClassName("step-"+ modalName);
+            for (i = 0; i < x.length; i++) {
+                x[i].className = x[i].className.replace(" active", "");
             }
-        </script>
-
+            //... and adds the "active" class to the current step:
+            x[n].className += " active";
+        }
+    </script>
     <!-- <script>
         const myModal =  new bootstrap.Modal('#editLinuxBridge')
         $(document).ready(function($) {

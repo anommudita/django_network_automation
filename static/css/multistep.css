@@ -118,7 +118,6 @@ input.invalid {
     background-color: #04AA6D;
 }
 
-
 .tab-LinuxBond {
     display: none;
 }
@@ -171,5 +170,92 @@ input.invalid {
 
 /* Mark the steps that are finished and valid: */
 .step-LinuxVlan.finish {
+    background-color: #04AA6D;
+}
+
+
+
+.tab-OVSBridge {
+    display: none;
+}
+
+/* network add OVSBridge */
+/* Make circles that indicate the steps of the form: */
+.step-OVSBridge {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-OVSBridge.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-OVSBridge.finish {
+    background-color: #04AA6D;
+}
+
+
+
+
+.tab-OVSBond {
+    display: none;
+}
+
+/* network add OVSBond */
+/* Make circles that indicate the steps of the form: */
+.step-OVSBond {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-OVSBond.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-OVSBond.finish {
+    background-color: #04AA6D;
+}
+
+
+.tab-OVSIntPort {
+    display: none;
+}
+
+/* network add OVSBond */
+/* Make circles that indicate the steps of the form: */
+.step-OVSIntPort {
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbbbbb;
+    border: none;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.5;
+}
+
+/* Mark the active step: */
+.step-OVSIntPort.active {
+    opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step-OVSIntPort.finish {
     background-color: #04AA6D;
 }

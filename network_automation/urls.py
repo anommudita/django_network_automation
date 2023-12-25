@@ -1,15 +1,14 @@
 from django.urls import path
 
-from . import views
+from network_automation import views
 
 urlpatterns = [
     # route login dan login
-    path('login', views.login, name="login"),
+    path('login/', views.login, name="login"),
     path('logout', views.logout, name="logout"),
 
-
     # halaman utama dan dashboard
-    path('', views.home, name="home"),
+    path('', views.home, name="proxmox"),
     path('createcluster', views.createCluster, name="createcluster"),
     path('joincluster', views.joinCluster, name="joincluster"),
 
@@ -19,13 +18,11 @@ urlpatterns = [
     # route data api
     path('data_api', views.data_api, name="data_api"),
 
-
     # route user
     path('user', views.user, name="user"),
     path('adduser', views.addUser, name="adduser"),
     path('edit-user/<str:id>', views.updateUser, name="edit-user"),
     path('delete-user/<str:userid>', views.deleteUser, name="delete-user"),
-
 
     # route groups
     path('groups', views.groups, name="groups"),
@@ -77,6 +74,9 @@ urlpatterns = [
     # route node network
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
 
+    # route install ovs node
+    path('install-ovs/<str:id_node>', views.install_ovs_switch, name="install-ovs"),
+
     #  route add network linux bridge
     path('add-linux-bridge/<str:id_node>', views.addLinuxBridge, name="add-linux-bridge"),
 
@@ -85,14 +85,21 @@ urlpatterns = [
 
     #  route add network linux Vlan
     path('add-linux-vlan/<str:id_node>', views.addLinuxVlan, name="add-linux-vlan"),
-    
 
+    #  route add network ovs bridge
+    path('add-ovs-bridge/<str:id_node>', views.addOVSBridge, name="add-ovs-bridge"),
+
+    #  route add network ovs bond
+    path('add-ovs-bond/<str:id_node>', views.addOVSBond, name="add-ovs-bond"),
+
+    #  route add network ovs intport
+    path('add-ovs-intport/<str:id_node>', views.addOVSIntPort, name="add-ovs-intport"),
+    
     # route network apply
     path('apply-network/<str:id_node>', views.NetworkApply, name="apply-network"),
     
     # route delete network
     path('delete-network/<str:iface>/<str:id_node>', views.deleteNetwork, name="delete-network"),
-
 
     # route add container
     path('add-container/<str:id_node>', views.addContainer, name="add-container"),
@@ -106,7 +113,6 @@ urlpatterns = [
     path('stop-container/<str:id_node>/<str:vmid>', views.stopContainer, name="stop-container"),
     # route reboot container 
     path('reboot-container/<str:id_node>/<str:vmid>', views.rebootContainer, name="reboot-container"),
-
 
     # route add virtual_machine
     path('add-virtual-machine/<str:id_node>', views.addVirtualMachine, name="add-virtual-machine"), 
@@ -127,7 +133,6 @@ urlpatterns = [
     # route cluster
     path('clusters', views.clusters, name="clusters"),
 
-
     # route monitoring
     path('monitors', views.monitors, name="monitors"),
 
@@ -138,13 +143,13 @@ urlpatterns = [
     # route update-image
     path('image-update', views.updateImage, name="image-update"),
 
-
     # route settings
     path('settings', views.settings, name="settings"),
 
 
     # route config
-    path('config', views.config, name="config"),
+    path('config/', views.config, name="config"),
+    
     # route config_by_user
     path('config_by_user', views.config_by_user, name="config_by_user"),
 

@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
 
-
 # import data user untuk panel admin
 from django.contrib.auth.models import User
 # import model dari models.py
@@ -13,9 +12,7 @@ from django.http import HttpResponse
 # from network_automation.forms import ServerForm
 from .forms import ServerForm, UpdateProfileAvatar, UpdateProfile, UpdateUserProfile
 
-
 from django.contrib.auth.hashers import make_password  # Import fungsi make_password
-
 
 # import authenticate untuk login
 from django.contrib.auth import authenticate , login, logout
@@ -23,19 +20,16 @@ from django.contrib.auth import authenticate , login, logout
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 
-
 from django.contrib.auth.decorators import login_required
 
 # time
 import time
 import datetime
 
-# import enum
-from enum import Enum
-
 # auto refresh
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+
 # import enum
 from enum import Enum
 
@@ -46,9 +40,7 @@ from django.urls import reverse
 # get response json
 from django.http import JsonResponse
 
-
 import json
-
 # import request dan jsonRespon untuk API promoxer
 # import requests
 
@@ -64,16 +56,39 @@ import os
 from pathlib import Path
 from django.shortcuts import render, redirect
 from django.contrib import messages
+
+
+
+from functools import wraps
+
+
+# Fungsi untuk mengecek apakah pengguna termasuk dalam grup 'user'
+def is_user(admin):
+    return admin.groups.filter(name='admin').exists() #mengembalikan nilai True jika pengguna termasuk dalam grup 'admin'
+
+# Decorator untuk memeriksa akses pengguna ke halaman
+def admin_access_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Silakan login untuk mengakses halaman ini.")
+            return redirect('login')
+        elif not is_user(request.user):
+            messages.error(request, "Akses ditolak. Anda tidak memiliki izin untuk halaman ini.")
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 # Create your views here.
-
-
 
 # function error conect to proxmoxer
 def error_connection(request):
     return render(request, 'error.html')
 
-def get_proxmox():
 
+# @admin_access_required
+def get_proxmox():
     # get data server
     server = Server.objects.get(id=1)
     username = server.username
@@ -92,11 +107,10 @@ def get_proxmox():
         print(e)
         return None
     
+# @admin_access_required
 def get_proxmox_paramiko():
-
     # get data server
     server = Server.objects.get(id=1)
-
     try:
         # setting datauser proxmox
         host = server.ip_address
@@ -116,8 +130,9 @@ def get_proxmox_paramiko():
         print(e)
         return None
     
-def get_exec_paramiko():
 
+# @admin_access_required
+def get_exec_paramiko():
     # get data server
     server = Server.objects.get(id=1)
     
@@ -137,6 +152,7 @@ def get_exec_paramiko():
         return None
 
 
+# @admin_access_required
 def get_shell_paramiko():
 
     # get data server
@@ -161,11 +177,11 @@ def get_shell_paramiko():
         return None
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # API Data AJAX
 def data_api(request):
     action = request.GET.get('action')
-
     try:
         match action:
             case 'view_data_group':
@@ -549,8 +565,6 @@ def data_api(request):
 
 # halamn login
 def login(request):
-    
-
     # mengambil data dari form login
     if request.method == "POST":
         username = request.POST.get('username')
@@ -565,7 +579,7 @@ def login(request):
             # mencari data user lalu dibandingkan dengan username dan password
             user = User.objects.get(username=username)
         except:
-            # messages.error(request, 'User does not exist')
+            messages.error(request, 'User does not exist')
             pass
 
         # ketika berhasil login 
@@ -578,7 +592,7 @@ def login(request):
             # akan mencatat session database dan session di browser
             # ketika berhasil login akan diarahkan ke halaman home
             auth_login(request, user)
-            return redirect('home')
+            return redirect('/proxmox')
         else:
             # login gagal
             # akan menampilkan pesan error
@@ -589,6 +603,9 @@ def login(request):
             # return render(request, 'login.html')
     
 def logout(request):
+    # jika tidak ada session di browser
+    if not request.user.is_authenticated:
+        return redirect('error_connection')
 
     # menghapus session di browser
     auth_logout(request)
@@ -596,8 +613,9 @@ def logout(request):
 
     messages.success(request, "Successfully logged out")
     
-    return redirect('login')
+    return redirect('/proxmox/login')
 
+@admin_access_required
 # halaman config
 def config(request):
     # data by id
@@ -612,7 +630,7 @@ def config(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Server updated successfully")
-            return redirect('home')
+            return redirect('/proxmox')
         else:
             # ketika form tidak valid atau kosong
             messages.error(request, "Make sure all fields are valid")
@@ -624,6 +642,7 @@ def config(request):
     return render(request, 'config.html', context)
 
 
+@admin_access_required
 # halaman config by user
 def config_by_user(request):
     # data by id
@@ -638,15 +657,15 @@ def config_by_user(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Server updated successfully")
-            return redirect('home')
+            return redirect('/proxmox')
         else:
             # ketika form tidak valid atau kosong
             messages.error(request, "Make sure all fields are valid")
             return redirect('settings')
     
 
-
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def home(request):
     proxmox = get_proxmox()
 
@@ -715,7 +734,8 @@ def home(request):
         return redirect('error_connection')
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add user
 def createCluster(request):
     # connect to proxmox
@@ -752,7 +772,8 @@ def createCluster(request):
             return redirect('home')
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add user
 def joinCluster(request):
     # connect to proxmox
@@ -793,11 +814,12 @@ def joinCluster(request):
             return redirect('home')
         
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 #  halaman user
 def  user(request):
 
-    proxmox = get_proxmox()
+    proxmox = get_proxmox() 
 
     if proxmox is not None:
         # user
@@ -820,7 +842,8 @@ def  user(request):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add user
 def  addUser(request):
     # connect to proxmox
@@ -847,9 +870,9 @@ def  addUser(request):
             return redirect('user')
     
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def  updateUser(request, id):
-
     proxmox = get_proxmox()
 
     if request.method == "POST":
@@ -877,10 +900,10 @@ def  updateUser(request, id):
             return redirect('user')      
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 #  delete user
 def deleteUser(request, userid):
-
     proxmox = get_proxmox()
     proxmox.access.users(userid).delete()
     # user = User.objects.get(id=id)
@@ -889,10 +912,10 @@ def deleteUser(request, userid):
     return redirect('user')
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 #  halaman groups
 def  groups(request):
-
     proxmox = get_proxmox()
     if proxmox is not None :
         groups = proxmox.access.groups.get()
@@ -907,7 +930,8 @@ def  groups(request):
         return redirect('error_connection')
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add groups
 def  addGroup(request):
     # connect to proxmox
@@ -931,12 +955,11 @@ def  addGroup(request):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # updateGroup
 def  updateGroup(request, groupid):
-    
     proxmox = get_proxmox()
-
     if request.method == "POST":
         comment = request.POST.get('edit_comment')
 
@@ -954,7 +977,8 @@ def  updateGroup(request, groupid):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # delete group
 def deleteGroup(request, groupid):
     # connect to proxmox
@@ -970,12 +994,11 @@ def deleteGroup(request, groupid):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 #  halaman permissions
 def  permissions(request):
-
     proxmox = get_proxmox()
-
     if proxmox is not None :
         # acl
         permissions = proxmox.access.acl.get()
@@ -1012,7 +1035,8 @@ def  permissions(request):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add permissions group
 def addPermissionGroup(request):
     # connect to proxmox
@@ -1042,7 +1066,8 @@ def addPermissionGroup(request):
         
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add permissions User
 def addPermissionUser(request):
     # connect to proxmox
@@ -1072,6 +1097,7 @@ def addPermissionUser(request):
 
 
 # add permissions API
+@admin_access_required
 def addPermissionAPI(request):
     # connect to proxmox
     proxmox = get_proxmox()
@@ -1101,7 +1127,8 @@ def addPermissionAPI(request):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # delete permission
 def deletePermissions(request, path, roles, type, ugid):
 
@@ -1124,17 +1151,14 @@ def deletePermissions(request, path, roles, type, ugid):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 #  roles
 def roles(request):
-
     proxmox = get_proxmox()
-
     if proxmox is not None :
         roles = proxmox.access.roles.get()
-
         privs = []
-
         # menampilkan data select option dari data list roles
         for item in roles:
             if item['roleid'] == 'Administrator':
@@ -1153,7 +1177,8 @@ def roles(request):
 
     
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # add roles
 def addRole(request):
 # connect to proxmox
@@ -1180,7 +1205,8 @@ def addRole(request):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # update roles 
 def  updateRole(request, roleid):
     
@@ -1206,10 +1232,10 @@ def  updateRole(request, roleid):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # delete role
 def deleteRole(request, roleid):
-
     # connect to proxmox
     proxmox = get_proxmox()
     try :
@@ -1221,14 +1247,12 @@ def deleteRole(request, roleid):
         return redirect('roles')
 
 
-
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman node
 def nodes(request):
-    
     proxmox = get_proxmox()
-
     if proxmox is not None :
         nodes = proxmox.nodes.get()
 
@@ -1303,7 +1327,6 @@ def deleteNode(request, id_node):
     proxmox = get_proxmox()
     # time.sleep(1.5)
     
-
     if proxmox is not None :
         try:
             # Fetch cluster status
@@ -1468,7 +1491,8 @@ def deleteNode(request, id_node):
         return('error_connection')
 
 # install ceph 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def installCephCluster(request):
     server = Server.objects.get(id=1)
     proxmox = get_proxmox()
@@ -1553,44 +1577,115 @@ def netmask_to_prefix(netmask):
     return netmask_str
 
 
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+def install_ovs_switch(request, id_node):
+    id_node = id_node
+    proxmox = get_proxmox()
+
+    if proxmox is not None:
+        try:
+            server = Server.objects.get(id=1)
+
+            host = server.ip_address
+            username = server.username
+            password = server.password
+
+            client = paramiko.client.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host, username=username, password=password)
+            _stdin, _stdout, _stderr = client.exec_command("apt install openvswitch-switch -y")
+            exit_status = _stdout.channel.recv_exit_status()  # Mengambil exit status dari perintah
+
+            client.close()
+            if exit_status == 0:
+                messages.success(request, "Success install OVS Switch")
+            else:
+                messages.error(request, "Failed to install OVS Switch")
+
+            
+        except Server.DoesNotExist:
+            # Tangani jika Server dengan id=1 tidak ditemukan
+            messages.error(request, "Server not found")
+            return redirect('node-network', id_node)
+        except Exception as e:
+            # Tangani kesalahan saat koneksi atau eksekusi perintah SSH
+            messages.error(request, f"Error install OVS : {str(e)}")
+            
+        return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+    
+
 
 # network node
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def networkNode(request, id_node):
+    id_node = id_node
     proxmox = get_proxmox()
+
     if proxmox is not None:
+        try:
+            server = Server.objects.get(id=1)
 
-        # id node
-        id_node = id_node
+            host = server.ip_address
+            username = server.username
+            password = server.password
 
+            client = paramiko.client.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host, username=username, password=password)
+            _stdin, _stdout, _stderr = client.exec_command("ovs-vsctl --version")
+            data = _stdout.read().decode()
 
-        # get network by id 
-        # pvesh get /nodes/{node}/network/{iface}
-        # network1 = proxmox.nodes(id_node).network('bond1').get()
+            # messages.success(request, data)
+            if data == '':
+                disableInstallOVS = ""
+            else:
+                disableInstallOVS = "disabled"
+            client.close()
+        except Server.DoesNotExist:
+            # Tangani jika Server dengan id=1 tidak ditemukan
+            messages.error(request, "Server not found")
+            return redirect('node-network', id_node)
+        except Exception as e:
+            # Tangani kesalahan saat koneksi atau eksekusi perintah SSH
+            print(f"Error: {e}")
 
-        # get_data = {
-        #                 "iface" : name,
-        #                 "type" : "bridge",
-        # }
-
-        # network1 = proxmox.nodes(id_node).network.get(**get_data)
-
-        # get network
+        # Ambil data jaringan
         network = proxmox.nodes(id_node).network.get()
-        
+
+        # OVS Type Network bridge
+        ovs_bridge = []
+
+        for item in network:
+            if item['type'] == 'OVSBridge':
+                iface = item['iface']
+
+                ovs_bridge.append({
+                    'iface': iface,
+                })
+
         context = {
             'title': 'Network',
             'active_node': 'active',
             'network': network,
             'id_node': id_node,
+            'ovs_bridge': ovs_bridge,
+            'disable': disableInstallOVS,
         }
-        return render(request, 'node/network.html', context )
+        return render(request, 'node/network.html', context)
     else:
         # Redirect ke halaman eror jika koneksi gagal
         return redirect('error_connection')
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # delete group
 def NetworkApply(request, id_node):
     # connect to proxmox
@@ -1605,7 +1700,8 @@ def NetworkApply(request, id_node):
         return redirect('node-network', id_node)
 
 # network node
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def addLinuxBridge(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
@@ -1683,7 +1779,8 @@ def addLinuxBridge(request, id_node):
     
 
 # network mode linux bond
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def addLinuxBond(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
@@ -1923,7 +2020,8 @@ def addLinuxBond(request, id_node):
     
 
 # network mode linux vlan
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def addLinuxVlan(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
@@ -1934,7 +2032,6 @@ def addLinuxVlan(request, id_node):
             ipv4 = request.POST.get('ipv4_vlan')
             netmask = request.POST.get('netmask_vlan')
             gateway = request.POST.get('gateway_vlan')
-
 
             # vlan
             vlan_raw_device = request.POST.get('vlan_raw_device')
@@ -2000,10 +2097,240 @@ def addLinuxVlan(request, id_node):
         return redirect('error_connection')
     
 
+# network mode OVS Bridge
+# @login_required(login_url='login')
+@admin_access_required
+def addOVSBridge(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_ovs_bridge')
+            ipv4 = request.POST.get('ipv4_ovs_bridge')
+            netmask = request.POST.get('netmask_ovs_bridge')
+            gateway = request.POST.get('gateway_ovs_bridge')
 
+            # ovs bridge
+            bridgePorts = request.POST.get('bridge_ports')
+            ovsOptions = request.POST.get('ovs_options')
+            
+            # ketika autostar di centang atau default-nya 1
+            if 'autoStartOVSBridge' in request.POST:
+                autostart = 1
+            else:
+                autostart = 0
+
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            if name :
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBridge",
+                    "bridge_ports" : bridgePorts,
+                    "ovs_options" : ovsOptions,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "autostart"  : autostart,
+                    }
+
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBridge",
+                    "bridge_ports" : bridgePorts,
+                    "ovs_options" : ovsOptions,
+                    "address":ipv4,
+                    "netmask" : desimal_to_netmask,
+                    "gateway" : gateway,
+                    "autostart"  : autostart,
+                    }
+                    
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSBridge",
+                        "bridge_ports" : bridgePorts,
+                        "ovs_options" : ovsOptions,
+                        "autostart"  : autostart,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network OVS Bridge added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+
+# network mode OVS Bond
+# @login_required(login_url='login')
+@admin_access_required
+def addOVSBond(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node   
+        if request.method == "POST":
+            name = request.POST.get('name_ovs_bond')
+            mode_bond = request.POST.get('mode_ovs_bond')
+            slaves = request.POST.get('slave_ovs_bond')
+            vlan_tag = request.POST.get('vlan_tag_ovs_bond')
+            # ovs bridge
+            ovs_bridge = request.POST.get('ovs_bridge_bond')
+            ovs_option = request.POST.get('ovs_options_bond')
+            
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            if name :
+                # ketika slave , vlan tag, OVS Options dikosongkan
+                if slaves =='' and vlan_tag =='' and ovs_option =='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    }
+
+                # ketika slave di isi
+                if slaves !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "slaves" : slaves,
+                    }
+
+                # ketika vlan di isi
+                if vlan_tag !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "ovs_tag" : vlan_tag,
+                    }
+
+                
+                # ketika vlan di isi
+                if ovs_option !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "ovs_options" : ovs_option,
+                    }
+
+                # ketika slave , vlan tag, OVS Options diisi
+                if slaves !='' and vlan_tag !='' and ovs_option !='':
+                    post_data = {
+                    "iface" : name,
+                    "type" : "OVSBond",
+                    "bond_mode" : mode_bond,
+                    "ovs_bridge" : ovs_bridge,
+                    "slaves" : slaves,
+                    "ovs_tag" : vlan_tag,
+                    "ovs_options" : ovs_option,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network OVS Bond added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
+# network mode OVS IntPort
+# @login_required(login_url='login')
+@admin_access_required
+def addOVSIntPort(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        # # id node                                                 
+        id_node = id_node
+        if request.method == "POST":
+            name = request.POST.get('name_ovs_intport')
+            ipv4 = request.POST.get('ipv4_ovs_intport')
+            netmask = request.POST.get('netmask_ovs_intport')
+            gateway = request.POST.get('gateway_ovs_intport')
+
+            # ovs bridge
+            OVSBridge = request.POST.get('ovs_bridge_ovs_intport')
+            vlan_tag = request.POST.get('vlan_tag_ovs_intport')
+            OVSOptions = request.POST.get('ovs_options_ovs_intport')
+            
+            if not name :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('node-network', id_node)
+            
+            if name :
+                # ketika ipv4 di isi
+                if ipv4 != '' and netmask != '':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSIntPort",
+                        "ovs_bridge" : OVSBridge,
+                        "ovs_tag" : vlan_tag,
+                        "ovs_options" : OVSOptions,
+                        "address":ipv4,
+                        "netmask" : desimal_to_netmask,
+                    }
+                # ketika ada gateway
+                if gateway !='':
+                    desimal_to_netmask = netmask_to_prefix(netmask)
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSIntPort",
+                        "ovs_bridge" : OVSBridge,
+                        "ovs_tag" : vlan_tag,
+                        "ovs_options" : OVSOptions,
+                        "address":ipv4,
+                        "netmask" : desimal_to_netmask,
+                        "gateway" : gateway,
+                    }
+                    
+                # ketika gateway kosong dan ipv4 kosong dan netmask kosong
+                if gateway == '' and ipv4 == '' and netmask == '' and vlan_tag =='':
+                    post_data = {
+                        "iface" : name,
+                        "type" : "OVSIntPort",
+                        "ovs_bridge" : OVSBridge,
+                        "ovs_options" : OVSOptions,
+                    }
+            try:
+                proxmox.nodes(id_node).network.post(**post_data)
+                messages.success(request, "Network OVS IntPort added successfully")
+                return redirect('node-network', id_node)
+            except Exception as e:
+                messages.error(request, f"Error adding network : {str(e)}")
+                return redirect('node-network', id_node)
+    else:
+        # Redirect ke halaman eror jika koneksi gagal
+        return redirect('error_connection')
+    
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # delete group
 def deleteNetwork(request, iface, id_node):
     # connect to proxmox
@@ -2018,8 +2345,8 @@ def deleteNetwork(request, iface, id_node):
         return redirect('node-network', id_node)
 
 
-
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman detail_node
 def detail_node(request, id_node):
     
@@ -2139,7 +2466,8 @@ def detail_node(request, id_node):
         return('error_connection')
 
 # install ceph 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def installCeph(request, id_node):
     shell, client= get_shell_paramiko()
     # time.sleep(1.5)
@@ -2185,7 +2513,8 @@ def installCeph(request, id_node):
         return('error_connection')
 
 # install iptables-persistance
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def installIptables(request, id_node):
     client = get_exec_paramiko()
     # time.sleep(1.5)
@@ -2205,7 +2534,8 @@ def installIptables(request, id_node):
 
 
 # reboot node 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def rebootNode(request, id_node):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2226,7 +2556,8 @@ def rebootNode(request, id_node):
     
 
 # reboot node 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def shutdownNode(request, id_node):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2246,7 +2577,8 @@ def shutdownNode(request, id_node):
         return('error_connection')
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # preroute
 def postRoute(request, id_node):
     # connect to proxmox via ssh
@@ -2310,7 +2642,8 @@ def preRoute(request, id_node):
             return redirect('detail-node', id_node)
 
 # add container 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def addContainer(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
@@ -2474,7 +2807,8 @@ def addContainer(request, id_node):
     
 
 # add virtual machine 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def addVirtualMachine(request, id_node):
     proxmox = get_proxmox()
     if proxmox is not None:
@@ -2579,9 +2913,7 @@ def addVirtualMachine(request, id_node):
                                 "bridge": bridge,
                                 "firewall" : firewall
                             }
-                
                 net0_str = f"{model_network},bridge={net_config['bridge']},firewall={net_config['firewall']}"
-
 
                 # ipconfig object
                 ip_address = ipv4 + '/' + netmask
@@ -2634,7 +2966,8 @@ def addVirtualMachine(request, id_node):
 
 
 # start container 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def startContainer(request, id_node, vmid):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2650,7 +2983,8 @@ def startContainer(request, id_node, vmid):
         return('error_connection')
     
 # stop container 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def stopContainer(request, id_node, vmid):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2666,7 +3000,8 @@ def stopContainer(request, id_node, vmid):
         return('error_connection')
 
 # reboot container
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def rebootContainer(request, id_node, vmid):
     proxmox = get_proxmox()
     time.sleep(1.5)
@@ -2682,7 +3017,8 @@ def rebootContainer(request, id_node, vmid):
         return('error_connection')
     
 # remove container
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def removeContainer(request, id_node, vmid):
     proxmox = get_proxmox()
     time.sleep(1.5)
@@ -2698,7 +3034,8 @@ def removeContainer(request, id_node, vmid):
         return('error_connection')
     
 # start virtual machine 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def startVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2714,7 +3051,8 @@ def startVirtualMachine(request, id_node, vmid):
         return('error_connection')
     
 # stop virtual machine
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def stopVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2730,7 +3068,8 @@ def stopVirtualMachine(request, id_node, vmid):
         return('error_connection')
 
 # reboot virtual machine
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def rebootVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
     # time.sleep(1.5)
@@ -2745,7 +3084,8 @@ def rebootVirtualMachine(request, id_node, vmid):
     else :
         return('error_connection')
 # remove container
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def removeVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
     time.sleep(1.5)
@@ -2759,7 +3099,10 @@ def removeVirtualMachine(request, id_node, vmid):
             return redirect('detail-node', id_node)
     else :
         return('error_connection')
-@login_required(login_url='login')
+    
+
+# @login_required(login_url='login')
+@admin_access_required
 # halaman detail_container
 def detail_container(request, id_node, vmid):
     proxmox = get_proxmox()
@@ -2836,7 +3179,8 @@ def detail_container(request, id_node, vmid):
         return('error_connection')
 
 # remove container
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 def removeVirtualMachine(request, id_node, vmid):
     proxmox = get_proxmox()
     time.sleep(1.5)
@@ -2851,7 +3195,8 @@ def removeVirtualMachine(request, id_node, vmid):
     else :
         return('error_connection')
 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman detail_container
 def detail_container(request, id_node, vmid):
     proxmox = get_proxmox()
@@ -2929,7 +3274,8 @@ def detail_container(request, id_node, vmid):
 
 
 # wajib login untuk mengakses halaman ini
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman clusters
 def clusters(request):
     
@@ -2958,7 +3304,8 @@ def clusters(request):
         return('error_connection')
 
 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman monitor
 def monitors(request):
     
@@ -2984,7 +3331,8 @@ def monitors(request):
         return('error_connection')
     
 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman profile
 def profile(request):
     
@@ -2999,7 +3347,8 @@ def profile(request):
         return('error_connection')
     
 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman profile
 def edit_profile(request):
     
@@ -3057,7 +3406,8 @@ def edit_profile(request):
         return('error_connection')
     
 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # update foto profile
 def updateImage(request):
 
@@ -3081,7 +3431,8 @@ def updateImage(request):
 
 
 
-@login_required(login_url='login')
+# @login_required(login_url='login')
+@admin_access_required
 # halaman settings
 def settings(request):
     

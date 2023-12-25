@@ -30,6 +30,39 @@ $('.logout-notif').on('click', function (e) {
 });
 
 
+// logout-notifikasi role user
+$('.logout-notif-user').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Apakah anda yakin',
+        text: "Ingin keluar dari Cloud E-Ganesha?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Logout'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Keluar!',
+                'Berhasil logout dari Cloud E-Ganesha',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+
 
 // tombol delete user
 $('.delete-user').on('click', function(e){
@@ -802,6 +835,39 @@ $('.network-apply').on('click', function (e) {
             Swal.fire(
                 'Network!',
                 'Success has been apply configuration',
+                'success'
+            )
+        }
+    })
+
+});
+
+
+
+// notif-install-ovs
+$('.notif-install-ovs').on('click', function (e) {
+
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to install OVS in this Node",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1CBB8C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Install'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Install OVS',
+                'Waiting for install OVS',
                 'success'
             )
         }

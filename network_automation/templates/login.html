@@ -8,13 +8,15 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="shortcut icon" href="{% static 'img/icons/icon-48x48.png' %}" />
+	<link rel="shortcut icon" href="{% static 'img/photos/logo_undiksha.png' %}" />
 	<link href="{% static 'css/app.css' %}" rel="stylesheet">
+	<link href="{% static 'css/loading.css' %}" rel="stylesheet">
 
-	<title>Login - Network Automation</title>
+	<title>Login - Cloud E-Ganesha</title>
 </head>
 
 <body>
+	
 	<main class="d-flex w-100">
 		<div class="container d-flex flex-column">
 			<div class="row vh-100">
@@ -27,7 +29,6 @@
 								Login to your account proxmox to monitoring server.
 							</p>
 						</div>
-
 
 						<!-- flash message -->
 						{% for message in messages %}
@@ -42,7 +43,7 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="m-sm-3">
-									<form method="POST" action="{% url 'login'%}">
+									<form method="POST" action="{{ settings.BASE_URL }}/proxmox/login/">
 										{% csrf_token %}
 										<div class="mb-3">
 											<label class="form-label">Username</label>
@@ -54,6 +55,7 @@
 										</div>
 										<div class="d-grid gap-2 mt-3">
 											<button class="btn btn-lg btn-primary" type="submit">login</button>
+										
 										</div>
 									</form>
 								</div>

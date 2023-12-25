@@ -1,0 +1,261 @@
+<!-- load static file -->
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud E-Ganesha</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="{% static 'img/photos/logo_undiksha.png' %}" />
+
+	<link href="{% static 'css/app.css' %}" rel="stylesheet">
+    <link href="{% static 'css/loading.css' %}" rel="stylesheet">
+    <link href="{% static 'css/multistep.css' %}" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- css bootstrap 5 -->
+    <!-- <link href="{% static 'bootstrap_5/css/bootstrap.css' %}" rel="stylesheet"> -->
+
+    <!-- JS Bootstrap 5 -->
+    <script src="{% static 'bootstrap_5/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- <script src="{% static 'bootstrap_5/js/bootstrap.bundle.js' %}"></script> -->
+    
+    <!-- Fontawesome Icon -->
+    <link href="{% static 'plugins/fontawesome-free-6.4.2-web/css/fontawesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'plugins/fontawesome-free-6.4.2-web/css/all.css' %}" rel="stylesheet">
+    
+</head>
+
+<body >
+    
+    <div class="wrapper">
+
+    <!-- navbar -->
+    {% include 'user_navbar.html' %}
+
+    <div class="main">
+    <!-- topbar -->
+    {% include 'user_topbar.html' %}
+
+    <!-- loading -->
+    <section id="loader" class="vw-100 vh-100 bg-white overflow-hidden d-flex position-fixed flex-column justify-content-center align-items-center">
+            <div class="lds-ring img-loader"><div></div><div></div><div></div><div></div></div>
+    </section>
+
+
+    <!-- konten -->
+    <main class="content" >
+
+        <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3"><strong></strong>{{ title }}</h1>
+    <!-- membungkus konten -->
+            {% block content %}
+
+            
+            {% endblock %}
+        </div>
+    </main>
+    <!-- end konten -->
+
+    <!-- footer -->
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row text-muted">
+                    <div class="col-6 text-start">
+                        <p class="mb-0">
+                            <a class="text-muted" href="#"><strong>User</strong></a> - <a class="text-muted" href="#" ><strong>Cloud E-Ganesha &copy; 2023</strong></a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- end footer -->
+    </div>
+</div>
+
+</body>
+
+
+        <!-- <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script> -->
+        <!--   Core JS Files   -->
+        <script src="{% static 'js/app.js' %}"></script>
+
+        <!-- loading js -->
+        <script src="{% static 'js/loader-hander.js' %}"></script>
+
+        
+        <!-- sweetalert2 -->
+        <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+        <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+        <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+        <!-- Multi Select2 -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        
+        <!-- start script select2 user-role -->
+        <script>
+            $(document).ready(function() {
+                
+                // Inisialisasi Select2 setelah modal terbuka
+                $('#addRole').on('shown.bs.modal', function () {
+                    $('#privileges').select2({
+                        placeholder: "Select Privileges",
+                        allowClear: true
+                    });
+                });
+
+                // Inisialisasi Select2 pada elemen dengan id "edit_privileges"
+                $('#editRoleModal').on('shown.bs.modal', function () {
+                    $('#edit_privileges').select2({
+                        placeholder: "Select Privileges",
+                        allowClear: true
+                    });
+                });
+
+                //  tanpa render namun tampilan kecil
+                // $('#privileges').select2({
+                //     placeholder: "Select Privileges",
+                //     allowClear: true
+                // });
+
+                // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
+                $('#addFormRole').submit(function() {
+                    // Ambil nilai yang dipilih dari Select2
+                    var selectedValues = $('#privileges').val();
+                    
+                    // Ubah nilai menjadi string dengan koma
+                    var privilegesString = selectedValues.join(',');
+
+                    // Assign nilai sebagai nilai dari input dengan name "privileges"
+                    $('input[name="privileges"]').val(privilegesString);
+                });
+                
+                });
+
+        </script>
+
+        <script>
+            const myModal = new bootstrap.Modal('#editRoleModal');
+            $(document).ready(function($) {
+                // Inisialisasi elemen Select2
+                $('#edit_privileges').select2();
+
+                $(document).on('click', '.btnEdit', function() {
+                    var id = $(this).data('id');
+
+                    $.ajax({
+                        method: 'GET',
+                        url: 'data_api?action=view_data_role',
+                        data: {
+                            id: id
+                        },
+                        success: function(res) {
+                            $('#edit_name').val(id);
+                            $('.edit_id').val(id);
+                            if (res.data) {
+                                var d = res.data;
+
+                                // Mengambil data izin dari respons
+                                var privileges = JSON.stringify(d);
+
+                                // Menghapus ":1" dari setiap data
+                                privileges = privileges.replace(/":1/g, '');
+
+                                // Menghapus tanda kutip ganda awal dan akhir
+                                privileges = privileges.replace(/"/g, '');
+
+                                // Menghapus tanda kurung kurawal "{" dan "}"
+                                privileges = privileges.substring(1, privileges.length - 1);
+
+                                // Mengatur nilai dari edit_privileges
+                                $('#edit_privileges').val(privileges.split(',')).trigger('change');
+
+                                // Membuka modal setelah Select2 diperbarui
+                                myModal.show();
+                            }
+                        }
+                    });
+                });
+            });
+
+
+
+            // menampilkan option pilihan melalui edit_privileges diselect 2
+            
+
+
+            // Tangani pengiriman formulir add role agar data menjadi [a,b,c]
+            $('#editFormRole').submit(function() {
+                // Ambil nilai yang dipilih dari Select2
+                var selectedValues = $('#edit_privileges').val();
+                
+                // Ubah nilai menjadi string dengan koma
+                var privilegesString = selectedValues.join(',');
+
+                // Assign nilai sebagai nilai dari input dengan name "privileges"
+                $('input[name="edit_privileges"]').val(privilegesString);
+            });
+
+            
+            // menonaktifkan Select2 pada elemen dengan id "privileges" setelah modal tambah ditutup
+            $('#addRole').on('hidden.bs.modal', function () {
+                $('#privileges').select2('destroy');
+            });
+
+            // menonaktifkan Select2 pada elemen dengan id "edit_privileges" setelah modal edit ditutup
+            $('#editRoleModal').on('hidden.bs.modal', function () {
+                $('#edit_privileges').select2('destroy');
+            });
+
+            //  edit data role
+            document.getElementById("editFormRole").addEventListener("submit", function(event) {
+                event.preventDefault(); // Prevent the default form submission
+                var id = document.querySelector('.edit_id').value;
+                var editForm = document.getElementById("editFormRole");
+                editForm.action = 'edit-role/' + id; // Change the action URL
+                editForm.submit(); // Submit the form
+            });
+
+
+        </script>
+        <!--  end script select2 user-role -->
+
+        <!-- plugin datatable -->
+        <script src="{% static 'plugins/datatable/datatables.js' %}"></script>
+        <!-- <link rel="stylesheet" href="{% static 'plugins/datatable/datatables.css'%}"> -->
+
+        <script>
+        $(document).ready(function($) {
+            $('#dataTable').DataTable({
+                "language": {
+                    "search": "Cari:",
+                    "lengthMenu": "Menampilkan _MENU_ data",
+                    "info": "Menampilkan _START_ sampai _END_ data dari _TOTAL_ data",
+                    "infoEmpty": "Tidak ada data yang ditampilkan",
+                    "infoFiltered": "(dari total _MAX_ data)",
+                    "zeroRecords": "Tidak ada hasil pencarian ditemukan",
+                    "paginate": {
+                        "first": "&laquo;",
+                        "last": "&raquo;",
+                        "next": "&rsaquo;",
+                        "previous": "&lsaquo;"
+                    }
+                }
+            });
+        });
+
+        </script>
+
+
+<script>
+
+</script>
+
+</html>
