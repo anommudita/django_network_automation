@@ -1,0 +1,299 @@
+
+<!-- file dari config html -->
+{% extends 'main.html' %}
+
+<!-- load static -->
+{% load static %}
+
+<!-- wrapping content -->
+{% block content %}
+
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div class="row">
+        <div class="col">
+        <!-- DataTales Example -->
+            <div class="card flex-fill">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Data User Client</h5>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#addUserClient" class="btn btn-primary ml-auto">Insert</a>
+                </div>
+                <table class="table table-hover my-0" id="dataTable" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-xl-table-cell" scope="col" width="5%">No</th>
+                            <th class="d-none d-xl-table-cell" scope="col" width="15%">Fullname</th>
+                            <th scope="col" width="10%">Email</th>
+                            <th scope="col" width="10%">Username</th>
+                            <th scope="col" width="10%">Active</th>
+                            <th scope="col" width="10%">Date Joined</th>
+                            <th scope="col" width="30%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in users %}  
+                            <tr>
+                                <td class="no_urut">{{ forloop.counter }}</td>
+                                <td>{{ row.first_name }}</td>
+                                <td>{{ row.email }}</td>  
+                                <td>{{ row.username }}</td>
+                                <td>
+                                    {% if row.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Not Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.date_joined }}</td>
+                                <td>
+                                    <a href="active-user-client/{{ row.id }}" class="btn btn-warning active-user-client">Order</a>
+                                    <a href="active-user-client/{{ row.id }}" class="btn btn-primary active-user-client">Activate</a>
+                                    <a href="#" class="btn btn-success btnEdit" data-id="{{row.id}}">Edit</a>
+                                    <a href="delete-user-client/{{ row.id }}" class="btn btn-danger delete-user-client">Delete</a>
+                                </td>  
+                            </tr>
+                        {% endfor %} 
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- modal box edit data -->
+    <div class="modal fade" id="editUserClientModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Edit Group</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="" id="editFormUserClient" method="post">
+                                {% csrf_token %}
+
+                                <input type="text" class="edit_id" hidden>
+
+                                <!-- Fullname -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x"></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_fullname" id="edit_fullname" placeholder="Enter fullname" type="text" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Email -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_email" id="edit_email" placeholder="Enter email" type="email" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Username -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_username" id="edit_username" placeholder="Enter username" type="text" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Password -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="edit_password" id="edit_password" placeholder="Enter password" type="password" autocomplete="off">
+                                </div>   
+                                <br>
+                        
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-success" id="editButtonUserClient">Edit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    <!-- end modal box edit data -->
+
+
+
+    <!-- modalbox tambah -->
+    <div class="modal fade" id="addUserClient" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center">Add User Client</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'add-user-client'%}" id="addFormUserClient" method="post">
+                                {% csrf_token %}
+
+                                <!-- Fullname -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-id-card fa-2x"></i></span>
+                                    </div>
+                                    <input class="form-control" name="fullname" id="fullname" placeholder="Enter fullname" type="text" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Email -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-envelope fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="email" id="email" placeholder="Enter email" type="email" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Username -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="username" id="username" placeholder="Enter username" type="text" autocomplete="off">
+                                </div>
+                                <br>
+
+                                <!-- Password -->
+                                <div class="input-group input-group-merge input-group-alternative">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                    </div>
+                                    <input class="form-control" name="password" id="password" placeholder="Enter password" type="password" autocomplete="off">
+                                </div>   
+                                <br>
+
+                                <div class="float-start">
+                                        <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="float-end">
+                                        <button type="submit" class="btn btn-primary " id="addButtonUserClient">Insert</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    <!-- end modalbox tambah -->
+
+
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+
+    <!-- script merapikan data -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Mendapatkan semua baris tabel ke dalam array
+            var rows = $("tbody").find("tr").toArray();
+
+            // Mengurutkan baris berdasarkan data yang ingin Anda urutkan (misalnya, berdasarkan groupid)
+            rows.sort(function (a, b) {
+                var keyA = $(a).find(".d-none.d-xl-table-cell").eq(0).text();
+                var keyB = $(b).find(".d-none.d-xl-table-cell").eq(0).text();
+
+                return keyA.localeCompare(keyB);
+            });
+
+            // Mengganti urutan baris dalam tabel
+            $("tbody").empty();
+            for (var i = 0; i < rows.length; i++) {
+                $("tbody").append(rows[i]);
+                // Memperbarui nomor urut
+                $(rows[i]).find(".no_urut").text(i + 1);
+            }
+        });
+    </script>
+
+    <!-- scirpts ajax get data by group id -->
+    <script>
+        const myModal =  new bootstrap.Modal('#editUserClientModal')
+        $(document).ready(function($) {
+            $(document).on('click', '.btnEdit', function() {
+                var id = $(this).data('id');
+
+                $.ajax({
+                    method: 'GET',
+                    url: 'data_api?action=view_data_user_client',
+                    data: {
+                        id: id
+                    },
+                    success: function(res) {
+                        if (res.data) {
+                            var d = res.data;
+                            // console.log(d);
+                            $('#edit_fullname').val(d.fullname);
+                            $('#edit_email').val(d.email);
+                            $('#edit_username').val(d.username);
+                            $('.edit_id').val(id);
+                            myModal.show()
+                        }
+                    }
+                });
+            });
+        
+        });
+
+        //  edit data user
+        document.getElementById("editFormUserClient").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var id = document.querySelector('.edit_id').value;
+            var editForm = document.getElementById("editFormUserClient");
+            editForm.action = 'edit-user-client/' + id; // Change the action URL
+            editForm.submit(); // Submit the form
+        });
+    </script>
+
+
+    <!-- ketika mengirim form maka tombol tambah akan disable -->
+    <script>
+        document.getElementById("addFormUserClient").addEventListener("submit", function() {
+            document.getElementById("addButtonUserClient").disabled = true;
+        });
+    </script>
+
+    <!-- ketika mengirim form maka tombol edit akan disable --> 
+    <script>
+        document.getElementById("editFormUserClient").addEventListener("submit", function() {
+            document.getElementById("editButtonUserClient").disabled = true;
+        });
+    </script>
+
+
+{% endblock content %}
+
+

@@ -1,68 +1,10 @@
 from django.db import models
 
-# # membuat user akun menggunakan bawaan django!
-# from django.contrib.auth.models import User
-# class UserClient(models.Model):
-#     # user
-#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_client')
-
-#     # name
-#     name = models.CharField(max_length=250)
-#     no_hp = models.CharField(max_length=250)
-
-#     date_created = models.DateTimeField(blank=True, null= True)
-#     update_created = models.DateTimeField(blank=True, null= True)
-
-#     # avatar
-#     # avatar = models.ImageField(blank = True, null = True, upload_to='images/')
-
-#     def  __str__(self):
-#             return self.user.username
-    
-#     def save_user_client(sender, instance, created, **kwargs):
-#         print(instance)
-#         try:
-#             user_client = UserClient.objects.get(user=instance)
-#         except Exception as e:
-#             UserClient.objects.create(user=instance)
-#         instance.user_client.save()
-
-
-
-# from django.contrib.auth.models import User
-# from django.db import models
-# from django.db.models.signals import post_save
-# from django.dispatch import receiver
-
-
-# class UserClient(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_client')
-#     name = models.CharField(max_length=250)
-#     no_hp = models.CharField(max_length=250)
-#     date_created = models.DateTimeField(auto_now_add=True)
-#     update_created = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return self.user.username
-
-
-# @receiver(post_save, sender=User)
-# def create_user_client(sender, instance, created, **kwargs):
-#     if created:
-#         UserClient.objects.create(user=instance)
-
-
-# @receiver(post_save, sender=User)
-# def save_user_client(sender, instance, **kwargs):
-#     instance.user_client.save()
-
-
-
-
 from django.contrib.auth.models import AbstractUser
 
-
 from django.contrib.auth.models import BaseUserManager
+
+from django.contrib.auth.models import User
 
 # from django.contrib.auth.models import AbstractUser
 
@@ -90,5 +32,34 @@ class CustomUser(AbstractUser):
         # related_name = 'custom_%(app_label)s_%(class)s_related'
 
 
+# harga paket
+class HargaPaket(models.Model):
+    nama_paket = models.CharField(max_length=100)
+    cpu = models.CharField(max_length=100)
+    ram = models.CharField(max_length=100)
+    storage = models.CharField(max_length=100)
+    harga = models.DecimalField(max_digits=10, decimal_places=2)
+    keterangan = models.TextField(null=True)
+    
+
+    def __str__(self):
+        return self.nama_paket
+
+
+# Pesanan Container
+class Pesanan(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    harga_paket = models.ForeignKey(HargaPaket, on_delete=models.CASCADE)
+    core = models.IntegerField()
+    ram = models.IntegerField()
+    storage = models.IntegerField()
+    os = models.CharField(max_length=100)
+    username = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)  # Password akan dienkripsi
+    perbulan = models.CharField(max_length=100, null=True)
+    jenis = models.CharField(max_length=100, default='container')
+
+    def __str__(self):
+        return f"Order {self.id} by {self.user.username}"
 
 

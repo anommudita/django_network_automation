@@ -1303,7 +1303,7 @@
 
                 const detailLink = document.createElement('a');
                 detailLink.classList.add('btn', 'btn-primary', 'mt-3');
-                detailLink.href = `/detail-container/${idNode}/${ctData.container_vmid}`;
+                detailLink.href = `/proxmox/detail-container/${idNode}/${ctData.container_vmid}`;
                 detailLink.textContent = 'Detail';
                 // ctDetail.appendChild(detailLink);
 
@@ -1463,7 +1463,7 @@
 
                 const detailLink = document.createElement('a');
                 detailLink.classList.add('btn', 'btn-primary', 'mt-3');
-                detailLink.href = `/detail-vm/${vmData.vm_name}`;
+                detailLink.href = `/proxmox/detail-vm/${idNode}/${vmData.vm_name}`;
                 detailLink.textContent = 'Detail';
                 vmDetail.appendChild(detailLink);
 

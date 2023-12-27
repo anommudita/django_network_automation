@@ -17,13 +17,13 @@
     <input class="id_node" type="text" value="{{id_node}}" hidden>
     <input class="id_ct" type="text" value="{{id_ct}}" hidden>
 
-    <!-- {{id_node}}
+    {{id_node}}
     {{id_ct}}
     {{date}}
     {{time}}
     {{hostname}}
     {{msg}}
-    {{identifier}} -->
+    {{identifier}}
     
 
     <!-- log -->
@@ -58,7 +58,7 @@
             idNode = idNodeInput.value;
             idCt = idCtInput.value;
     
-            fetch(`/proxmox/data_api?action=view_data_ct_log&id_node=${idNode}&id_ct=${idCt}`)
+            fetch(`/data_api?action=view_data_ct_log&id_node=${idNode}&id_ct=${idCt}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

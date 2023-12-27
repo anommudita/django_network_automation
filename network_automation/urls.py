@@ -70,6 +70,16 @@ urlpatterns = [
     path('nodes/<str:id_node>/reboot', views.rebootNode, name="reboot-node"),
     #route shutdown node
     path('nodes/<str:id_node>/shutdown', views.shutdownNode, name="shutdown-node"),
+    #route storage
+    path('nodes/<str:id_node>/storage', views.storage_nodes, name="storage-node"),
+
+
+    #route create OSD storage
+    path('nodes/<str:id_node>/storage/OSD', views.createOSD, name="create-osd"),
+    #route create Pools
+    path('nodes/<str:id_node>/storage/Pools', views.createPools, name="create-pools"),
+    #route add storage
+    path('nodes/<str:id_node>/storage/add-storage', views.addStorage, name="add-storage"),
 
     # route node network
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
@@ -129,9 +139,14 @@ urlpatterns = [
 
     # route detail container
     path('detail-container/<str:id_node>/<str:vmid>', views.detail_container, name="detail-container"),
+    # route detail vm
+    path('detail-vm/<str:id_node>/<str:vmid>', views.detail_vm, name="detail-vm"),
 
     # route cluster
-    path('clusters', views.clusters, name="clusters"),
+    path('high-availability', views.highAvailability, name="high-availability"),
+
+    # route kom
+    path('high-availability/add-resource', views.addResource, name="add-resource"),
 
     # route monitoring
     path('monitors', views.monitors, name="monitors"),
@@ -153,5 +168,32 @@ urlpatterns = [
     # route config_by_user
     path('config_by_user', views.config_by_user, name="config_by_user"),
 
+    # package price
+    path('package_price', views.package_price, name="package_price"),
+
+    # route add package price
+    path('add-package-price', views.addPackagePrice, name="add-package-price"),
+
+    # route delete package price
+    path('delete-package-price/<str:id_package_price>', views.deletePackagePrice, name="delete-package-price"), 
+
+    # route edit package price
+    path('edit-package-price/<str:id>', views.updatePackagePrice, name="edit-package-price"),
+
+
+    # users all
+    path('users_all', views.users_all, name="users_all"),
+
+    # route add user client
+    path('add-user-client', views.addUserClient, name="add-user-client"),
+
+    # route delete user client
+    path('delete-user-client/<str:id_user>', views.deleteUserClient, name="delete-user-client"), 
+
+    # route active user client
+    path('active-user-client/<str:id_user>', views.activeUserClient, name="active-user-client"),
+
+    # route edit user client
+    path('edit-user-client/<str:id_user>', views.updateUserClient, name="edit-user-client"),
 
 ]

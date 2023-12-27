@@ -25,6 +25,8 @@ from django.contrib.auth.decorators import login_required
 # time
 import time
 import datetime
+# import timezone
+from django.utils import timezone
 
 # auto refresh
 from django.http import HttpResponseRedirect
@@ -57,7 +59,10 @@ from pathlib import Path
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
+from users.models import Pesanan, HargaPaket
 
+# import group 
+from django.contrib.auth.models import Group
 
 from functools import wraps
 
@@ -212,6 +217,39 @@ def data_api(request):
                     'status': 'success',
                     'message': 'Data successfully retrieved',
                     'data': role
+                }
+                return JsonResponse(response)
+            case 'view_data_package_price':
+                id = request.GET.get('id')
+                package_price = HargaPaket.objects.get(id=id)
+                package_price_all = {
+                    'id': package_price.id,
+                    'name_package': package_price.nama_paket,
+                    'cpu': package_price.cpu,
+                    'ram': package_price.ram,
+                    'storage': package_price.storage,
+                    'price': package_price.harga,
+                    'information': package_price.keterangan,
+                }
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': package_price_all
+                }
+                return JsonResponse(response)
+            case 'view_data_user_client':
+                id = request.GET.get('id')
+                user_ = User.objects.get(id=id)
+                user = {
+                    'id': user_.id,
+                    'fullname': user_.first_name,
+                    'email': user_.email,
+                    'username': user_.username
+                }
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': user
                 }
                 return JsonResponse(response)
             case 'view_data_cluster_resources':
@@ -476,6 +514,80 @@ def data_api(request):
                     return JsonResponse({'error': 'ID node tidak diberikan'})
                 
             case 'view_data_ct_log':
+                id_node = request.GET.get('id_node') 
+                id_ct = request.GET.get('id_ct')  # Mengambil ID node dari permintaan GET
+
+                if id_ct and id_node is not None:
+                    # setting datauser proxmox
+                    proxmox = get_proxmox()
+                    net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+                    ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+                    host = ip_address
+                    username = 'log'
+                    password = 'logs123'
+
+                    client = paramiko.client.SSHClient()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.connect(host, username=username, password=password)
+
+                    command = "journalctl --output json-pretty"
+
+                    stdin, stdout, stderr = client.exec_command(command)
+
+                    log = stdout.read().decode('utf-8')
+
+                    log_blocks = log.split('}')
+
+                    formatted_logs = []
+
+                    # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+                    for block in log_blocks[:-1]:
+                        formatted_logs.append(f"{block.strip() + '},'}\n")
+
+                    # Menambahkan blok terakhir tanpa koma
+                    # Menghilangkan tanda koma terakhir pada blok terakhir
+                    last_block = formatted_logs[-1].replace("},", "}")
+                    formatted_logs.append(f"{last_block}\n")
+
+                    client.close()
+
+                    # logs_json = "[" + formatted_logs + "]"
+                    logs_json = "[" + "".join(formatted_logs) + "]"
+                    # Hapus koma di luar tanda kurung
+                    logs_json = logs_json.replace(",]", "]")
+                    # print(logs_json)
+
+                    logs_list = json.loads(logs_json)
+                    
+                    for item in logs_list:
+                        # time
+                        date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+                        # You may need to parse the date_from_proxmox if it's in a specific format
+                        formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+                        hostname = item['_HOSTNAME']
+                        msg = item['MESSAGE']
+                        identifier = item['SYSLOG_IDENTIFIER']
+
+                    # Buat JSON response
+                    response = {
+                        'log': logs_list,
+                        'ct_time': formatted_time,
+                        'ct_hostname': hostname,
+                        'ct_msg': msg,
+                        'ct_identifier': identifier,
+                    }
+                    
+                    return JsonResponse(response)
+                else:
+                    # Tanggapan jika id_node tidak diberikan
+                    return JsonResponse({'error': 'ID node tidak diberikan'})
+            
+            # belum diedit
+            case 'view_data_vm_log': 
                 id_node = request.GET.get('id_node') 
                 id_ct = request.GET.get('id_ct')  # Mengambil ID node dari permintaan GET
 
@@ -1291,7 +1403,159 @@ def nodes(request):
         return render(request, 'node/node.html', context )
     else :
         return('error_connection')
+    
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def addStorage(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
 
+    if request.method == "POST":
+        id= request.POST.get('id')
+        type= request.POST.get('type')
+        pool= request.POST.get('pool')
+        content= request.POST.get('content')
+
+        if not id and not type and not pool:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('storage-node', id_node)
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'storage' : id,
+            'type': type,
+            'pool': pool,
+            'content': content,
+        }
+        
+        try:
+            proxmox.storage.post(**post_data)
+            messages.success(request, "Add Storage Successfully")
+            # return redirect('home')
+            return redirect('storage-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Storage : {str(e)}")
+            return redirect('storage-node', id_node)
+
+def extract_data(node):
+    data_list = []
+    for child in node.get('children', []):
+        entry = {
+            'name': child.get('name'),
+            'type': child.get('type'),
+            'status': child.get('status')
+        }
+        data_list.append(entry)
+        data_list.extend(extract_data(child))
+    return data_list
+
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# halaman node
+def storage_nodes(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        
+        storage = proxmox.nodes(id_node).disks.list.get()
+
+        # Filter the disks to exclude those with 'used' parameter
+        filtered_disks = [disk for disk in storage if 'used' not in disk]
+
+        pools = proxmox.nodes(id_node).ceph.pool.get()
+
+        osd = proxmox.nodes(id_node).ceph.osd.get()
+
+        # Extract data from the 'osd' structure
+        osd_data = extract_data(osd['root'])
+        
+        context = {
+            'title': 'Storage Nodes',
+            'active_storage': 'active',
+            'storage': storage,
+            'id_node': id_node,
+            'disk': filtered_disks,
+            'pools': pools,
+            'osd': osd,
+            'osd_data': osd_data,
+        }
+        return render(request, 'node/storage.html', context)
+    else:
+        return HttpResponse('error_connection')
+
+
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def createOSD(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        path = request.POST.get('path')
+
+        if not path:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('storage-node', id_node)
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'dev' : path,
+        }
+        
+        try:
+            proxmox.nodes(id_node).ceph.osd.post(**post_data)
+            messages.success(request, "Create Ceph OSD Successfully")
+            # return redirect('home')
+            return redirect('storage-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Ceph OSD : {str(e)}")
+            return redirect('storage-node', id_node)
+        
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def createPools(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        name= request.POST.get('name')
+
+        if not name:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('storage-node', id_node)
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'name' : name,
+        }
+        
+        try:
+            proxmox.nodes(id_node).ceph.pool.post(**post_data)
+            messages.success(request, "Create Ceph Pool Successfully")
+            # return redirect('home')
+            return redirect('storage-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Ceph Pool : {str(e)}")
+            return redirect('storage-node', id_node)
+        
 # def get_exec_paramiko2(id_node):
 
 #     # get data server
@@ -3178,27 +3442,11 @@ def detail_container(request, id_node, vmid):
     else:
         return('error_connection')
 
-# remove container
-# @login_required(login_url='login')
-@admin_access_required
-def removeVirtualMachine(request, id_node, vmid):
-    proxmox = get_proxmox()
-    time.sleep(1.5)
-    if proxmox is not None :
-        try:
-            proxmox.nodes(id_node).qemu(vmid).delete()
-            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
-            return redirect('detail-node', id_node)
-        except Exception as e:
-            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
-            return redirect('detail-node', id_node)
-    else :
-        return('error_connection')
-
+# belum diedit
 # @login_required(login_url='login')
 @admin_access_required
 # halaman detail_container
-def detail_container(request, id_node, vmid):
+def detail_vm(request, id_node, vmid):
     proxmox = get_proxmox()
 
     id_ct = vmid
@@ -3268,22 +3516,164 @@ def detail_container(request, id_node, vmid):
             'msg': msg,
             'identifier': identifier,
         }
-        return render(request, 'node/container/detail_container.html', context)
+        return render(request, 'node/vm/detail_vm.html', context)
     else:
         return('error_connection')
+
+# remove container
+# @login_required(login_url='login')
+@admin_access_required
+def removeVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).delete()
+            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
+# # @login_required(login_url='login')
+# @admin_access_required
+# # halaman detail_container
+# def detail_container(request, id_node, vmid):
+#     proxmox = get_proxmox()
+
+#     id_ct = vmid
+
+#     if id_ct and id_node is not None:
+#     # setting datauser proxmox
+#         net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+#         ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+#         host = ip_address
+#         username = 'log'
+#         password = 'logs123'
+
+#         client = paramiko.client.SSHClient()
+#         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#         client.connect(host, username=username, password=password)
+
+#         command = "journalctl --output json-pretty"
+
+#         stdin, stdout, stderr = client.exec_command(command)
+
+#         log = stdout.read().decode('utf-8')
+
+#         log_blocks = log.split('}')
+
+#         formatted_logs = []
+
+#         # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+#         for block in log_blocks[:-1]:
+#             formatted_logs.append(f"{block.strip() + '},'}\n")
+
+#         # Menambahkan blok terakhir tanpa koma
+#         # Menghilangkan tanda koma terakhir pada blok terakhir
+#         last_block = formatted_logs[-1].replace("},", "}")
+#         formatted_logs.append(f"{last_block}\n")
+
+#         client.close()
+
+#         # logs_json = "[" + formatted_logs + "]"
+#         logs_json = "[" + "".join(formatted_logs) + "]"
+#         # Hapus koma di luar tanda kurung
+#         logs_json = logs_json.replace(",]", "]")
+#         # print(logs_json)
+
+#         logs_list = json.loads(logs_json)
+
+#         for item in logs_list:
+#             # time
+#             date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+#             # You may need to parse the date_from_proxmox if it's in a specific format
+#             formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+#             hostname = item['_HOSTNAME']
+#             msg = item['MESSAGE']
+#             identifier = item['SYSLOG_IDENTIFIER']
+        
+#         context = {
+#             'title': 'Detail Container',
+#             'active_ct': 'active',
+#             'id_node': id_node,
+#             'id_ct': id_ct,
+#             'date': date,
+#             'time': formatted_time,
+#             'hostname': hostname,
+#             'msg': msg,
+#             'identifier': identifier,
+#         }
+#         return render(request, 'node/container/detail_container.html', context)
+#     else:
+#         return('error_connection')
 
 
 # wajib login untuk mengakses halaman ini
 # @login_required(login_url='login')
 @admin_access_required
 # halaman clusters
-def clusters(request):
+def highAvailability(request):
     
     proxmox = get_proxmox()
 
-    if proxmox is not None :
+    if proxmox is not None:
         try:
             ceph = proxmox.cluster.ceph.status.get()
+            resources = proxmox.cluster.ha.resources.get()
+            status = proxmox.cluster.ha.status.current.get()
+
+            # Get the list of nodes
+            nodes = proxmox.nodes.get()
+
+            ct = []
+            vm = []
+
+            # Extract existing VMIDs from resources
+            existing_vmids = set()
+            for resource in resources:
+                if 'sid' in resource and resource['type'] == 'ct':
+                    vmid = resource['sid'].split(":")[1]
+                    existing_vmids.add(vmid)
+
+            # Loop through each node
+            for node in nodes:
+                node_name = node['node']
+
+                # Get the list of containers (CT) for the current node
+                containers = proxmox.nodes(node_name).lxc.get()
+
+                # Check if containers data is not empty before appending
+                if containers:
+                    print(f"Containers for Node {node_name}:")
+                    for container in containers:
+                        vmid = container['vmid']
+                        if vmid not in existing_vmids:
+                            ct.append({
+                                'name': container['name'],
+                                'vmid': vmid
+                            })
+
+                # Get the list of virtual machines (VM) for the current node
+                vms = proxmox.nodes(node_name).qemu.get()
+
+                # Check if virtual machines data is not empty before appending
+                if vms:
+                    print(f"Virtual Machines for Node {node_name}:")
+                    for vm in vms:
+                        vmid = vm['vmid']
+                        if vmid not in existing_vmids:
+                            vm.append({
+                                'name': vm['name'],
+                                'vmid': vmid
+                            })
+
             error_message = "N/A"
         except Exception as e:
             error_message = str(e)
@@ -3294,14 +3684,54 @@ def clusters(request):
                 error_message = str(e)
             
         context = {
-            'title': 'Ceph',
-            'active_ceph': 'active',
+            'title': 'High Availability',
+            'active_ha': 'active',
             'ceph': ceph,
             'error_message': error_message,
+            'resources': resources,
+            'status': status,
+            'ct': ct,
+            'vm': vm,
         }
-        return render(request, 'cluster/cluster.html', context )
-    else :
-        return('error_connection')
+        return render(request, 'HA/HA.html', context)
+    else:
+        return HttpResponse('error_connection')
+
+
+
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def addResource(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        resource= request.POST.get('resource')
+        
+
+        if not resource:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('high-availability')
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'sid' : resource,
+        }
+        
+        try:
+            proxmox.cluster.ha.resources.post(**post_data)
+            messages.success(request, "Add Storage Successfully")
+            # return redirect('home')
+            return redirect('high-availability')
+        except Exception as e:
+            messages.error(request, f"Error adding Storage : {str(e)}")
+            return redirect('high-availability')
 
 
 # @login_required(login_url='login')
@@ -3448,5 +3878,289 @@ def settings(request):
     
 
 
+# package price 
+@admin_access_required
+def package_price(request):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        # package price
+        package_price = HargaPaket.objects.all()
+
+        packages = len(package_price)
+        
+        context = {
+        'title': 'Package Price',
+        'active_package': 'active',
+        'package_price': package_price,
+        'packages': packages,
+        }
+        return render(request, 'users/packages_price.html', context )
+    else:
+        return redirect(error_connection)
+    
+# add package price
+@admin_access_required
+def addPackagePrice(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            name_package = request.POST.get('name_package')
+            cpu = request.POST.get('cpu')
+            ram = request.POST.get('ram')
+            storage = request.POST.get('storage')
+            price = request.POST.get('price')
+            information = request.POST.get('information')
+
+            if not name_package or not cpu or not ram or not storage or not price :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('package_price')
+            
+            try:
+                # insert data to database
+                package_price = HargaPaket.objects.create(
+                    nama_paket=name_package,
+                    cpu=cpu,
+                    ram=ram,
+                    storage=storage,
+                    harga=price,
+                    keterangan=information
+                )
+
+                # save
+                package_price.save()
+                messages.success(request, "Package price added successfully")
+                return redirect('package_price')
+            except Exception as e:
+                messages.error(request, f"Error adding package price : {str(e)}")
+                return redirect('package_price')
+    else:
+        return redirect(error_connection)
 
 
+
+# delete package price
+@admin_access_required
+def deletePackagePrice(request, id_package_price):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # delete data to database
+            package_price = HargaPaket.objects.get(id=id_package_price)
+            package_price.delete()
+            time.sleep(1.5)
+            messages.success(request, "Package price deleted successfully")
+            return redirect('package_price')
+        except Exception as e:
+            messages.error(request, f"Error deleted package price : {str(e)}")
+            return redirect('package_price')
+    else:
+        return redirect(error_connection)
+    
+@admin_access_required
+def  updatePackagePrice(request, id):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            name_package = request.POST.get('edit_name_package')
+            cpu = request.POST.get('edit_cpu')
+            ram = request.POST.get('edit_ram')
+            storage = request.POST.get('edit_storage')
+            price = request.POST.get('edit_price')
+            information = request.POST.get('edit_information')
+
+            if not name_package or not cpu or not ram or not storage or not price :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('package_price')
+            
+            try:
+                # update data to database
+                package_price = HargaPaket.objects.get(id=id)
+                package_price.nama_paket = name_package
+                package_price.cpu = cpu
+                package_price.ram = ram
+                package_price.storage = storage
+                package_price.harga = price
+                package_price.keterangan = information
+
+                # save
+                package_price.save()
+                messages.success(request, "Package price updated successfully")
+                return redirect('package_price')
+            except Exception as e:
+                messages.error(request, f"Error updated package price : {str(e)}")
+                return redirect('package_price')
+    else:
+        return redirect(error_connection)
+    
+
+
+# package price 
+@admin_access_required
+def users_all(request):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        # get data user exclude superuser
+        users = User.objects.exclude(is_superuser=True)
+        
+        context = {
+        'title': 'Users Client',
+        'active_users': 'active',
+        'users': users,
+        }
+        return render(request, 'users/users.html', context )
+    else:
+        return redirect(error_connection)
+    
+
+# add package price
+@admin_access_required
+def addUserClient(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            fullname = request.POST.get('fullname')
+            email = request.POST.get('email')
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+
+            if not fullname or not email or not username or not password :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('users_all')
+            
+            # Check apakah username sudah ada dalam database
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "already used username. Please use another username.")
+                return redirect('users_all')
+        
+            if User.objects.filter(email=email).exists():
+                messages.error(request, "already used email. Please use another email.")
+                return redirect('users_all')
+
+            try:
+                # insert user data to database
+                user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                    email=email,
+                    first_name=fullname,
+                    is_active=False,
+                    date_joined=timezone.now()
+                )
+
+                # Mendapatkan atau membuat grup yang diinginkan (misalnya, 'Member')
+                group, created = Group.objects.get_or_create(name='user')
+
+                # Menambahkan user ke dalam grup yang diinginkan
+                group.user_set.add(user)
+            
+                # Simpan user
+                user.save()
+
+                messages.success(request, "User Client added successfully")
+                return redirect('users_all')
+            except Exception as e:
+                messages.error(request, f"Error adding user client : {str(e)}")
+                return redirect('users_all')
+    else:
+        return redirect(error_connection)
+
+
+# delete user client
+@admin_access_required
+def deleteUserClient(request, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # delete data user to database
+            user = User.objects.get(id=id_user)
+            user.delete()
+            time.sleep(1.5)
+            messages.success(request, "User Client deleted successfully")
+            return redirect('users_all')
+        except Exception as e:
+            messages.error(request, f"Error deleted user client : {str(e)}")
+            return redirect('users_all')
+    else:
+        return redirect(error_connection)
+    
+
+# actice user client
+@admin_access_required
+def activeUserClient(request, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # active data user to database
+            user = User.objects.get(id=id_user)
+            user.is_active = True
+            user.save()
+            time.sleep(1.5)
+            messages.success(request, "User Client activated successfully")
+            return redirect('users_all')
+        except Exception as e:
+            messages.error(request, f"Error activated user client : {str(e)}")
+            return redirect('users_all')
+    else:
+        return redirect(error_connection)
+    
+# update user client
+@admin_access_required
+def  updateUserClient(request, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        if request.method == "POST":
+            fullname = request.POST.get('edit_fullname')
+            email = request.POST.get('edit_email')
+            username = request.POST.get('edit_username')
+            password = request.POST.get('edit_password')
+
+            if not fullname or not email or not username:
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('users_all')
+            
+            try:
+                if password == "":
+                    # update data to database
+                    user = User.objects.get(id=id_user)
+                    user.first_name = fullname
+                    user.email = email
+                    user.username = username
+
+                    # save
+                    user.save()
+                    messages.success(request, "User Client updated successfully")
+                    return redirect('users_all')
+                else:
+
+                    # hash password
+                    hashed_password = make_password(password)
+
+                    # update data to database
+                    user = User.objects.get(id=id_user)
+                    user.first_name = fullname
+                    user.email = email
+                    user.username = username
+                    user.password = hashed_password
+
+                    # save
+                    user.save()
+                    messages.success(request, "User Client updated successfully")
+                    return redirect('users_all')
+            except Exception as e:
+                messages.error(request, f"Error updated user client : {str(e)}")
+                return redirect('users_all')
+    else:
+        return redirect(error_connection)

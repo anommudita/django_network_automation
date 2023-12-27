@@ -1,0 +1,628 @@
+{% extends 'main.html' %}
+{% load static %}
+
+
+{% block content %}
+
+
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+
+    
+    <!-- {% for col in nodes %} 
+    {% endfor %} -->
+    <!-- <div class="d-flex pt-3 mb-4">
+        {% if ceph == 'N/A' %}
+            <a href="/nodes/install-ceph-cluster" class="btn btn-danger mr-2 mb-3 install-ceph">Install Ceph</a>
+        {% else %}
+            <button type="button" class="btn btn-outline-danger mr-2 mb-3" disabled>Ceph Already Instal</button>
+        {% endif %} -->
+    <!-- <div class="loading-nodes" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    </div> -->
+    <!-- {% if cluster == 'OFF'%}
+
+    {% else %}
+        <div class="ms-auto">
+            <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                Delete Node from Cluster
+            </button>
+
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                {% for name in nodes %}
+                    <li><a href="/nodes/delnode/{{ name.node }}" class="dropdown-item">{{ name.node }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    </div>
+
+    <div id="data-container">
+    </div> -->
+    <input class="id_node" type="text" value="{{id_node}}" hidden>
+    <div class="d-flex pt-3 mb-4">
+        <div class="ms-auto">
+            <a class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStorageModal">Add Storage</a>
+            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#OSDModal">Add Ceph OSD</a>
+            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#PoolsModal">Add Ceph Pools</a>
+        </div>
+    </div>
+    
+    
+
+    {% for row in storage %}
+    <div class="col">
+        <div class="card border-left-primary shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <!-- Ikon hard drive -->
+                    <div class="col-auto">
+                        <i class="fa-regular fa-hard-drive fa-4x text-gray-300"></i>
+                    </div>
+    
+                    <!-- Informasi node -->
+                    <div class="col">
+                        <table class="table">
+                            <tbody>
+                                <!-- Node Name -->
+                                <tr>
+                                    <td>Storage Path</td>
+                                    <td class="text-end">{{ row.devpath }}</td>
+                                </tr>
+    
+                                <!-- Status -->
+                                <tr>
+                                    <td>Size</td>
+                                    <td class="text-end">
+                                        {{ row.size }} Bytes
+                                    </td>
+                                </tr>
+    
+                                <!-- CPU -->
+                                <tr>
+                                    <td>Used</td>
+                                    <td class="text-end">{{ row.used }}</td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% endfor %}
+
+    <div class="row">
+        <div class="col-xl-6 col-xxl-5 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Ceph OSD</h5>
+                </div>
+                <table class="table table-hover my-0">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-xl-table-cell">Name</th>
+                            <th class="d-none d-xl-table-cell">Type</th>
+                            <th class="d-none d-xl-table-cell">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in osd_data %}
+                            <tr>
+                                <td class="d-none d-xl-table-cell">{{ row.name }}</td>
+                                <td class="d-none d-xl-table-cell">{{ row.type }}</td>
+                                <td class="d-none d-md-table-cell">{{ row.status }}</td>
+                            </tr>
+                        {% endfor %}
+                </table>
+            </div>
+        </div>
+        <div class="col-xl-6 col-xxl-5 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Ceph Pools</h5>
+                </div>
+                <table class="table table-hover my-0">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-md-table-cell">Pool</th>
+                            <th class="d-none d-xl-table-cell">Name</th>
+                            <th class="d-none d-xl-table-cell">Size/min</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in pools %}
+                            <tr>
+                                <td class="d-none d-xl-table-cell">{{ row.pool }}</td>
+                                <td class="d-none d-xl-table-cell">{{ row.pool_name }}</td>
+                                <td class="d-none d-xl-table-cell">{{ row.size }}/{{row.min_size}}</td>
+                            </tr>
+                        {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="OSDModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center" id="clusterTitle">Create Ceph OSD</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'create-osd' id_node=id_node %}" id="createCluster" method="post">
+                                {% csrf_token %}
+                                <!-- Common Fields -->
+                                <!-- ... -->
+    
+                                <!-- address -->
+                                <div class="form-group mb-4">
+                                    <!-- IP -->
+                                    <div class="form-group mb-4">
+                                        <label>Interfaces : </label>
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <select name="path" class="form-control" id="path">
+                                                <option value="">Pilih..</option>
+                                                {% for row in disk %}
+                                                    <option value="{{row.devpath}}">{{row.devpath}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div> 
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary">Add OSD</button>
+                                </div>                  
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="PoolsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center" id="clusterTitle">Create Pools </h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'create-pools' id_node=id_node %}" id="createCluster" method="post">
+                                {% csrf_token %}
+                                <!-- Common Fields -->
+                                <!-- ... -->
+    
+                                <!-- address -->
+                                <div class="form-group mb-4">
+                                    <!-- IP -->
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="name" id="name" placeholder="Enter Name" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary">Add Pools</button>
+                                    </div>
+                                </div>                   
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addStorageModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center" id="clusterTitle">Add Storage</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'add-storage' id_node=id_node %}" method="post">
+                                {% csrf_token %}
+                                <!-- Common Fields -->
+                                <!-- ... -->
+    
+                                <!-- address -->
+                                <div class="form-group mb-4">
+                                    <!-- IP -->
+                                    <label>Id : </label>
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <input class="form-control" name="id" id="id" placeholder="Enter Id" type="text" autocomplete="off" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mb-4">
+                                    <label>Type : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                        </div>
+                                        <select name="type" class="form-control" id="type">
+                                            <option value="">Pilih..</option>
+                                            <option value="btrfs">btrfs</option>
+                                            <option value="cephfs">cephfs</option>
+                                            <option value="cifs">cifs</option>
+                                            <option value="dir">dir</option>
+                                            <option value="glusterfs">glusterfs</option>
+                                            <option value="iscsi">iscsi</option>
+                                            <option value="iscsidirect">iscsidirect</option>
+                                            <option value="lvm">lvm</option>
+                                            <option value="lvmthin">lvmthin</option>
+                                            <option value="nfs">nfs</option>
+                                            <option value="pbs">pbs</option>
+                                            <option value="rbd">rbd</option>
+                                            <option value="zfs">zfs</option>
+                                            <option value="zfspool">zfspool</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-4">
+                                    <!-- IP -->
+                                    <label>Pool : </label>
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <select name="pool" class="form-control" id="pool">
+                                                <option value="">Pilih..</option>
+                                                {% for row in pools %}
+                                                    <option value="{{ row.pool_name }}">{{ row.pool_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-4">
+                                    <!-- IP -->
+                                    <label>Content : </label>
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <select name="content" class="form-control" id="content">
+                                                <option value="">Pilih..</option>
+                                                <option value="rootdir">Container</option>
+                                                <option value="images">VM</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary">Add Storage</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- script loading -->
+    <!-- <script>
+        onload = function (){
+            // deklarasi variabel
+            let id = document.getElemenById("loading-nodes")
+            let loading = document.createElement("div")
+
+            // fill text content
+            loading.textContent = "Loading"
+            loading.style.fontSize = "30px"
+            // panggil id
+            id.appendChild(loading)
+
+            // set interval
+            let loaded = setInterval(() => {
+                loading.textContent += "."
+            }, 1000);
+
+            setTimeout(() => {
+                clearInterval(loaded)
+                loading.textContent = "Loading."
+            }, 4000);
+
+
+
+        }
+    </script> -->
+
+    <!-- sweetalert2 -->
+    <!-- <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script> -->
+
+    <!-- <script>
+        // Ensure showErrorModal is defined globally
+        function showErrorModal(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#FCB92C',
+            });
+        }
+
+        // Call showErrorModal with the error_message
+        $(document).ready(function () {
+            showErrorModal('{{node_name}}');
+        });
+    </script> -->
+    
+    <!-- Script untuk auto refresh data resource -->
+    <!-- <script>
+    
+        function createNodeCard(nodeData) {
+            if (nodeData.node_status === "online") {
+                const nodeCard = document.createElement('div');
+                nodeCard.classList.add('col');
+
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card', 'border-left-primary', 'shadow');
+                nodeCard.appendChild(cardContainer);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+                cardContainer.appendChild(cardBody);
+
+                const cardRow = document.createElement('div');
+                cardRow.classList.add('row', 'no-gutters', 'align-items-center');
+                cardBody.appendChild(cardRow);
+
+                // Ikon hard drive
+                const iconCol = document.createElement('div');
+                iconCol.classList.add('col-auto');
+                cardRow.appendChild(iconCol);
+
+                const icon = document.createElement('i');
+                icon.classList.add('fa-regular', 'fa-hard-drive', 'fa-4x', 'text-gray-300');
+                iconCol.appendChild(icon);
+
+                // Informasi node
+                const infoCol = document.createElement('div');
+                infoCol.classList.add('col');
+                cardRow.appendChild(infoCol);
+
+                const table = document.createElement('table');
+                table.classList.add('table');
+                infoCol.appendChild(table);
+
+                const tableBody = document.createElement('tbody');
+                table.appendChild(tableBody);
+
+                // Node Name
+                const nodeNameRow = document.createElement('tr');
+                const nodeNameCell = document.createElement('td');
+                nodeNameCell.textContent = 'Node Name';
+                const nodeNameValueCell = document.createElement('td');
+                nodeNameValueCell.textContent = nodeData.node_name;
+                nodeNameValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                nodeNameRow.appendChild(nodeNameCell);
+                nodeNameRow.appendChild(nodeNameValueCell);
+                tableBody.appendChild(nodeNameRow);
+
+                // Status
+                const statusRow = document.createElement('tr');
+                const statusCell = document.createElement('td');
+                statusCell.textContent = 'Status';
+                const statusValueCell = document.createElement('td');
+                statusValueCell.textContent = nodeData.node_status;
+                statusValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                statusRow.appendChild(statusCell);
+                statusRow.appendChild(statusValueCell);
+                tableBody.appendChild(statusRow);
+
+                // CPU
+                const cpuRow = document.createElement('tr');
+                const cpuCell = document.createElement('td');
+                cpuCell.textContent = 'CPU';
+                const cpuValueCell = document.createElement('td');
+                cpuValueCell.textContent = `${nodeData.nodes_cpu}% of ${nodeData.nodes_maxcpu} CPU`;
+                cpuValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                cpuRow.appendChild(cpuCell);
+                cpuRow.appendChild(cpuValueCell);
+                tableBody.appendChild(cpuRow);
+
+                // Memori
+                const memoriRow = document.createElement('tr');
+                const memoriCell = document.createElement('td');
+                memoriCell.textContent = 'Memori';
+                const memoriValueCell = document.createElement('td');
+                memoriValueCell.textContent = `${nodeData.nodes_mem} GB - ${nodeData.nodes_maxmem} GB`;
+                memoriValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                memoriRow.appendChild(memoriCell);
+                memoriRow.appendChild(memoriValueCell);
+                tableBody.appendChild(memoriRow);
+
+                // Disk
+                const diskRow = document.createElement('tr');
+                const diskCell = document.createElement('td');
+                diskCell.textContent = 'Storage';
+                const diskValueCell = document.createElement('td');
+                diskValueCell.textContent = `${nodeData.nodes_disk} GB - ${nodeData.nodes_maxdisk} GB`;
+                diskValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                diskRow.appendChild(diskCell);
+                diskRow.appendChild(diskValueCell);
+                tableBody.appendChild(diskRow);
+
+                // Uptime
+                const uptimeRow = document.createElement('tr');
+                const uptimeCell = document.createElement('td');
+                uptimeCell.textContent = 'Uptime';
+                const uptimeValueCell = document.createElement('td');
+                uptimeValueCell.textContent = `${nodeData.nodes_hours} jam ${nodeData.nodes_minutes} menit ${nodeData.nodes_second} detik`;
+                uptimeValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                uptimeRow.appendChild(uptimeCell);
+                uptimeRow.appendChild(uptimeValueCell);
+                tableBody.appendChild(uptimeRow);
+
+                //Button
+                const button = document.createElement('div');
+                button.classList.add('d-flex', 'justify-content-end', 'pt-3');
+
+                const rebootButton = document.createElement('a');
+                rebootButton.href = `nodes/${nodeData.node_name}/reboot`;
+                rebootButton.classList.add('btn', 'btn-warning', 'me-1', 'reboot-node');
+                rebootButton.textContent = `Reboot`;
+
+                const shutdownButton = document.createElement('a');
+                shutdownButton.href = `nodes/${nodeData.node_name}/shutdown`;
+                shutdownButton.classList.add('btn', 'btn-danger', 'me-1', 'shutdown-node');
+                shutdownButton.textContent = `Shutdown`;
+
+                const linkButton = document.createElement('a');
+                linkButton.href = `detail-node/${nodeData.node_name}`;
+                linkButton.classList.add('btn', 'btn-primary');
+                linkButton.textContent = `Detail`;
+
+                const storageButton = document.createElement('a');
+                storageButton.href = `nodes/${nodeData.node_name}/storage`;
+                storageButton.classList.add('btn', 'btn-success', 'me-1', 'reboot-node');
+                storageButton.textContent = `Storage`;
+
+                button.appendChild(storageButton);
+                button.appendChild(shutdownButton);
+                button.appendChild(rebootButton);
+                button.appendChild(linkButton);
+                cardBody.appendChild(button);
+
+                return nodeCard;
+            }
+            else {
+                const nodeCard = document.createElement('div');
+                nodeCard.classList.add('col');
+
+                // Tambahkan elemen tautan
+                const cardLink = document.createElement('a');
+                cardLink.href = '/'; // Gantilah dengan URL halaman target
+                cardLink.classList.add('card-link');
+                nodeCard.appendChild(cardLink);
+
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card', 'border-left-primary', 'shadow');
+                nodeCard.appendChild(cardContainer);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+                cardContainer.appendChild(cardBody);
+
+                const cardRow = document.createElement('div');
+                cardRow.classList.add('row', 'no-gutters', 'align-items-center');
+                cardBody.appendChild(cardRow);
+
+                // Ikon hard drive
+                const iconCol = document.createElement('div');
+                iconCol.classList.add('col-auto');
+                cardRow.appendChild(iconCol);
+
+                const icon = document.createElement('i');
+                icon.classList.add('fa-regular', 'fa-hard-drive', 'fa-4x', 'text-gray-300');
+                iconCol.appendChild(icon);
+
+                // Informasi node
+                const infoCol = document.createElement('div');
+                infoCol.classList.add('col');
+                cardRow.appendChild(infoCol);
+
+                const table = document.createElement('table');
+                table.classList.add('table');
+                infoCol.appendChild(table);
+
+                const tableBody = document.createElement('tbody');
+                table.appendChild(tableBody);
+
+                // Node Name
+                const nodeNameRow = document.createElement('tr');
+                const nodeNameCell = document.createElement('td');
+                nodeNameCell.textContent = 'Node Name';
+                const nodeNameValueCell = document.createElement('td');
+                nodeNameValueCell.textContent = nodeData.node_name;
+                nodeNameValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                nodeNameRow.appendChild(nodeNameCell);
+                nodeNameRow.appendChild(nodeNameValueCell);
+                tableBody.appendChild(nodeNameRow);
+
+                // Status
+                const statusRow = document.createElement('tr');
+                const statusCell = document.createElement('td');
+                statusCell.textContent = 'Status';
+                const statusValueCell = document.createElement('td');
+                statusValueCell.textContent = nodeData.node_status;
+                statusValueCell.classList.add('text-end'); // Menambahkan class untuk menggeser teks ke kanan
+                statusRow.appendChild(statusCell);
+                statusRow.appendChild(statusValueCell);
+                tableBody.appendChild(statusRow);
+
+                return nodeCard;
+            }
+        }
+    
+        function ambilDataTerbaru() {
+            // Lakukan permintaan AJAX ke server Anda untuk mendapatkan data terbaru
+            // Pastikan URL endpoint yang sesuai
+            fetch('data_api?action=view_data_nodes_resources')
+                .then(response => response.json())
+                .then(data => {
+                    const dataContainer = document.getElementById('data-container');
+                    dataContainer.innerHTML = ''; // Hapus data yang ada sebelumnya
+    
+                    let nodesData = data.node_data; // Menerima data untuk beberapa node
+
+                    // Urutkan nodesData berdasarkan node_name
+                    nodesData.sort((a, b) => a.node_name.localeCompare(b.node_name));
+    
+                    nodesData.forEach(nodeData => {
+                        const nodeCard = createNodeCard(nodeData);
+                        dataContainer.appendChild(nodeCard);
+                    });
+                })
+                .catch(error => console.error('Gagal mengambil data terbaru:', error));
+        }
+    
+        // Atur interval untuk melakukan pembaruan data setiap 60 detik
+        setInterval(ambilDataTerbaru, 1000); // 1000 ms = 1 detik, jadi 60.000 ms = 60 detik
+    </script> -->
+{% endblock content %}
