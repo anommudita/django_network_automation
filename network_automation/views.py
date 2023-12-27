@@ -2632,7 +2632,7 @@ def detail_node(request, id_node):
 
         # container
         for item in templates:
-            if item['format'] == 'tzst' or item['format'] == 'tar.gz':
+            if item['format'] == 'tzst' or item['format'] == 'tar.gz' or item['format'] == 'tgz':
                 # volid :
                 volid = item['volid']
                 # format :
@@ -2695,6 +2695,12 @@ def detail_node(request, id_node):
             container = None
         if virtual_machine == []:
             virtual_machine = None
+        
+        # Get the list of disks
+        storage_list = proxmox.storage.get()
+
+        # Filter out entries with type 'dir'
+        non_dir_storage = [storage_entry for storage_entry in storage_list if storage_entry['type'] != 'dir']
 
         try:
             ceph = proxmox.nodes(id_node).ceph.status.get()
@@ -2724,6 +2730,7 @@ def detail_node(request, id_node):
             'virtual_machine': virtual_machine,
             'ceph': ceph,
             'error_message': error_message,
+            'storage': non_dir_storage,
         }
         return render(request, 'node/detail_node.html', context )
     else :
@@ -2853,7 +2860,7 @@ def postRoute(request, id_node):
         dstip = request.POST.get('dst_ip')
         srcip = request.POST.get('src_ip')
         dstport = request.POST.get('dst_port')
-        interfaces = request.POST.get('network_interfaces')
+        interfaces = request.POST.get('network-interfaces')
 
         if not interfaces or not dstip or not srcip or not dstport:
             messages.error(request, "Make sure all fields are valid")
@@ -2882,7 +2889,7 @@ def preRoute(request, id_node):
     client = get_exec_paramiko()
 
     if request.method == "POST":
-        interfaces = request.POST.get('network_interfaces')
+        interfaces = request.POST.get('network-interfaces')
         srcport = request.POST.get('src_port')
         ip = request.POST.get('ip')
         port = request.POST.get('port')

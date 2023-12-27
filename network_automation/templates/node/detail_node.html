@@ -202,7 +202,7 @@
                                     <a href="/start-virtual_machine/{{id_node}}/{{row.vmid}}" class="btn btn-success mr-3 start-virtual_machine">Start</a>
                                     <a href="/stop-virtual_machine/{{id_node}}/{{row.vmid}}" class="btn btn-warning mr-3 stop-virtual_machine">Stop</a>
                                     <a href="/reboot-virtual_machine/{{id_node}}/{{row.vmid}}" class="btn btn-primary mr-3 reboot-virtual_machine">Reboot</a>
-                                </div>
+                                </div>postrou
 
                                 <div class="text-center">
                                     <a href="/remove-virtual_machine/{{id_node}}//{{row.vmid}}" class="btn btn-danger mt-3 text remove-virtual_machine">Remove</a>
@@ -244,7 +244,7 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
                                                 </div>
-                                                <select name="network_interfaces" class="form-control" id="network_interfaces">
+                                                <select name="network-interfaces" class="form-control" id="network-interfaces">
                                                     <option value="">Pilih..</option>
                                                     {% for row in network %}
                                                         <option value="{{row.iface}}">{{row.iface}} - {{row.type}}</option>
@@ -302,7 +302,7 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
                                                 </div>
-                                                <select name="network_interfaces" class="form-control" id="network_interfaces">
+                                                <select name="network-interfaces" class="form-control" id="network-nterfaces">
                                                     <option value="">Pilih..</option>
                                                     {% for row in network %}
                                                         <option value="{{row.iface}}">{{row.iface}} - {{row.type}}</option>
@@ -499,7 +499,9 @@
                                             </div>
 
                                             <select name="storage_disk" class="form-control" id="storage_disk">
-                                                <option value="local-lvm" selected>local-lvm</option>
+                                                {% for row in storage %}
+                                                    <option value="{{ row.storage }}" selected>{{ row.storage }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
 
