@@ -51,7 +51,10 @@ urlpatterns = [
     path('detail-node/<str:id_node>', views.detail_node, name="detail-node"),
 
     #route delnode
-    path('nodes/delnode/<str:node_name>', views.deleteNode, name="delete-nodes"),
+    path('nodes/delnode/<str:id_node>', views.deleteNode, name="delete-nodes"),
+
+    #route install ceph cluster
+    path('nodes/install-ceph-cluster', views.installCephCluster, name="install-ceph-cluster"),
 
     # install ceph
     path('detail-node/<str:id_node>/install-ceph', views.installCeph, name="install-ceph"),
@@ -67,6 +70,16 @@ urlpatterns = [
     path('nodes/<str:id_node>/reboot', views.rebootNode, name="reboot-node"),
     #route shutdown node
     path('nodes/<str:id_node>/shutdown', views.shutdownNode, name="shutdown-node"),
+    #route storage
+    path('nodes/<str:id_node>/storage', views.storage_nodes, name="storage-node"),
+
+
+    #route create OSD storage
+    path('nodes/<str:id_node>/storage/OSD', views.createOSD, name="create-osd"),
+    #route create Pools
+    path('nodes/<str:id_node>/storage/Pools', views.createPools, name="create-pools"),
+    #route add storage
+    path('nodes/<str:id_node>/storage/add-storage', views.addStorage, name="add-storage"),
 
     # route node network
     path('node-network/<str:id_node>', views.networkNode, name="node-network"),
@@ -126,9 +139,14 @@ urlpatterns = [
 
     # route detail container
     path('detail-container/<str:id_node>/<str:vmid>', views.detail_container, name="detail-container"),
+    # route detail vm
+    path('detail-vm/<str:id_node>/<str:vmid>', views.detail_vm, name="detail-vm"),
 
     # route cluster
-    path('clusters', views.clusters, name="clusters"),
+    path('high-availability', views.highAvailability, name="high-availability"),
+
+    # route kom
+    path('high-availability/add-resource', views.addResource, name="add-resource"),
 
     # route monitoring
     path('monitors', views.monitors, name="monitors"),

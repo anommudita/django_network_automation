@@ -1,0 +1,154 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+
+<!-- sweetalert2
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+
+    {% if error_message != 'N/A' %}
+        <script>
+            // Ensure showErrorModal is defined globally
+            function showErrorModal(message) {
+                Swal.fire({
+                    title: 'Error',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#FCB92C',
+                });
+            }
+
+            // Call showErrorModal with the error_message
+            $(document).ready(function () {
+                showErrorModal('{{ error_message }}');
+            });
+        </script>
+    {% endif %} -->
+
+    <div class="d-flex pt-3 mb-4">
+        <div class="ms-auto">
+            <a class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addResourceModal">Add Resource</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-xxl-5 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Status</h5>
+                </div>
+                <table class="table table-hover my-0">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-xl-table-cell">Type</th>
+                            <th class="d-none d-xl-table-cell">Node</th>
+                            <th class="d-none d-xl-table-cell">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in status %}
+                            <tr>
+                                <td class="d-none d-xl-table-cell">{{ row.type }}</td>
+                                <td class="d-none d-xl-table-cell">{{ row.node }}</td>
+                                <td class="d-none d-md-table-cell">{{ row.status }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-xl-6 col-xxl-5 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Resources</h5>
+                </div>
+                <table class="table table-hover my-0">
+                    <thead>
+                        <tr>
+                            <th class="d-none d-md-table-cell">id</th>
+                            <th class="d-none d-xl-table-cell">State</th>
+                            <th class="d-none d-xl-table-cell">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in resources %}
+                            <tr>
+                                <td class="d-none d-xl-table-cell">{{ row.sid }}</td>
+                                <td class="d-none d-xl-table-cell">{{ row.state }}</td>
+                                <td class="d-none d-xl-table-cell">{{ row.type }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addResourceModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-white border-0 mb-0">
+                        <div class="card-header bg-transparent">
+                            <h2 class="card-heading text-center" id="clusterTitle">Add Resource</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'add-resource' %}" method="post">
+                                {% csrf_token %}
+                                <!-- Common Fields -->
+                                <!-- ... -->
+    
+                                <!-- address -->
+                                <div class="form-group mb-4">
+                                    <!-- IP -->
+                                    <label>Sid : </label>
+                                    <div class="form-group mb-4">
+                                        <div class="input-group input-group-merge input-group-alternative">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-network-wired fa-2x "></i></span>
+                                            </div>
+                                            <select name="resource" class="form-control" id="resource">
+                                                <option value="">Pilih..</option>
+                                                {% for row in ct %}
+                                                    <option value="ct:{{ row.vmid }}">{{ row.name }}</option>
+                                                {% endfor %}
+                                                {% for row in vm %}
+                                                    <option value="vm:{{ row.vmid }}">{{ row.name }}</option>
+                                                {% endfor %}
+                                                
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary">Add Resource</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock content %}

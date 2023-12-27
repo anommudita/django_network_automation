@@ -4,12 +4,23 @@
 
 {% block content %}
 
-    
+    <!-- flash message -->
+    {% for message in messages %}
+    <div class="container-fluid p-0">
+
+        <div class="alert {{ message.tags }} alert-dismissible fade show col-6" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+
+
     <!-- {% for col in nodes %} 
     {% endfor %} -->
     <div class="d-flex pt-3 mb-4">
         {% if ceph == 'N/A' %}
-            <a href="" class="btn btn-danger mr-2 mb-3 install-ceph">Install Ceph</a>
+            <a href="/nodes/install-ceph-cluster" class="btn btn-danger mr-2 mb-3 install-ceph">Install Ceph</a>
         {% else %}
             <button type="button" class="btn btn-outline-danger mr-2 mb-3" disabled>Ceph Already Instal</button>
         {% endif %}
@@ -25,7 +36,7 @@
 
             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                 {% for name in nodes %}
-                    <li><a href="nodes/delnode/{{name.node}}" class="dropdown-item">{{ name.node }}</a></li>
+                    <li><a href="/nodes/delnode/{{ name.node }}" class="dropdown-item">{{ name.node }}</a></li>
                 {% endfor %}
             </ul>
         </div>
@@ -213,7 +224,12 @@
                 linkButton.classList.add('btn', 'btn-primary');
                 linkButton.textContent = `Detail`;
 
+                const storageButton = document.createElement('a');
+                storageButton.href = `nodes/${nodeData.node_name}/storage`;
+                storageButton.classList.add('btn', 'btn-success', 'me-1');
+                storageButton.textContent = `Storage`;
 
+                button.appendChild(storageButton);
                 button.appendChild(shutdownButton);
                 button.appendChild(rebootButton);
                 button.appendChild(linkButton);

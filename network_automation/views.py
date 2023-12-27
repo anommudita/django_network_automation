@@ -594,6 +594,80 @@ def data_api(request):
                 else:
                     # Tanggapan jika id_node tidak diberikan
                     return JsonResponse({'error': 'ID node tidak diberikan'})
+            
+            # belum diedit
+            case 'view_data_vm_log': 
+                id_node = request.GET.get('id_node') 
+                id_ct = request.GET.get('id_ct')  # Mengambil ID node dari permintaan GET
+
+                if id_ct and id_node is not None:
+                    # setting datauser proxmox
+                    proxmox = get_proxmox()
+                    net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+                    ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+                    host = ip_address
+                    username = 'log'
+                    password = 'logs123'
+
+                    client = paramiko.client.SSHClient()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.connect(host, username=username, password=password)
+
+                    command = "journalctl --output json-pretty"
+
+                    stdin, stdout, stderr = client.exec_command(command)
+
+                    log = stdout.read().decode('utf-8')
+
+                    log_blocks = log.split('}')
+
+                    formatted_logs = []
+
+                    # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+                    for block in log_blocks[:-1]:
+                        formatted_logs.append(f"{block.strip() + '},'}\n")
+
+                    # Menambahkan blok terakhir tanpa koma
+                    # Menghilangkan tanda koma terakhir pada blok terakhir
+                    last_block = formatted_logs[-1].replace("},", "}")
+                    formatted_logs.append(f"{last_block}\n")
+
+                    client.close()
+
+                    # logs_json = "[" + formatted_logs + "]"
+                    logs_json = "[" + "".join(formatted_logs) + "]"
+                    # Hapus koma di luar tanda kurung
+                    logs_json = logs_json.replace(",]", "]")
+                    # print(logs_json)
+
+                    logs_list = json.loads(logs_json)
+                    
+                    for item in logs_list:
+                        # time
+                        date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+                        # You may need to parse the date_from_proxmox if it's in a specific format
+                        formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+                        hostname = item['_HOSTNAME']
+                        msg = item['MESSAGE']
+                        identifier = item['SYSLOG_IDENTIFIER']
+
+                    # Buat JSON response
+                    response = {
+                        'log': logs_list,
+                        'ct_time': formatted_time,
+                        'ct_hostname': hostname,
+                        'ct_msg': msg,
+                        'ct_identifier': identifier,
+                    }
+                    
+                    return JsonResponse(response)
+                else:
+                    # Tanggapan jika id_node tidak diberikan
+                    return JsonResponse({'error': 'ID node tidak diberikan'})
                 
             case 'view_data_network':
                 iface = request.GET.get('iface')
@@ -813,7 +887,7 @@ def createCluster(request):
             proxmox.cluster.config.post(**post_data)
             messages.success(request, "Create cluster successfully")
             # return redirect('home')
-            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time(3))}")
+            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
         except Exception as e:
             messages.error(request, f"Error adding cluster : {str(e)}")
             return redirect('home')
@@ -855,7 +929,7 @@ def joinCluster(request):
             proxmox.cluster.config.join.post(**post_data)
             messages.success(request, "Join cluster successfully")
             # return redirect('home')
-            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time(3))}")
+            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
         except Exception as e:
             messages.error(request, f"Error joining cluster : {str(e)}")
             return redirect('home')
@@ -1338,7 +1412,159 @@ def nodes(request):
         return render(request, 'node/node.html', context )
     else :
         return('error_connection')
+    
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def addStorage(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
 
+    if request.method == "POST":
+        id= request.POST.get('id')
+        type= request.POST.get('type')
+        pool= request.POST.get('pool')
+        content= request.POST.get('content')
+
+        if not id and not type and not pool:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('storage-node', id_node)
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'storage' : id,
+            'type': type,
+            'pool': pool,
+            'content': content,
+        }
+        
+        try:
+            proxmox.storage.post(**post_data)
+            messages.success(request, "Add Storage Successfully")
+            # return redirect('home')
+            return redirect('storage-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Storage : {str(e)}")
+            return redirect('storage-node', id_node)
+
+def extract_data(node):
+    data_list = []
+    for child in node.get('children', []):
+        entry = {
+            'name': child.get('name'),
+            'type': child.get('type'),
+            'status': child.get('status')
+        }
+        data_list.append(entry)
+        data_list.extend(extract_data(child))
+    return data_list
+
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# halaman node
+def storage_nodes(request, id_node):
+    proxmox = get_proxmox()
+    if proxmox is not None:
+        
+        storage = proxmox.nodes(id_node).disks.list.get()
+
+        # Filter the disks to exclude those with 'used' parameter
+        filtered_disks = [disk for disk in storage if 'used' not in disk]
+
+        pools = proxmox.nodes(id_node).ceph.pool.get()
+
+        osd = proxmox.nodes(id_node).ceph.osd.get()
+
+        # Extract data from the 'osd' structure
+        osd_data = extract_data(osd['root'])
+        
+        context = {
+            'title': 'Storage Nodes',
+            'active_storage': 'active',
+            'storage': storage,
+            'id_node': id_node,
+            'disk': filtered_disks,
+            'pools': pools,
+            'osd': osd,
+            'osd_data': osd_data,
+        }
+        return render(request, 'node/storage.html', context)
+    else:
+        return HttpResponse('error_connection')
+
+
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def createOSD(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        path = request.POST.get('path')
+
+        if not path:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('storage-node', id_node)
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'dev' : path,
+        }
+        
+        try:
+            proxmox.nodes(id_node).ceph.osd.post(**post_data)
+            messages.success(request, "Create Ceph OSD Successfully")
+            # return redirect('home')
+            return redirect('storage-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Ceph OSD : {str(e)}")
+            return redirect('storage-node', id_node)
+        
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def createPools(request, id_node):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        name= request.POST.get('name')
+
+        if not name:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('storage-node', id_node)
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'name' : name,
+        }
+        
+        try:
+            proxmox.nodes(id_node).ceph.pool.post(**post_data)
+            messages.success(request, "Create Ceph Pool Successfully")
+            # return redirect('home')
+            return redirect('storage-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error adding Ceph Pool : {str(e)}")
+            return redirect('storage-node', id_node)
+        
 # def get_exec_paramiko2(id_node):
 
 #     # get data server
@@ -1369,18 +1595,22 @@ def nodes(request):
 #         return None
 
 # install ceph 
-# @login_required(login_url='login')
-@admin_access_required
-def deleteNode(request, node_name):
+@login_required(login_url='login')
+def deleteNode(request, id_node):
     proxmox = get_proxmox()
     # time.sleep(1.5)
     
     if proxmox is not None :
         try:
+            # Fetch cluster status
             prox_data = proxmox.cluster.status.get()
 
             # Check if there are nodes with type 'node'
             nodes = [node for node in prox_data if node.get('type') == 'node']
+
+            # lennode = len(nodes) - 1
+
+            # print(lennode)
 
             # Check if there is more than one node
             if len(nodes) > 1:
@@ -1393,13 +1623,17 @@ def deleteNode(request, node_name):
                 # Extract IP address and node name from the data
                 for node in nodes:
                     # Skip 'ceph1'
-                    if node.get('name') == node_name:
+                    if node.get('name') == id_node:
                         continue
 
-                    # Check if the node is local
+                    # # Check if the node is local
                     # if node.get('local') == 1:
-                    #     messages.error(request, f"Error: Cannot remove the local node {node.get('name')}.") 
+                    #     print(f"Error: Cannot remove the local node {node.get('name')}.")
                     #     continue
+
+                    # Break out of the loop if one node is processed
+                    if nodes_processed >= 1:
+                        break
 
                     ip_address = node.get('ip')
                     node_name = node.get('name')
@@ -1412,8 +1646,24 @@ def deleteNode(request, node_name):
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                     client.connect(host, username=username, password=password)
 
-                    client.exec_command(f"pvecm delnode {node_name}\n")
-                    
+                    shell = client.invoke_shell()
+
+                    # shell.send(f"pvecm expected {lennode}\n")
+                    # time.sleep(2)
+
+                    shell.send("pvecm nodes\n")
+                    time.sleep(5)
+
+                    shell.send(f"pvecm delnode {id_node}\n")
+                    time.sleep(20)  # You may need to adjust the sleep duration
+
+                    output = shell.recv(65535).decode()
+                    print(output)
+                    # Stop the services on the node
+                    # _stdin, _stdout,_stderr = client.exec_command(f"pvecm delnode {node_name}\n")
+
+                    # print(_stdout.read().decode())
+
                     # Close the SSH connection
                     client.close()
 
@@ -1423,14 +1673,12 @@ def deleteNode(request, node_name):
                     # Increment the count of processed nodes
                     nodes_processed += 1
 
-                    # Break out of the loop if one node is processed
-                    if nodes_processed >= 1:
-                        break
+                    
 
                 # If delnode is executed, perform ceph1 removal operations
                 if delnode_executed:
                     for node in nodes:
-                        if node.get('name') == node_name:
+                        if node.get('name') == id_node:
                             ip_address = node.get('ip')
                             node_name = node.get('name')
 
@@ -1463,16 +1711,51 @@ def deleteNode(request, node_name):
                             client.close()
 
                             # Print success message
-                            messages.success(request, f"Node {node_name} has been removed from the cluster.")
+                            print(f"Node {node_name} has been removed from the cluster.")
 
                             # Break out of the loop since we found the node
                             break
                     else:
                         # Print error message if the node is not found
-                        messages.error(request, f"Node {node_name} not found in the cluster.")          
+                        print(f"Node {node_name} not found in the cluster.")
             else:
-                messages.error(request, "There is only one node in the cluster. Skipping execution.")
+                for node in nodes:
+                    ip_address = node.get('ip')
+                    node_name = node.get('name')
 
+                    host = f"{ip_address}"
+                    username = "root"
+                    password = "12345"
+
+                    client = paramiko.SSHClient()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.connect(host, username=username, password=password)
+
+                    # Stop the services on the node
+                    commands = [
+                        "systemctl stop pve-cluster corosync",
+                        "pmxcfs -l",
+                        "rm /etc/corosync/*",
+                        "rm /etc/pve/corosync.conf",
+                        "killall pmxcfs",
+                        "systemctl start pve-cluster"
+                    ]
+
+                    for command in commands:
+                        shell = client.invoke_shell()
+                        shell.send(command + "\n")
+                        time.sleep(2)  # You may need to adjust the sleep duration
+                        output = shell.recv(65535).decode()
+                        print(output)
+
+                    # Close the SSH connection
+                    client.close()
+
+                    # Print success message
+                    print(f"Node {node_name} has been removed from the cluster.")
+
+                    # Break out of the loop since we found the node
+                    break                    
             return redirect('nodes')
         except Exception as e:
             messages.error(request, f"Error deleting node: {str(e)}")
@@ -1525,7 +1808,7 @@ def installCephCluster(request):
                 time.sleep(360)  # You may need to adjust the sleep duration
 
                 # Enter "yes" to confirm
-                shell.send("pveceph init --network 192.168.2.0/27\n")
+                shell.send("pveceph init --network 192.168.43.0/24\n")
 
                 # Wait for the command to complete and capture the output
                 time.sleep(15)  # You may need to adjust the sleep duration
@@ -2362,7 +2645,7 @@ def detail_node(request, id_node):
 
         # container
         for item in templates:
-            if item['format'] == 'tzst' or item['format'] == 'tar.gz':
+            if item['format'] == 'tzst' or item['format'] == 'tar.gz' or item['format'] == 'tgz':
                 # volid :
                 volid = item['volid']
                 # format :
@@ -2425,6 +2708,12 @@ def detail_node(request, id_node):
             container = None
         if virtual_machine == []:
             virtual_machine = None
+        
+        # Get the list of disks
+        storage_list = proxmox.storage.get()
+
+        # Filter out entries with type 'dir'
+        non_dir_storage = [storage_entry for storage_entry in storage_list if storage_entry['type'] != 'dir']
 
         try:
             ceph = proxmox.nodes(id_node).ceph.status.get()
@@ -2454,7 +2743,11 @@ def detail_node(request, id_node):
             'virtual_machine': virtual_machine,
             'ceph': ceph,
             'error_message': error_message,
+<<<<<<< HEAD
             'vmid': vmid,
+=======
+            'storage': non_dir_storage,
+>>>>>>> b673f7143f8503e751b6f744b265ff264b9b6aac
         }
         return render(request, 'node/detail_node.html', context )
     else :
@@ -2482,7 +2775,7 @@ def installCeph(request, id_node):
             time.sleep(360)  # You may need to adjust the sleep duration
 
             # Enter "yes" to confirm
-            shell.send("pveceph init --network 192.168.2.0/27\n")
+            shell.send("pveceph init --network 192.168.1.0/24\n")
 
             # Wait for the command to complete and capture the output
             time.sleep(15)  # You may need to adjust the sleep duration
@@ -2584,7 +2877,7 @@ def postRoute(request, id_node):
         dstip = request.POST.get('dst_ip')
         srcip = request.POST.get('src_ip')
         dstport = request.POST.get('dst_port')
-        interfaces = request.POST.get('network_interfaces')
+        interfaces = request.POST.get('network-interfaces')
 
         if not interfaces or not dstip or not srcip or not dstport:
             messages.error(request, "Make sure all fields are valid")
@@ -2613,7 +2906,7 @@ def preRoute(request, id_node):
     client = get_exec_paramiko()
 
     if request.method == "POST":
-        interfaces = request.POST.get('network_interfaces')
+        interfaces = request.POST.get('network-interfaces')
         srcport = request.POST.get('src_port')
         ip = request.POST.get('ip')
         port = request.POST.get('port')
@@ -3138,27 +3431,11 @@ def detail_container(request, id_node, vmid):
     else:
         return('error_connection')
 
-# remove container
-# @login_required(login_url='login')
-@admin_access_required
-def removeVirtualMachine(request, id_node, vmid):
-    proxmox = get_proxmox()
-    time.sleep(1.5)
-    if proxmox is not None :
-        try:
-            proxmox.nodes(id_node).qemu(vmid).delete()
-            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
-            return redirect('detail-node', id_node)
-        except Exception as e:
-            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
-            return redirect('detail-node', id_node)
-    else :
-        return('error_connection')
-
+# belum diedit
 # @login_required(login_url='login')
 @admin_access_required
 # halaman detail_container
-def detail_container(request, id_node, vmid):
+def detail_vm(request, id_node, vmid):
     proxmox = get_proxmox()
 
     id_ct = vmid
@@ -3228,22 +3505,164 @@ def detail_container(request, id_node, vmid):
             'msg': msg,
             'identifier': identifier,
         }
-        return render(request, 'node/container/detail_container.html', context)
+        return render(request, 'node/vm/detail_vm.html', context)
     else:
         return('error_connection')
+
+# remove container
+# @login_required(login_url='login')
+@admin_access_required
+def removeVirtualMachine(request, id_node, vmid):
+    proxmox = get_proxmox()
+    time.sleep(1.5)
+    if proxmox is not None :
+        try:
+            proxmox.nodes(id_node).qemu(vmid).delete()
+            messages.success(request, "Virtual Machine removing successfully, wait a few moments to remove the VM")
+            return redirect('detail-node', id_node)
+        except Exception as e:
+            messages.error(request, f"Error removing Virtual Machine : {str(e)}")
+            return redirect('detail-node', id_node)
+    else :
+        return('error_connection')
+
+# # @login_required(login_url='login')
+# @admin_access_required
+# # halaman detail_container
+# def detail_container(request, id_node, vmid):
+#     proxmox = get_proxmox()
+
+#     id_ct = vmid
+
+#     if id_ct and id_node is not None:
+#     # setting datauser proxmox
+#         net = proxmox.nodes(id_node).lxc(id_ct).config.get()
+
+#         ip_address = net['net0'].split('ip=')[1].split('/')[0]
+
+#         host = ip_address
+#         username = 'log'
+#         password = 'logs123'
+
+#         client = paramiko.client.SSHClient()
+#         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#         client.connect(host, username=username, password=password)
+
+#         command = "journalctl --output json-pretty"
+
+#         stdin, stdout, stderr = client.exec_command(command)
+
+#         log = stdout.read().decode('utf-8')
+
+#         log_blocks = log.split('}')
+
+#         formatted_logs = []
+
+#         # Menambahkan koma dan kurung kurawal tutup setelah setiap blok, kecuali blok terakhir
+#         for block in log_blocks[:-1]:
+#             formatted_logs.append(f"{block.strip() + '},'}\n")
+
+#         # Menambahkan blok terakhir tanpa koma
+#         # Menghilangkan tanda koma terakhir pada blok terakhir
+#         last_block = formatted_logs[-1].replace("},", "}")
+#         formatted_logs.append(f"{last_block}\n")
+
+#         client.close()
+
+#         # logs_json = "[" + formatted_logs + "]"
+#         logs_json = "[" + "".join(formatted_logs) + "]"
+#         # Hapus koma di luar tanda kurung
+#         logs_json = logs_json.replace(",]", "]")
+#         # print(logs_json)
+
+#         logs_list = json.loads(logs_json)
+
+#         for item in logs_list:
+#             # time
+#             date = item['__REALTIME_TIMESTAMP']  # Get the date from Proxmox
+
+#             # You may need to parse the date_from_proxmox if it's in a specific format
+#             formatted_time = datetime.datetime.utcfromtimestamp(int(date) / 1000000).strftime('%Y-%m-%d %H:%M:%S')
+
+#             hostname = item['_HOSTNAME']
+#             msg = item['MESSAGE']
+#             identifier = item['SYSLOG_IDENTIFIER']
+        
+#         context = {
+#             'title': 'Detail Container',
+#             'active_ct': 'active',
+#             'id_node': id_node,
+#             'id_ct': id_ct,
+#             'date': date,
+#             'time': formatted_time,
+#             'hostname': hostname,
+#             'msg': msg,
+#             'identifier': identifier,
+#         }
+#         return render(request, 'node/container/detail_container.html', context)
+#     else:
+#         return('error_connection')
 
 
 # wajib login untuk mengakses halaman ini
 # @login_required(login_url='login')
 @admin_access_required
 # halaman clusters
-def clusters(request):
+def highAvailability(request):
     
     proxmox = get_proxmox()
 
-    if proxmox is not None :
+    if proxmox is not None:
         try:
             ceph = proxmox.cluster.ceph.status.get()
+            resources = proxmox.cluster.ha.resources.get()
+            status = proxmox.cluster.ha.status.current.get()
+
+            # Get the list of nodes
+            nodes = proxmox.nodes.get()
+
+            ct = []
+            vm = []
+
+            # Extract existing VMIDs from resources
+            existing_vmids = set()
+            for resource in resources:
+                if 'sid' in resource and resource['type'] == 'ct':
+                    vmid = resource['sid'].split(":")[1]
+                    existing_vmids.add(vmid)
+
+            # Loop through each node
+            for node in nodes:
+                node_name = node['node']
+
+                # Get the list of containers (CT) for the current node
+                containers = proxmox.nodes(node_name).lxc.get()
+
+                # Check if containers data is not empty before appending
+                if containers:
+                    print(f"Containers for Node {node_name}:")
+                    for container in containers:
+                        vmid = container['vmid']
+                        if vmid not in existing_vmids:
+                            ct.append({
+                                'name': container['name'],
+                                'vmid': vmid
+                            })
+
+                # Get the list of virtual machines (VM) for the current node
+                vms = proxmox.nodes(node_name).qemu.get()
+
+                # Check if virtual machines data is not empty before appending
+                if vms:
+                    print(f"Virtual Machines for Node {node_name}:")
+                    for vm in vms:
+                        vmid = vm['vmid']
+                        if vmid not in existing_vmids:
+                            vm.append({
+                                'name': vm['name'],
+                                'vmid': vmid
+                            })
+
             error_message = "N/A"
         except Exception as e:
             error_message = str(e)
@@ -3254,14 +3673,54 @@ def clusters(request):
                 error_message = str(e)
             
         context = {
-            'title': 'Ceph',
-            'active_ceph': 'active',
+            'title': 'High Availability',
+            'active_ha': 'active',
             'ceph': ceph,
             'error_message': error_message,
+            'resources': resources,
+            'status': status,
+            'ct': ct,
+            'vm': vm,
         }
-        return render(request, 'cluster/cluster.html', context )
-    else :
-        return('error_connection')
+        return render(request, 'HA/HA.html', context)
+    else:
+        return HttpResponse('error_connection')
+
+
+
+# wajib login untuk mengakses halaman ini
+# @login_required(login_url='login')
+@admin_access_required
+# add user
+def addResource(request):
+    # connect to proxmox
+    proxmox = get_proxmox()
+
+    if request.method == "POST":
+        resource= request.POST.get('resource')
+        
+
+        if not resource:
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('high-availability')
+        
+        # network = {
+        #     'priority' : priority, 
+        #     'address' : ip,
+        # }
+
+        post_data = {
+            'sid' : resource,
+        }
+        
+        try:
+            proxmox.cluster.ha.resources.post(**post_data)
+            messages.success(request, "Add Storage Successfully")
+            # return redirect('home')
+            return redirect('high-availability')
+        except Exception as e:
+            messages.error(request, f"Error adding Storage : {str(e)}")
+            return redirect('high-availability')
 
 
 # @login_required(login_url='login')

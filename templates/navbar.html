@@ -29,6 +29,13 @@
                     </a>
                 </li>
 
+                <!-- halaman ceph -->
+                <li class="sidebar-item {{active_ha}}">
+                    <a class="sidebar-link" href="{% url 'high-availability'%}">
+                        <i class="align-middle" data-feather="activity"></i> <span class="align-middle">High Availability</span>
+                    </a>
+                </li>
+
                 <!-- Monitor -->
                 <li class="sidebar-item {{active_monitor}}">
                     <a class="sidebar-link" href="{% url 'monitors'%}">
