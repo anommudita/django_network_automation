@@ -963,6 +963,64 @@ $('.active-user-client').on('click', function (e) {
     })
 });
 
+$('.delete-order').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Want to remove this order?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Remove order!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Remove Order!',
+                'Success removed order',
+                'success'
+            )
+        }
+    })
+});
+
+
+$('.delete-order-by-user').on('click', function (e) {
+    // e = event
+    // mematikan funtion href yang seharusnya berjalan jika di klick
+    e.preventDefault();
+
+    //var href 
+    const href = $(this).attr('href');
+
+    Swal.fire({
+        title: 'Apakah anda yakin',
+        text: "Ingin menghapus order ini?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Hapus Order!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.location.href = href;
+            Swal.fire(
+                'Hapus Order!',
+                'Berhasil menghapus order',
+                'success'
+            )
+        }
+    })
+});
+
+
 
 
 // $('.notif').on('click', function(e){

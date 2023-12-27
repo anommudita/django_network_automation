@@ -14,7 +14,6 @@ class CustomUser(AbstractUser):
 
     # Add other custom fields here
 
-
     def __str__(self):
         return self.username
 
@@ -34,11 +33,11 @@ class CustomUser(AbstractUser):
 
 # harga paket
 class HargaPaket(models.Model):
-    nama_paket = models.CharField(max_length=100)
-    cpu = models.CharField(max_length=100)
-    ram = models.CharField(max_length=100)
-    storage = models.CharField(max_length=100)
-    harga = models.DecimalField(max_digits=10, decimal_places=2)
+    nama_paket = models.CharField(max_length=100, null=True)
+    cpu = models.CharField(max_length=100, null=True)
+    ram = models.CharField(max_length=100, null=True)
+    storage = models.CharField(max_length=100, null=True)
+    harga = models.CharField(max_length=100, null=True)
     keterangan = models.TextField(null=True)
     
 
@@ -58,6 +57,8 @@ class Pesanan(models.Model):
     password = models.CharField(max_length=100)  # Password akan dienkripsi
     perbulan = models.CharField(max_length=100, null=True)
     jenis = models.CharField(max_length=100, default='container')
+    status = models.CharField(max_length=100, default='0', null=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return f"Order {self.id} by {self.user.username}"

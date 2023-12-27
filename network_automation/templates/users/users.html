@@ -18,6 +18,12 @@
         </div>
     </div>
     {% endfor %}
+
+    <div>
+        <div class="col-lg-6 col-5 text-right mb-4">
+        <a href="{% url 'users_all'%}" class="btn btn-primary fs-4">Users</a>
+        <a href="{% url 'order_all' %}"  class="btn btn-outline-success fs-4">Orderan</a>
+    </div>
     
     <div class="row">
         <div class="col">
@@ -55,8 +61,13 @@
                                 </td>
                                 <td>{{ row.date_joined }}</td>
                                 <td>
-                                    <a href="active-user-client/{{ row.id }}" class="btn btn-warning active-user-client">Order</a>
-                                    <a href="active-user-client/{{ row.id }}" class="btn btn-primary active-user-client">Activate</a>
+                                    <a href="order_by_user/{{ row.id }}" class="btn btn-warning">Order</a>
+
+                                    {% if row.is_active == 0 %}
+                                        <a href="active-user-client/{{ row.id }}" class="btn btn-primary active-user-client">Activate</a>
+                                    {% else %}
+                                        <a href="active-user-client/{{ row.id }}" class="btn btn-primary active-user-client disabled">Activate</a>
+                                    {% endif %}
                                     <a href="#" class="btn btn-success btnEdit" data-id="{{row.id}}">Edit</a>
                                     <a href="delete-user-client/{{ row.id }}" class="btn btn-danger delete-user-client">Delete</a>
                                 </td>  

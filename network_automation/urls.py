@@ -178,4 +178,20 @@ urlpatterns = [
     # route edit user client
     path('edit-user-client/<str:id_user>', views.updateUserClient, name="edit-user-client"),
 
+    # order all
+    path('order_all', views.order_all, name="order_all"),
+
+    # order by user
+    path('order_by_user/<str:id_user>', views.order_by_user, name="order_by_user"),
+
+    # order execute
+    path('order_execute', views.executeOrder, name="order_execute"),
+
+    # delete order
+    path('delete-order/<str:id_order>', views.deleteOrder, name="delete-order"), 
+
+    # print invoice 
+    path('print-invoice', views.printInvoice, name="print-invoice"),
+
+
 ]
