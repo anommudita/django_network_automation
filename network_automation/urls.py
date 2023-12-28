@@ -205,9 +205,14 @@ urlpatterns = [
     # order execute
     path('order_execute', views.executeOrder, name="order_execute"),
 
-    # delete order
-    path('delete-order/<str:id_order>', views.deleteOrder, name="delete-order"), 
+    # order execute by user
+    path('order_execute-user/<str:id_user>', views.executeOrderUser, name="order_execute-user"),
 
+    # delete order
+    path('delete-order/<str:id_order>', views.deleteOrder, name="delete-order"),
+
+    # delete order by user
+    path('delete-order-user/<str:id_order>/<str:id_user>', views.deleteOrderByUser, name="delete-order-user"), 
     # print invoice 
     path('print-invoice/<str:id_invoice>', views.printInvoice, name="print-invoice"),
 

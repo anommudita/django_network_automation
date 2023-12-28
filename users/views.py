@@ -58,6 +58,18 @@ import time
 
 from functools import wraps
 
+import random
+
+# django pdf
+from django_xhtml2pdf.utils import pdf_decorator
+
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+import io
+
+import datetime
+
 # Fungsi untuk mengecek apakah pengguna termasuk dalam grup 'user'
 def is_user(user):
     return user.groups.filter(name='user').exists() #mengembalikan nilai True jika pengguna termasuk dalam grup 'user'
@@ -303,6 +315,7 @@ def pesanan_sesuai_paket(request, cpu, ram, storage, id_paket):
         username = request.POST.get('username')
         password = request.POST.get('password')
         penyewaan = request.POST.get('penyewaan')
+        os = request.POST.get('paket_os')
 
         if not username or not password or not penyewaan :
             messages.error(request, "Pastikan semua kolom terisi")
@@ -316,7 +329,7 @@ def pesanan_sesuai_paket(request, cpu, ram, storage, id_paket):
 
             # membuat order
             order = Pesanan.objects.create(
-                user=current_user, harga_paket=current_paket, core=cpu, ram=ram, storage=storage, username=username, password=password, os="Linux", perbulan=penyewaan, jenis="container")
+                user=current_user, harga_paket=current_paket, core=cpu, ram=ram, storage=storage, username=username, password=password, os=os, perbulan=penyewaan, jenis="container")
             
             # Simpan  orderan
             order.save()
@@ -386,15 +399,16 @@ def pesananCustom(request):
             messages.error(request, f"Error : {str(e)}")
             return redirect('dashboard')
         
-def updatePesanan(request):
+def updatePesanan(request, id_order):
     if request.method == "POST":
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        penyewaan = request.POST.get('penyewaan')
-        cpu = request.POST.get('cpu')
-        storage = request.POST.get('storage')
-        ram = request.POST.get('ram')
-        os = request.POST.get('os')
+        username = request.POST.get('edit_username')
+        password = request.POST.get('edit_password')
+        penyewaan = request.POST.get('edit_penyewaan')
+        cpu = request.POST.get('edit_cpu')
+        storage = request.POST.get('edit_storage')
+        ram = request.POST.get('edit_ram')
+        os = request.POST.get('edit_os')
+
 
         memory = gb_to_mb(int(ram))
 
@@ -404,12 +418,16 @@ def updatePesanan(request):
         try:
             current_user = request.user
 
-            last_paket = HargaPaket.objects.latest('id')
-
-            # membuat order
-            order = Pesanan.objects.create(
-                user=current_user, harga_paket=last_paket, core=cpu, ram=memory, storage=storage, username=username, password=password, os=os, perbulan=penyewaan, jenis="container")
-            
+            order = Pesanan.objects.get(id=id_order)
+            order.core = cpu
+            order.ram = ram
+            order.storage = storage
+            order.username = username
+            order.password = password
+            order.os = os
+            order.perbulan = penyewaan
+            order.jenis = "container"
+            order.user = current_user
             # Simpan  orderan
             order.save()
 
@@ -419,3 +437,42 @@ def updatePesanan(request):
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
             return redirect('dashboard')      
+        
+
+
+@pdf_decorator(pdfname='invoice.pdf')
+def printInvoiceUser(request, id_invoice):
+
+    order = Pesanan.objects.get(id=id_invoice)
+
+    harga_paket = float(order.harga_paket.harga.replace('.', '').replace(',', '.'))  # Ubah string menjadi float
+    total = harga_paket * int(order.perbulan)
+    total_str = '{:,.0f}'.format(total).replace(',', '.')  # Ubah nilai menjadi string dengan format yang diinginkan
+
+    # Generate angka acak antara 100000 dan 999999
+    progress_kode_random = random.randint(100000, 999999)
+
+    # Membuat kode invoice dengan menggabungkan string dan angka acak
+    kode_invoice = f"CEG-{progress_kode_random}"
+
+    # Menggabungkan ke dalam format yang diinginkan
+    tanggal_baru = order.date_created.strftime("%d/%m/%Y")
+
+    todayThis = datetime.date.today()
+    today = todayThis.strftime("%d/%m/%Y")
+
+    if order.status == "0":
+        status = "Belum di proses"
+    else :
+        status = "Sudah di proses"
+
+
+    context = {
+        'order' : order,
+        'total' : total_str,
+        'today' : today,
+        'date_created' : tanggal_baru,
+        'kode_invoice' : kode_invoice,
+        'status' : status,
+    }
+    return render(request, 'invoice/invoice.html', context)

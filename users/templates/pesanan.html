@@ -29,7 +29,7 @@
                                         </tr>
                                         <tr>
                                             <td>Memori</td>
-                                            <td class="text-end" id="memori">{{ row.ram }} GB</td>
+                                            <td class="text-end" id="memori">{{ row.ram }} MB</td>
                                         </tr>
                                         <tr>
                                             <td>Storage</td>
@@ -107,13 +107,13 @@
                                 <td class="no_urut">{{ forloop.counter }}</td>
                                 <td>{{ row.harga_paket }}</td>
                                 <td>{{ row.core }} core</td>  
-                                <td>{{ row.ram }} GB</td>
-                                <td>{{ row.storage }} MB</td>
+                                <td>{{ row.ram }} MB</td>
+                                <td>{{ row.storage }} GB</td>
                                 <td>{{ row.os }}</td>
                                 <td>{{ row.username }}</td>
                                 <td>{{ row.perbulan }} Bulan </td>
                                 <td>
-                                    <a href="#" class="btn btn-primary" data-id="{{row.userid}}">Invoice</a>
+                                    <a href="{% url 'print-invoice-user' row.id %}" class="btn btn-primary" data-id="{{row.userid}}">Invoice</a>
 
                                     {% if row.status == "0" %}
                                         <a href="delete-order-by-user/{{ row.id }}" class="btn btn-danger delete-order-by-user">Delete</a>
@@ -122,10 +122,10 @@
                                     {% endif %}
 
                                     
-                                    {% if row.status == "1" or row.harga_paket.0 or row.harga_paket.1 or row.harga_paket.2  %}
-                                        <a href="#" class="btn btn-success disable" data-id="{{row.id}}">Edit</a>
+                                    {% if row.status == "1" or row.harga_paket.nama_paket != "Custom" %}
+                                        <a class="btn btn-secondary disabled">Edit</a>        
                                     {% else %}
-                                        <a href="#" class="btn btn-success btnEdits" data-id="{{row.id}}">Edit</a>
+                                        <a class="btn btn-success btnEdits" data-id="{{row.id}}">Edit</a>
                                     {% endif %}
                                 </td>  
                             </tr>
@@ -153,6 +153,22 @@
                             <div class="card-body">
                                 <form action="pesanan_user/{{ row.cpu }}/{{ row.ram }}/{{ row.storage }}/{{ row.id }}" id="addFormPackagePrice" method="post">
                                     {% csrf_token %}
+
+
+                                    <!-- OS -->
+                                    <label for="paket_os">OS : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-brands fa-linux fa-2x "></i></span>
+                                        </div>
+                                        <select name="paket_os" class="form-control" id="paket_os">
+                                            <option value="ubuntu">Linux Ubuntu</option>
+                                            <option value="debian">Linux Debian</option>
+                                            <option value="centos">Linux Centos</option>
+                                        </select>
+                                    </div>
+
+                                    <br>
 
                                     <!-- Username -->
                                     <div class="input-group input-group-merge input-group-alternative">
@@ -341,7 +357,7 @@
                                 <form action="" id="editFormPesananCustom" method="post">
                                     {% csrf_token %}
 
-                                    <input type="text" id="edit_id" hidden>
+                                    <input type="text" class="edit_id" hidden>
 
                                     <!-- Paket -->
                                     <label for="edit_pilih_paket">Pilih Paket : </label>
@@ -479,20 +495,16 @@
                         if (res.data) {
                             var d = res.data;
                             // Update modal content if needed
-                            $('#edit_core').val(d.core);
+                            $('#edit_cpu').val(d.core);
                             $('#edit_ram').val(d.ram);
                             $('#edit_storage').val(d.storage);
                             $('#edit_os').val(d.os);
                             $('#edit_username').val(d.username);
                             $('#edit_password').val(d.password);
-                            $('#edit_perbulan').val(d.perbulan);
-                            // $('.edit_id').val(id);
+                            $('#edit_penyewaan').val(d.perbulan);
+                            $('.edit_id').val(d.id);
                             // var group = d.groups[0];
                             // $('#edit_group').val(group);
-
-                            
-                            
-
                             myModals.show()
                         }
                     }

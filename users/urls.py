@@ -28,10 +28,13 @@ urlpatterns = [
 
     # route untuk membuat pesanan sesuai paket
     path('pesanan_custom', views.pesananCustom, name='pesanan_custom'),
-    path('edit-pesanan/<str:id>', views.updatePesanan, name="edit-pesanan"),
+    path('edit-pesanan/<str:id_order>', views.updatePesanan, name="edit-pesanan"),
 
     path('data_api_user', views.data_api_user, name='data_api_user'),
 
     # route halaman delete order by user
     path('delete-order-by-user/<str:id_order>', views.deleteOrderbyUser, name='delete-order-by-user'),
+
+    # route halaman print invoice user
+    path('print-invoice-user/<str:id_invoice>', views.printInvoiceUser, name="print-invoice-user"),
 ]
