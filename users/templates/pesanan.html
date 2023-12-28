@@ -1,80 +1,12 @@
+
 {% extends 'user_main.html' %}
+{% load static %}
 {% block content %}
+
     <div class="row mb-5">
 
-        <!-- Paket A -->
-        <!-- <div class="col-xl-4 col-md-6 mb-4">
-            <h2 class="text-danger">Paket A</h2>
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body d-flex">
-                        <div class="align-self-center w-100">
-                            <table class="table mb-0">
-                                <tbody>
-                                    <p id="">Data akan ditampilkan di sini</p>
-                                    <tr>
-                                        <td>CPU</td>
-                                        <td class="text-end" id="cpu"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Memori</td>
-                                        <td class="text-end" id="memori"></td>
-
-                                    </tr>
-                                    <tr>
-                                        <td>Storage</td>
-                                        <td class="text-end" id="disk"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            <div class=" pt-5">
-                                <div class="text-center">
-                                    <button class="btn btn-danger"><h1 class="text-white">Rp.70.000</h1></button>
-                                </div>
-                            </div>
-                            
-                        </div>
-                </div>
-            </div>
-        </div> -->
-
-        <!-- Paket B -->
-        <!-- <div class="col-xl-4 col-md-6 mb-4">
-        <h2 class="text-primary">Paket B</h2>
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body d-flex">
-                        <div class="align-self-center w-100">
-                            <table class="table mb-0">
-                                <tbody>
-                                    <p id="">Data akan ditampilkan di sini</p>
-                                    <tr>
-                                        <td>CPU</td>
-                                        <td class="text-end" id="cpu"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Memori</td>
-                                        <td class="text-end" id="memori"></td>
-
-                                    </tr>
-                                    <tr>
-                                        <td>Storage</td>
-                                        <td class="text-end" id="disk"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            <div class=" pt-5">
-                                <div class="text-center">
-                                    <button class="btn btn-primary"><h1 class="text-white">Rp.50.000</h1></button>
-                                </div>
-                            </div>
-
-                        </div>
-                </div>
-            </div>
-        </div> -->
-
-        <!-- Paket C -->
+    
+        <!-- Paket ALL -->
         {% for row in package_price %}
         <div class="col-xl-4 col-md-6 mb-4">
 
@@ -103,17 +35,21 @@
                                             <td>Storage</td>
                                             <td class="text-end" id="disk">{{ row.storage }} GB</td>
                                         </tr>
+                                        <tr>
+                                            <td>Sistem Operasi</td>
+                                            <td class="text-end">Linux</td>
+                                        </tr>
                                     </tbody>
                                 </table>
 
                                 <div class=" pt-5">
                                     <div class="text-center">
                                         {% if forloop.counter == 1 %}
-                                            <button class="btn btn-danger"><h1 class="text-white">Rp.{{ row.harga }}</h1></button>
+                                            <button class="btn btn-danger"data-bs-toggle="modal" data-bs-target="#addPesanan{{ row.id }}"><h1 class="text-white">Rp.{{ row.harga }}/bulan</h1></button>
                                         {% elif forloop.counter == 2 %}
-                                            <button class="btn btn-primary"><h1 class="text-white">Rp.{{ row.harga }}</h1></button>
+                                            <button class="btn btn-primary"data-bs-toggle="modal" data-bs-target="#addPesanan{{ row.id }}"><h1 class="text-white">Rp.{{ row.harga }}/bulan</h1></button>
                                         {% else %}
-                                            <button class="btn btn-success"><h1 class="text-white">Rp.{{ row.harga }}</h1></button>
+                                            <button class="btn btn-success"data-bs-toggle="modal" data-bs-target="#addPesanan{{ row.id }}"><h1 class="text-white">Rp.{{ row.harga }}/bulan</h1></button>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -147,8 +83,8 @@
         <!-- DataTales Example -->
             <div class="card flex-fill">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Data Pesanan</h5>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#addPesanan" class="btn btn-primary ml-auto">Tambah</a>
+                    <h5 class="card-title mb-0">Data Order Cloud Anda</h5>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#addPesananCustom" class="btn btn-primary ml-auto">Tambah</a>
                 </div>
                 <table class="table table-hover my-0" id="dataTable" style="width: 100%">
                     <thead>
@@ -161,6 +97,7 @@
                             <th scope="col" width="10%">OS</th>
                             <th scope="col" width="10%">Username</th>
                             <th scope="col" width="10%">Penyewaan</th>
+                            <!-- <th scope="col" width="10%">Status</th> -->
                             <th scope="col" width="15%">Aksi</th>
                         </tr>
                     </thead>
@@ -169,16 +106,27 @@
                             <tr>
                                 <td class="no_urut">{{ forloop.counter }}</td>
                                 <td>{{ row.harga_paket }}</td>
-                                <td>{{ row.cpu }} core</td>  
+                                <td>{{ row.core }} core</td>  
                                 <td>{{ row.ram }} GB</td>
-                                <td>{{ row.storage }} GB</td>
+                                <td>{{ row.storage }} MB</td>
                                 <td>{{ row.os }}</td>
                                 <td>{{ row.username }}</td>
-                                <td>{{ row.perbulan }} Bulan</td>
+                                <td>{{ row.perbulan }} Bulan </td>
                                 <td>
                                     <a href="#" class="btn btn-primary" data-id="{{row.userid}}">Invoice</a>
-                                    <a href="#" class="btn btn-success btnEdit" data-id="{{row.userid}}">Edit</a>
-                                    <a href="delete-user/{{ row.userid }}" class="btn btn-danger delete-user">Delete</a>
+
+                                    {% if row.status == "0" %}
+                                        <a href="delete-order-by-user/{{ row.id }}" class="btn btn-danger delete-order-by-user">Delete</a>
+                                    {% else %}
+                                        <a href="delete-order-by-user/{{ row.id }}" class="btn btn-danger delete-order-by-user disabled">Delete</a>
+                                    {% endif %}
+
+                                    
+                                    {% if row.status == "1" or row.harga_paket.0 or row.harga_paket.1 or row.harga_paket.2  %}
+                                        <a href="#" class="btn btn-success disable" data-id="{{row.id}}">Edit</a>
+                                    {% else %}
+                                        <a href="#" class="btn btn-success btnEdits" data-id="{{row.id}}">Edit</a>
+                                    {% endif %}
                                 </td>  
                             </tr>
                         {% endfor %} 
@@ -189,8 +137,9 @@
     </div>
 
 
-    <!-- modalbox tambah -->
-        <div class="modal fade" id="addPesanan" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <!-- modalbox tambah sesauai paket -->
+    {% for row in package_price %}  
+        <div class="modal fade" id="addPesanan{{ row.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -202,132 +151,36 @@
                                 <h2 class="card-heading text-center">Tambah Pesanan</h2>
                             </div>
                             <div class="card-body">
-                                <form action="{% url 'add-package-price'%}" id="addFormPackagePrice" method="post">
+                                <form action="pesanan_user/{{ row.cpu }}/{{ row.ram }}/{{ row.storage }}/{{ row.id }}" id="addFormPackagePrice" method="post">
                                     {% csrf_token %}
 
-                                    <!-- Paket -->
-                                    <label for="container_templated">Pilih Paket : </label>
+                                    <!-- Username -->
                                     <div class="input-group input-group-merge input-group-alternative">
-                                        
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                            <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
                                         </div>
-
-                                        <select name="container_templated" class="form-control" id="pilih_paket">
-                                            <option value="">Pilih..</option>
-                                            {% for row in package_price %}
-                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
-                                            {% endfor %}
-                                        </select>
+                                        <input class="form-control" name="username" id="username" placeholder="Masukan username untuk server anda" type="text" autocomplete="off">
                                     </div>
                                     <br>
 
-                                    <!-- CPU -->
-                                    <label for="cores">Cores : </label>
+                                    <!-- Password -->
                                     <div class="input-group input-group-merge input-group-alternative">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
                                         </div>
-                                        <input class="form-control" name="cpu" id="cpu" placeholder="Enter the number of CPUs" type="number" autocomplete="off">
-                                    </div>
-                                    <br>
-
-                                    <!-- Ram -->
-                                    <label for="memory">RAM (GiB): </label>
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
-                                        </div>
-                                        <input class="form-control" name="ram" id="ram" placeholder="Enter the number of RAM" type="number" autocomplete="off">
-                                    </div>
-                                    <br>
-
-                                    <!-- Storage -->
-                                    <label for="disk_size">Storage (GiB): </label>
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
-                                        </div>
-                                        <input class="form-control" name="storage" id="storage" placeholder="Enter Storage" type="number" autocomplete="off" value="">
+                                        <input class="form-control" name="password" id="password" placeholder="Masukan password untuk server anda" type="password" autocomplete="off">
                                     </div>   
                                     <br>
 
-                                    <!-- OS -->
-                                    <label for="memory">OS : </label>
+                                    <!-- Penyewaaan -->
                                     <div class="input-group input-group-merge input-group-alternative">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-money-bill fa-2x "></i></span>
+                                            <span class="input-group-text"><i class="fa-solid fa-calendar-days fa-2x "></i></span>
                                         </div>
-                                        <input class="form-control" name="price" id="price" placeholder="Enter Package Price" type="number" autocomplete="off">
-                                    </div>
+                                        <input class="form-control" name="penyewaan" id="penyewaan" placeholder="Masukan berapa bulan anda menyewa paket ini" type="text" autocomplete="off">
+                                    </div>   
                                     <br>
 
-                                    <!-- username -->
-                                    <label for="container_templated">Username : </label>
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
-                                        </div>
-
-                                        <select name="container_templated" class="form-control" id="pilih_paket">
-                                            <option value="">Pilih..</option>
-                                            {% for row in package_price %}
-                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <br>
-
-
-
-                                    <!-- password -->
-                                    <label for="container_templated">Password : </label>
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
-                                        </div>
-
-                                        <select name="container_templated" class="form-control" id="pilih_paket">
-                                            <option value="">Pilih..</option>
-                                            {% for row in package_price %}
-                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <br>
-
-
-                                    <!-- penyewaan -->
-                                    <label for="container_templated">Penyewaan : </label>
-                                    <div class="input-group input-group-merge input-group-alternative">
-                                        
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
-                                        </div>
-
-                                        <select name="container_templated" class="form-control" id="pilih_paket">
-                                            <option value="">Pilih..</option>
-                                            {% for row in package_price %}
-                                                <option value="{{row.nama_paket}}">{{ row.nama_paket }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <br>
-
-
-                                    <!-- Information -->
-                                    <div class="form-group mb-4">
-                                        <div class="input-group input-group-merge input-group-alternative">
-                                            <div class="form-floating">
-                                                <textarea class="form-control" id="information" name="information"></textarea>
-                                                <label for="information">Information</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                
-                                    <br>
                                     <div class="float-start">
                                             <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Tutup</button>
                                         </div>
@@ -341,6 +194,337 @@
                 </div>
         </div>
         </div>
-    <!-- end modalbox tambah -->
+    {% endfor %}
+    <!-- endmodal pake -->
+
+
+    <!-- modalbox tambah custom -->
+        <div class="modal fade" id="addPesananCustom" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">Tambah Pesanan</h2>
+                            </div>
+                            <div class="card-body">
+                                <form action="{% url 'pesanan_custom'%}" id="addFormPesananCustom" method="post">
+                                    {% csrf_token %}
+
+                                    <!-- Paket -->
+                                    <label for="container_templated">Pilih Paket : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                        </div>
+
+                                        <select name="container_templated" class="form-control" id="pilih_paket">
+                                            <option value="">Custom</option>
+                                        </select>
+                                    </div>
+                                    <br>
+
+                                    <!-- CPU -->
+                                    <label for="cpu">Cores : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="cpu" id="cpu" placeholder="Masukan jumlah core server" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- Ram -->
+                                    <label for="ram">RAM (GiB): </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="ram" id="ram" placeholder="Masukan jumlah ram server" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- Storage -->
+                                    <label for="storage">Storage (MiB): </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="storage" id="storage" placeholder="Masukan jumlah storage server" type="text" autocomplete="off" value="">
+                                    </div>   
+                                    <br>
+
+                                    <!-- OS -->
+                                    <label for="os">OS : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-brands fa-linux fa-2x "></i></span>
+                                        </div>
+                                        <select name="os" class="form-control" id="os">
+                                            <option value="">Pilih..</option>
+                                            <option value="ubuntu">Linux Ubuntu</option>
+                                            <option value="debian">Linux Debian</option>
+                                            <option value="centos">Linux Centos</option>
+                                        </select>
+                                    </div>
+                                    <br>
+
+                                    <!-- username -->
+                                    <label for="username">Username : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                        </div>
+
+                                        <input class="form-control" name="username" id="username" placeholder="Masukan username server" type="text" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- password -->
+                                    <label for="password">Password : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                        </div>
+
+                                        <input class="form-control" name="password" id="password" placeholder="Masukan password server" type="password" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- penyewaan -->
+                                    <label for="penyewaan">Penyewaan : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-calendar-days fa-2x "></i></span>
+                                        </div>
+
+                                        <input class="form-control" name="penyewaan" id="penyewaan" placeholder="Masukan berapa bulan anda menyewa server ini" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <div class="float-start">
+                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Tutup</button>
+                                        </div>
+                                        <div class="float-end">
+                                            <button type="submit" class="btn btn-primary " id="addButtonPesananCustom">Pesan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+    <!-- end modalbox tambah custom-->
+
+
+    <!-- modalbox edit custom -->
+        <div class="modal fade" id="editPesananCustom" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card bg-white border-0 mb-0">
+                            <div class="card-header bg-transparent">
+                                <h2 class="card-heading text-center">Edit Pesanan</h2>
+                            </div>
+                            <div class="card-body">
+                                <form action="" id="editFormPesananCustom" method="post">
+                                    {% csrf_token %}
+
+                                    <input type="text" id="edit_id" hidden>
+
+                                    <!-- Paket -->
+                                    <label for="edit_pilih_paket">Pilih Paket : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-box-archive fa-2x "></i></span>
+                                        </div>
+
+                                        <select name="edit_pilih_paket" class="form-control" id="edit_pilih_paket">
+                                            <option value="">Custom</option>
+                                        </select>
+                                    </div>
+                                    <br>
+
+                                    <!-- CPU -->
+                                    <label for="edit_cpu">Cores : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-brain fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_cpu" id="edit_cpu" placeholder="Masukan jumlah core server" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- Ram -->
+                                    <label for="edit_ram">RAM (GiB): </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-sd-card fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_ram" id="edit_ram" placeholder="Masukan jumlah ram server" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- Storage -->
+                                    <label for="edit_storage">Storage (GiB): </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
+                                        </div>
+                                        <input class="form-control" name="edit_storage" id="edit_storage" placeholder="Masukan jumlah storage server" type="number" autocomplete="off" value="">
+                                    </div>   
+                                    <br>
+
+                                    <!-- OS -->
+                                    <label for="edit_os">OS : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-brands fa-linux fa-2x "></i></span>
+                                        </div>
+                                        <select name="edit_os" class="form-control" id="edit_os">
+                                            <option value="">Pilih..</option>
+                                            <option value="ubuntu">Linux Ubuntu</option>
+                                            <option value="debian">Linux Debian</option>
+                                            <option value="centos">Linux Centos</option>
+                                        </select>
+                                    </div>
+                                    <br>
+
+                                    <!-- username -->
+                                    <label for="edit_username">Username : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-user fa-2x "></i></span>
+                                        </div>
+
+                                        <input class="form-control" name="edit_username" id="edit_username" placeholder="Masukan username server" type="text" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- password -->
+                                    <label for="edit_password">Password : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-lock fa-2x "></i></span>
+                                        </div>
+
+                                        <input class="form-control" name="edit_password" id="edit_password" placeholder="Masukan password server" type="password" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <!-- penyewaan -->
+                                    <label for="edit_penyewaan">Penyewaan : </label>
+                                    <div class="input-group input-group-merge input-group-alternative">
+                                        
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa-solid fa-calendar-days fa-2x "></i></span>
+                                        </div>
+
+                                        <input class="form-control" name="edit_penyewaan" id="edit_penyewaan" placeholder="Masukan berapa bulan anda menyewa server ini" type="number" autocomplete="off">
+                                    </div>
+                                    <br>
+
+                                    <div class="float-start">
+                                            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Tutup</button>
+                                        </div>
+                                        <div class="float-end">
+                                            <button type="submit" class="btn btn-primary " id="editButtonPesananCustom">Simpan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+    <!-- end modalbox tambah custom-->
+
+
+
+    <!-- sweetalert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
+    <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
+    
+    <!-- scirpts ajax get data by group id -->
+
+    <script>
+        const myModals =  new bootstrap.Modal('#editPesananCustom')
+        $(document).ready(function($) {
+            $(document).on('click', '.btnEdits', function() {
+                var id = $(this).data('id');
+
+                $.ajax({
+                    method: 'GET',
+                    url: 'data_api_user?action=view_data_pesanan',
+                    data: {
+                        id: id
+                    },
+                    success: function(res) {
+                        console.log(res)
+                        if (res.data) {
+                            var d = res.data;
+                            // Update modal content if needed
+                            $('#edit_core').val(d.core);
+                            $('#edit_ram').val(d.ram);
+                            $('#edit_storage').val(d.storage);
+                            $('#edit_os').val(d.os);
+                            $('#edit_username').val(d.username);
+                            $('#edit_password').val(d.password);
+                            $('#edit_perbulan').val(d.perbulan);
+                            // $('.edit_id').val(id);
+                            // var group = d.groups[0];
+                            // $('#edit_group').val(group);
+
+                            
+                            
+
+                            myModals.show()
+                        }
+                    }
+                });
+            });
+        
+        });
+
+        //  edit data user
+        document.getElementById("editFormPesananCustom").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var id = document.querySelector('.edit_id').value;
+            var editForm = document.getElementById("editFormPesananCustom");
+            editForm.action = 'edit-pesanan/' + id; // Change the action URL
+            editForm.submit(); // Submit the form
+        });
+    </script>
+
+
+
+    <!-- ketika mengirim form maka tombol tambah akan disable -->
+    <script>
+        document.getElementById("addFormPesananCustom").addEventListener("submit", function() {
+            document.getElementById("addButtonPesananCustom").disabled = true;
+        });
+    </script>
+
+    <!-- ketika mengirim form maka tombol edit akan disable --> 
+    <script>
+        document.getElementById("editFormPesananCustom").addEventListener("submit", function() {
+            document.getElementById("editButtonPesananCustom").disabled = true;
+        });
+    </script>
 
 {% endblock content %}

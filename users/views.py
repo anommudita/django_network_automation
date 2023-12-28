@@ -39,6 +39,8 @@ from django.contrib.auth.decorators import user_passes_test
 
 
 from django.contrib.auth import authenticate, login
+
+# from django.contrib.auth import authenticate, login as auth_login_user
 from django.shortcuts import redirect, render
 from django.contrib import messages
 
@@ -59,6 +61,10 @@ from functools import wraps
 # Fungsi untuk mengecek apakah pengguna termasuk dalam grup 'user'
 def is_user(user):
     return user.groups.filter(name='user').exists() #mengembalikan nilai True jika pengguna termasuk dalam grup 'user'
+
+# get response json
+from django.http import JsonResponse
+
 
 # Decorator untuk memeriksa akses pengguna ke halaman
 def user_access_required(view_func):
@@ -81,14 +87,14 @@ def user_login(request):
         
         # Lakukan proses otentikasi
         user = authenticate(request, username=username, password=password)
-        print(user)
+        # print(user)
         
         if user is not None:
             if user.groups.filter(name='user').exists():  # Mengecek apakah pengguna termasuk dalam grup 'user'
-
                 # jika user sudah aktif 
                 if user.is_active:
                     login(request, user)  # Melakukan login
+                    # auth_login_user(request, user)
                     return redirect('dashboard')  # Redirect ke halaman 'about' jika berhasil login dan termasuk dalam grup 'user'
                 else:
                     messages.error(request, "Akun anda belum aktif, silahkan cek email anda.")
@@ -112,11 +118,11 @@ def register(request):
         password2 = request.POST.get('password2')
 
         if not email or not name or not password1 or not password2:
-            messages.error(request, "Make sure all fields are filled")
+            messages.error(request, "Pastikan semua kolom terisi")
             return redirect('sign-up')
 
         if password1 != password2:
-            messages.error(request, "Passwords do not match")
+            messages.error(request, "Kata sandi tidak sama")
             return redirect('sign-up')
         
         # Check apakah username sudah ada dalam database
@@ -155,14 +161,47 @@ def user_logout(request):
     if not request.user.is_authenticated:
         # return redirect('error_connection')
         print("tidak ada session di browser")
-
     # menghapus session di browser
     auth_logout(request)
     time.sleep(1.5)
 
     messages.success(request, "Anda telah berhasil logout")
-    
     return redirect('user_login')
+
+@user_access_required
+def data_api_user(request):
+    action = request.GET.get('action')
+    try:
+        match action:
+            case 'view_data_pesanan':
+                id = request.GET.get('id')
+                
+                # get data pesanan by id
+                pesanan = Pesanan.objects.get(id=id)
+                order = {
+                    'id': pesanan.id,
+                    'user_id': pesanan.user_id,
+                    'harga_paket_id': pesanan.harga_paket_id,
+                    'core': pesanan.core,
+                    'ram': pesanan.ram,
+                    'storage': pesanan.storage,
+                    'username': pesanan.username,
+                    'password': pesanan.password,
+                    'os': pesanan.os,
+                    'perbulan': pesanan.perbulan,
+                    'jenis': pesanan.jenis,
+                }
+                response = {
+                    'status': 'success',
+                    'message': 'Data successfully retrieved',
+                    'data': order
+                }
+                return JsonResponse(response)       
+    except Exception as e:
+            return HttpResponse(f"Error : {str(e)}", status=500)
+    
+
+
 
 # Gunakan decorator untuk membatasi akses ke view 'about' hanya untuk anggota grup 'user'
 # @user_passes_test(is_user)
@@ -178,10 +217,13 @@ def dashboard(request):
     id = logged_in_user.id
 
     # package price
-    package_price = HargaPaket.objects.all()
+    package_price = HargaPaket.objects.all()[:3]
 
     # get data pesanan by user id
     pesanan = Pesanan.objects.filter(user_id=id)
+
+
+    users = User.objects.exclude(is_superuser=True)
 
     context = {
         'username': username,
@@ -190,6 +232,7 @@ def dashboard(request):
         'active_dashboard': 'active',
         'package_price': package_price,
         'pesanan' : pesanan,
+        'users': users,
     }
 
     # return HttpResponse("About page")
@@ -252,3 +295,127 @@ def edit_user_profile(request):
         'userData' : user,
     }
     return render(request, 'edit_user_profile.html', context )
+
+
+@user_access_required
+def pesanan_sesuai_paket(request, cpu, ram, storage, id_paket):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        penyewaan = request.POST.get('penyewaan')
+
+        if not username or not password or not penyewaan :
+            messages.error(request, "Pastikan semua kolom terisi")
+            return redirect('dashboard')
+        
+        try:
+
+            current_user = request.user
+
+            current_paket = HargaPaket.objects.get(id=id_paket)
+
+            # membuat order
+            order = Pesanan.objects.create(
+                user=current_user, harga_paket=current_paket, core=cpu, ram=ram, storage=storage, username=username, password=password, os="Linux", perbulan=penyewaan, jenis="container")
+            
+            # Simpan  orderan
+            order.save()
+
+            messages.success(request, "Pesanan anda telah berhasil dibuat, tunggu admin untuk mengaktifkan pesanan anda:)")
+            return redirect('dashboard')
+            
+        except Exception as e:
+            messages.error(request, f"Error : {str(e)}")
+            return redirect('dashboard')
+
+
+@user_access_required
+def deleteOrderbyUser(request, id_order):
+    try:
+        # delete data user to database
+        order = Pesanan.objects.get(id=id_order)
+        order.delete()
+        time.sleep(1.5)
+        messages.success(request, "Order telah berhasil dihapus")
+        return redirect('dashboard')
+    except Exception as e:
+        messages.error(request, f"Error deleted order : {str(e)}")
+        return redirect('dashboard')
+    
+
+
+def gb_to_mb(gb):
+    mb = gb * 1024  # 1 GB = 1024 MB
+    return mb
+
+
+@user_access_required
+def pesananCustom(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        penyewaan = request.POST.get('penyewaan')
+        cpu = request.POST.get('cpu')
+        storage = request.POST.get('storage')
+        ram = request.POST.get('ram')
+        os = request.POST.get('os')
+
+        memory = gb_to_mb(int(ram))
+
+        if not username or not password or not penyewaan or not cpu or not storage or not ram or not os:
+            messages.error(request, "Pastikan semua kolom terisi")
+            return redirect('dashboard')
+        
+        try:
+
+            current_user = request.user
+
+            last_paket = HargaPaket.objects.latest('id')
+
+            # membuat order
+            order = Pesanan.objects.create(
+                user=current_user, harga_paket=last_paket, core=cpu, ram=memory, storage=storage, username=username, password=password, os=os, perbulan=penyewaan, jenis="container")
+            
+            # Simpan  orderan
+            order.save()
+
+            messages.success(request, "Pesanan anda telah berhasil dibuat, tunggu admin untuk mengaktifkan pesanan anda:)")
+            return redirect('dashboard')
+            
+        except Exception as e:
+            messages.error(request, f"Error : {str(e)}")
+            return redirect('dashboard')
+        
+def updatePesanan(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        penyewaan = request.POST.get('penyewaan')
+        cpu = request.POST.get('cpu')
+        storage = request.POST.get('storage')
+        ram = request.POST.get('ram')
+        os = request.POST.get('os')
+
+        memory = gb_to_mb(int(ram))
+
+        if not username or not password :
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('dashboard')
+        try:
+            current_user = request.user
+
+            last_paket = HargaPaket.objects.latest('id')
+
+            # membuat order
+            order = Pesanan.objects.create(
+                user=current_user, harga_paket=last_paket, core=cpu, ram=memory, storage=storage, username=username, password=password, os=os, perbulan=penyewaan, jenis="container")
+            
+            # Simpan  orderan
+            order.save()
+
+            messages.success(request, "Pesanan anda telah berhasil diedit, tunggu admin untuk mengaktifkan pesanan anda:)")
+            return redirect('dashboard')
+
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('dashboard')      

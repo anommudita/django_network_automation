@@ -67,6 +67,15 @@ from django.contrib.auth.models import Group
 from functools import wraps
 
 
+# django pdf
+from django_xhtml2pdf.utils import pdf_decorator
+
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+import io
+
+
 # Fungsi untuk mengecek apakah pengguna termasuk dalam grup 'user'
 def is_user(admin):
     return admin.groups.filter(name='admin').exists() #mengembalikan nilai True jika pengguna termasuk dalam grup 'admin'
@@ -2627,6 +2636,10 @@ def detail_node(request, id_node):
         # template
         templates = proxmox.nodes(id_node).storage('local').content.get()
 
+
+        # vmid auto
+        vmid = proxmox.cluster.nextid.get()
+
         # ISO Container Templated
         iso_container = []
 
@@ -2730,6 +2743,7 @@ def detail_node(request, id_node):
             'virtual_machine': virtual_machine,
             'ceph': ceph,
             'error_message': error_message,
+            'vmid': vmid,
             'storage': non_dir_storage,
         }
         return render(request, 'node/detail_node.html', context )
@@ -2956,20 +2970,6 @@ def addContainer(request, id_node):
                 messages.error(request, "Make sure all fields are valid")
                 return redirect('detail-node', id_node)
             
-            # # Cari lokasi file user_data.yaml dalam folder skrip
-            # script_folder = Path("network_automation/scripts/user-data.yaml").resolve().parent
-            # user_data_path = script_folder / "user-data.yaml"
-
-            # # Pastikan file user_data.yaml ada dan baca kontennya
-            # if user_data_path.is_file():
-            #     with open(user_data_path, 'r') as user_data_file:
-            #         user_data_yaml = user_data_file.read()
-            # else:
-            #     messages.error(request, "user_data.yaml file not found")
-            #     return redirect('detail-node', id_node)
-
-            
-            # net0_str = "name=eth0,bridge={network_interface},firewall=1,ip=dhcp"
 
             # kondisi ketika dhcp ipv4 di centang
             if dhcp_ipv4 == "1":
@@ -2982,6 +2982,11 @@ def addContainer(request, id_node):
                                 }
                 net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
 
+                disk_config = {
+                                "size": disk_size,  # penyimpanan disk dalam GB
+                                }
+                rootfs= f"name={disk_config['size']}"
+
                 post_data = {
                     "vmid" : ct_id,
                     "ostemplate" : template,
@@ -2991,6 +2996,8 @@ def addContainer(request, id_node):
                     "memory" : memory,
                     "swap" : memory_swap,
                     "storage": storage_disk,
+                    "rootfs" : rootfs,
+
 
                     # interface
                     # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
@@ -3031,36 +3038,8 @@ def addContainer(request, id_node):
                 messages.error(request, "Make sure input Interface IPv4")
                 return redirect('detail-node', id_node)
 
-            # insert container on proxmox with use api proxoxer
-
-            ct_config ={
-                'vmid' : ct_id,
-                'ostemplate' : template,
-                'password' : password,
-                'cores' : cores,
-                'hostname' : hostname,
-                'memory' : memory,
-                'swap' : memory_swap,
-                'storage' : storage_disk,
-                # 'net' : network_interface,
-                'pool' : resource_pool,
-                'ssh_public_keys' : ssh_key,
-            }
             try:
-                proxmox.nodes(id_node).lxc.create(
-                    # vmid=ct_id,
-                    # ostemplate=template,
-                    # password=password,
-                    # cores=cores,
-                    # hostname=hostname,
-                    # memory=memory,
-                    # swap=memory_swap,
-                    # storage=storage_disk,
-                    # net[0]=network_interface,
-                    # pool=resource_pool,
-                    # ssh_public_keys=ssh_key,
-                    **ct_config
-                )
+
                 proxmox.nodes(id_node).lxc.post(**post_data)
                 messages.success(request, "Container added successfully")
 
@@ -4007,7 +3986,7 @@ def  updatePackagePrice(request, id):
     
 
 
-# package price 
+# user all
 @admin_access_required
 def users_all(request):
     proxmox = get_proxmox()
@@ -4171,3 +4150,229 @@ def  updateUserClient(request, id_user):
                 return redirect('users_all')
     else:
         return redirect(error_connection)
+    
+
+# order all
+@admin_access_required
+def order_all(request):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        # orderan 
+        order = Pesanan.objects.all()
+
+        vmid = proxmox.cluster.nextid.get()
+
+        nodes = proxmox.nodes.get()
+
+        # all required proxmox :
+
+        # templates
+        # templates = proxmox.nodes(id_node).storage('local').content.get()
+
+        # get network proxmox
+        # network_proxmox = proxmox.nodes(id_node).network.get()
+
+        # get network berdasarkan type bridge
+        # network = []
+
+        # for item in network_proxmox:
+        #     if item['type'] == 'bridge':
+        #         # iface :
+        #         iface = item['iface']
+        #         # type :
+        #         type = item['type']
+                
+        #         network.append({
+        #             'iface': iface,
+        #             'type': type
+        #         })
+
+
+        context = {
+        'title': 'Users Client',
+        'active_users': 'active',
+        'order': order,
+        # 'templates': templates,
+        # 'network': network,
+        'vmid': vmid,
+        'nodes' : nodes,
+        }
+        return render(request, 'users/orderan.html', context )
+    else:
+        return redirect(error_connection)
+    
+
+# execute order
+# @admin_access_required
+def executeOrder(request):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        # orderan 
+        order = Pesanan.objects.all()
+
+        vmid = proxmox.cluster.nextid.get()
+
+        # nodes = proxmox.nodes.get()
+
+        if request.method == "POST":
+
+            id_node = request.POST.get('id_node')
+            id_order = request.POST.get('id_order')
+
+            ram = request.POST.get('ram')
+            core = request.POST.get('core')
+            storage = request.POST.get('storage')
+            username = request.POST.get('username')
+            password1 = request.POST.get('password1')
+
+            if not id_node or not id_order  :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('order_all')
+        
+            try:
+                # data pesanan by id
+                order = Pesanan.objects.get(id=id_order)
+                # password = order.password
+                # core = order.core
+                # username = order.username
+                # ram = order.ram
+                # storage = order.storage
+
+
+                # create proxmox
+                net_config = {
+                                "name": "eth0",  # Nama antarmuka
+                                "bridge": "vmbr1",  # Nama bridge jika diperlukan
+                                "firewall": 1,  # Opsi firewall (1 untuk aktifkan, 0 untuk nonaktifkan)
+                                "ip": "dhcp" ,  # Alamat IPv4 (CIDR, dhcp, atau manual)
+                                # "gw": gateway,  # Gateway IPv4
+                                }
+                net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
+
+                template = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+
+                post_data = {
+                    "vmid" : vmid,
+                    "ostemplate" : template,
+                    "password": password1,
+                    "cores" : core,
+                    "hostname"  : "test123444",
+                    "memory" : 512,
+                    "swap" : 512,
+                    "storage": "local-lvm",
+
+                    # interface
+                    # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
+                    # "net0" : net0_str,
+                    # "pool" : resource_pool,
+                    # "ssh_public_keys":ssh_key
+                }
+
+                # proxmox.nodes(id_node).lxc.create(
+                #     vmid=103,
+                #     ostemplate=template,
+                #     password=password,
+                #     cores=core,
+                #     hostname="test123444",
+                #     memory=ram,
+                #     swap=512,
+                #     storage=storage,
+                # )
+
+                proxmox.nodes(id_node).lxc.post(**post_data)
+
+                # edit data pesanan status menjadi 1
+                order.status = 1
+                order.save()
+
+                messages.success(request, "The order has been executed")
+
+                return redirect('order_all')
+            except Exception as e:
+                messages.error(request, f"Error adding order: {str(e)}")
+                return redirect('order_all')
+    
+@admin_access_required
+def deleteOrder(request, id_order):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # delete data user to database
+            order = Pesanan.objects.get(id=id_order)
+            order.delete()
+            time.sleep(1.5)
+            messages.success(request, "Order deleted successfully")
+            return redirect('order_all')
+        except Exception as e:
+            messages.error(request, f"Error deleted order : {str(e)}")
+            return redirect('order_all')
+    else:
+        return redirect(error_connection)
+    
+
+# order all
+@admin_access_required
+def order_by_user(request, id_user):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+
+        # orderan by user 
+        order = Pesanan.objects.filter(user=id_user)
+
+        vmid = proxmox.cluster.nextid.get()
+
+        nodes = proxmox.nodes.get()
+
+        context = {
+        'title': 'Order By User',
+        'active_users': 'active',
+        'order': order,
+        'vmid': vmid,
+        'nodes' : nodes,
+        }
+        return render(request, 'users/orderan_by_user.html', context )
+    else:
+        return redirect(error_connection)
+
+
+# @pdf_decorator(pdfname='invoice.pdf')
+# def printInvoice(request):
+#     context = {
+#         'nama' : 'Ida Bagus Anom Mudita'
+#     }
+#     return render(request, 'invoice/invoice.html', context)
+            
+
+# print pdf
+def render_to_pdf(template_src, context_dict):
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    result = io.BytesIO()
+
+    # Create PDF dengan ukuran kertas A4 dan mode landscape
+    pdf = pisa.CreatePDF(
+        io.BytesIO(html.encode("UTF-8")),
+        dest=result,
+        default_css=False,
+        pagesize=(210, 297),  # Ukuran kertas A4
+        page_orientation='Landscape'  # Mode landscape
+    )
+
+    if not pdf.err:
+        return HttpResponse(result.getvalue(), content_type='application/pdf')
+    return None
+
+@admin_access_required
+def printInvoice(request):
+    context = {
+        'nama': 'Ida Bagus Anom Mudita'
+    }
+
+    pdf = render_to_pdf('invoice/invoice.html', context)
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+        return response
+    return HttpResponse("Failed to generate PDF", status=400)
