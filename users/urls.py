@@ -28,6 +28,7 @@ urlpatterns = [
 
     # route untuk membuat pesanan sesuai paket
     path('pesanan_custom', views.pesananCustom, name='pesanan_custom'),
+    path('edit-pesanan/<str:id>', views.updatePesanan, name="edit-pesanan"),
 
     path('data_api_user', views.data_api_user, name='data_api_user'),
 

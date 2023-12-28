@@ -64,7 +64,7 @@
 
     <!-- tombol tambah -->
     <div class="col-lg-6 col-5 text-right mb-4">
-        <a href="{% url 'user'%}" class="btn btn-primary fs-4">Order Cloud</a>
+        <a class="btn btn-primary fs-4">Pesanan</a>
     </div>
 
     <!-- flash message -->
@@ -108,7 +108,7 @@
                                 <td>{{ row.harga_paket }}</td>
                                 <td>{{ row.core }} core</td>  
                                 <td>{{ row.ram }} GB</td>
-                                <td>{{ row.storage }} GB</td>
+                                <td>{{ row.storage }} MB</td>
                                 <td>{{ row.os }}</td>
                                 <td>{{ row.username }}</td>
                                 <td>{{ row.perbulan }} Bulan </td>
@@ -125,7 +125,7 @@
                                     {% if row.status == "1" or row.harga_paket.0 or row.harga_paket.1 or row.harga_paket.2  %}
                                         <a href="#" class="btn btn-success disable" data-id="{{row.id}}">Edit</a>
                                     {% else %}
-                                        <a  href="#" class="btn btn-success btnEdit" data-id="{{row.id}}">Edit</a>
+                                        <a href="#" class="btn btn-success btnEdits" data-id="{{row.id}}">Edit</a>
                                     {% endif %}
                                 </td>  
                             </tr>
@@ -249,12 +249,12 @@
                                     <br>
 
                                     <!-- Storage -->
-                                    <label for="storage">Storage (GiB): </label>
+                                    <label for="storage">Storage (MiB): </label>
                                     <div class="input-group input-group-merge input-group-alternative">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fa-solid fa-hard-drive fa-2x "></i></span>
                                         </div>
-                                        <input class="form-control" name="storage" id="storage" placeholder="Masukan jumlah storage server" type="number" autocomplete="off" value="">
+                                        <input class="form-control" name="storage" id="storage" placeholder="Masukan jumlah storage server" type="text" autocomplete="off" value="">
                                     </div>   
                                     <br>
 
@@ -453,45 +453,50 @@
         </div>
     <!-- end modalbox tambah custom-->
 
-{% endblock content %}
+
 
     <!-- sweetalert2 -->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <script src="{% static 'plugins/sweetalert2/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'plugins/sweetalert2/myscript.js' %}"></script>
-
-
+    
     <!-- scirpts ajax get data by group id -->
+
     <script>
-        const myModal =  new bootstrap.Modal('#editPesananCustom')
-        myModal.show()
+        const myModals =  new bootstrap.Modal('#editPesananCustom')
         $(document).ready(function($) {
-            $(document).on('click', '.btnEdit', function() {
+            $(document).on('click', '.btnEdits', function() {
                 var id = $(this).data('id');
 
-                myModal.show()
+                $.ajax({
+                    method: 'GET',
+                    url: 'data_api_user?action=view_data_pesanan',
+                    data: {
+                        id: id
+                    },
+                    success: function(res) {
+                        console.log(res)
+                        if (res.data) {
+                            var d = res.data;
+                            // Update modal content if needed
+                            $('#edit_core').val(d.core);
+                            $('#edit_ram').val(d.ram);
+                            $('#edit_storage').val(d.storage);
+                            $('#edit_os').val(d.os);
+                            $('#edit_username').val(d.username);
+                            $('#edit_password').val(d.password);
+                            $('#edit_perbulan').val(d.perbulan);
+                            // $('.edit_id').val(id);
+                            // var group = d.groups[0];
+                            // $('#edit_group').val(group);
 
-                // $.ajax({
-                //     method: 'GET',
-                //     url: 'data_api_user?action=view_data_pesanan',
-                //     data: {
-                //         id: id
-                //     },
-                //     success: function(res) {
-                //         if (res.data) {
-                //             var d = res.data;
-                //             // console.log(d);
-                //             // $('#edit_firstname').val(d.firstname);
-                //             // $('#edit_lastname').val(d.lastname);
-                //             // $('#edit_email').val(d.email);
-                //             // $('.edit_id').val(id);
-                //             // var group = d.groups[0];
-                //             // $('#edit_group').val(group);
                             
-                //             myModal.show()
-                //         }
-                //     }
-                // });
+                            
+
+                            myModals.show()
+                        }
+                    }
+                });
             });
         
         });
@@ -501,7 +506,7 @@
             event.preventDefault(); // Prevent the default form submission
             var id = document.querySelector('.edit_id').value;
             var editForm = document.getElementById("editFormPesananCustom");
-            editForm.action = 'edit-user/' + id; // Change the action URL
+            editForm.action = 'edit-pesanan/' + id; // Change the action URL
             editForm.submit(); // Submit the form
         });
     </script>
@@ -521,3 +526,5 @@
             document.getElementById("editButtonPesananCustom").disabled = true;
         });
     </script>
+
+{% endblock content %}

@@ -197,8 +197,9 @@ def data_api_user(request):
                     'data': order
                 }
                 return JsonResponse(response)       
-    except :
-            return HttpResponse('Error', status=500)
+    except Exception as e:
+            return HttpResponse(f"Error : {str(e)}", status=500)
+    
 
 
 
@@ -384,3 +385,37 @@ def pesananCustom(request):
         except Exception as e:
             messages.error(request, f"Error : {str(e)}")
             return redirect('dashboard')
+        
+def updatePesanan(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        penyewaan = request.POST.get('penyewaan')
+        cpu = request.POST.get('cpu')
+        storage = request.POST.get('storage')
+        ram = request.POST.get('ram')
+        os = request.POST.get('os')
+
+        memory = gb_to_mb(int(ram))
+
+        if not username or not password :
+            messages.error(request, "Make sure all fields are valid")
+            return redirect('dashboard')
+        try:
+            current_user = request.user
+
+            last_paket = HargaPaket.objects.latest('id')
+
+            # membuat order
+            order = Pesanan.objects.create(
+                user=current_user, harga_paket=last_paket, core=cpu, ram=memory, storage=storage, username=username, password=password, os=os, perbulan=penyewaan, jenis="container")
+            
+            # Simpan  orderan
+            order.save()
+
+            messages.success(request, "Pesanan anda telah berhasil diedit, tunggu admin untuk mengaktifkan pesanan anda:)")
+            return redirect('dashboard')
+
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('dashboard')      
