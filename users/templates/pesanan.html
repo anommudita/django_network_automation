@@ -113,7 +113,7 @@
                                 <td>{{ row.username }}</td>
                                 <td>{{ row.perbulan }} Bulan </td>
                                 <td>
-                                    <a href="{% url 'print-invoice-user' row.id %}" class="btn btn-primary" data-id="{{row.userid}}">Invoice</a>
+                                    <a href="{% url 'print-invoice-user' row.id  %}" class="btn btn-primary" data-id="{{row.userid}}">Invoice</a>
 
                                     {% if row.status == "0" %}
                                         <a href="delete-order-by-user/{{ row.id }}" class="btn btn-danger delete-order-by-user">Delete</a>
