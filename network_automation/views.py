@@ -2943,7 +2943,7 @@ def addContainer(request, id_node):
             storage_container = request.POST.get('storage-container')
             storage_disk = request.POST.get('storage_disk')
             template = request.POST.get('container_templated')
-            disk_size = request.POST.get('disk-size')
+            disk_size = request.POST.get('disk_size')
             cores = request.POST.get('cores')
             memory = request.POST.get('memory')
             memory_swap = request.POST.get('memory-swap')
@@ -2982,10 +2982,19 @@ def addContainer(request, id_node):
                                 }
                 net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
 
+                volume = proxmox.nodes(id_node).storage(storage_disk).content.get()
+
                 disk_config = {
+                                "volume": storage_disk,
+                                # "acl": 0,
+                                # "mountoptions": "rootfs",
+                                # "qouta": 0,
+                                # "replicated": 0,
+                                # "ro": 0,
+                                # "shared": 0,
                                 "size": disk_size,  # penyimpanan disk dalam GB
                                 }
-                rootfs= f"name={disk_config['size']}"
+                rootfs= f"volume={disk_config['volume']},size={disk_config['size']}"
 
                 post_data = {
                     "vmid" : ct_id,
