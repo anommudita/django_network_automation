@@ -66,6 +66,7 @@ from django.contrib.auth.models import Group
 
 from functools import wraps
 
+import random
 
 # django pdf
 from django_xhtml2pdf.utils import pdf_decorator
@@ -2743,11 +2744,8 @@ def detail_node(request, id_node):
             'virtual_machine': virtual_machine,
             'ceph': ceph,
             'error_message': error_message,
-<<<<<<< HEAD
             'vmid': vmid,
-=======
             'storage': non_dir_storage,
->>>>>>> b673f7143f8503e751b6f744b265ff264b9b6aac
         }
         return render(request, 'node/detail_node.html', context )
     else :
@@ -4191,6 +4189,25 @@ def order_all(request):
         #             'type': type
         #         })
 
+        # template
+        templates = proxmox.nodes("node1").storage('local').content.get()
+
+        os = "centos"  # Anda mendapatkan nilai ini dari database
+        # templates = [
+        #     {'volid': 'local:iso/ubuntu-22.04.3-live-server-amd64.iso', 'format': 'iso', 'ctime': 1696403217, 'content': 'iso', 'size': 2133391360},
+        #     {'format': 'txz', 'volid': 'local:vztmpl/centos-9-stream-default_20221109_amd64.tar.xz', 'size': 104646080, 'content': 'vztmpl', 'ctime': 1703681464},
+        #     {'size': 129824858, 'content': 'vztmpl', 'ctime': 1696402720, 'format': 'tzst', 'volid': 'local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst'},
+        #     {'format': 'tzst', 'volid': 'local:vztmpl/ubuntu-23.04-standard_23.04-1_amd64.tar.zst', 'content': 'vztmpl', 'size': 135930761, 'ctime': 1696402545}
+        # ]
+
+        templates = proxmox.nodes("node1").storage('local').content.get()
+
+        # Mencari volid yang sesuai dengan nilai os dari database
+        volid = None
+        for template in templates:
+            if 'volid' in template and os in template['volid']:
+                volid = template['volid']
+                break
 
         context = {
         'title': 'Users Client',
@@ -4200,6 +4217,8 @@ def order_all(request):
         # 'network': network,
         'vmid': vmid,
         'nodes' : nodes,
+        'templates': templates,
+        'volid': volid,
         }
         return render(request, 'users/orderan.html', context )
     else:
@@ -4207,14 +4226,15 @@ def order_all(request):
     
 
 # execute order
-# @admin_access_required
+@admin_access_required
 def executeOrder(request):
     proxmox = get_proxmox()
     if proxmox is not None :
         # orderan 
-        order = Pesanan.objects.all()
+        # order = Pesanan.objects.all()
 
         vmid = proxmox.cluster.nextid.get()
+
 
         # nodes = proxmox.nodes.get()
 
@@ -4223,11 +4243,30 @@ def executeOrder(request):
             id_node = request.POST.get('id_node')
             id_order = request.POST.get('id_order')
 
-            ram = request.POST.get('ram')
-            core = request.POST.get('core')
-            storage = request.POST.get('storage')
-            username = request.POST.get('username')
-            password1 = request.POST.get('password1')
+            # nodes = proxmox.nodes.get()
+
+            os = order.os
+            # template
+            templates = proxmox.nodes(id_node).storage('local').content.get()
+
+            # ISO Container Templated
+            iso_container = []
+            for item in templates:
+                if item['format'] == 'tzst' or item['format'] == 'tar.gz' or item['format'] == 'tgz':
+                    # volid :
+                    volid = item['volid']
+                    # format :
+                    format = item['format']
+                    # size :
+                    size = round(item['size'] / 1048576, 2)
+                
+                # disk_usage = round(disk_usage / 1073741824, 2)
+                iso_container.append({
+                    'volid': volid,
+                    'format': format,
+                    'size': size,
+                })
+
 
             if not id_node or not id_order  :
                 messages.error(request, "Make sure all fields are valid")
@@ -4236,11 +4275,11 @@ def executeOrder(request):
             try:
                 # data pesanan by id
                 order = Pesanan.objects.get(id=id_order)
-                # password = order.password
-                # core = order.core
-                # username = order.username
-                # ram = order.ram
-                # storage = order.storage
+                password = order.password
+                core = order.core
+                username = order.username
+                ram = order.ram
+                storage = order.storage
 
 
                 # create proxmox
@@ -4258,30 +4297,18 @@ def executeOrder(request):
                 post_data = {
                     "vmid" : vmid,
                     "ostemplate" : template,
-                    "password": password1,
+                    "password": password,
                     "cores" : core,
-                    "hostname"  : "test123444",
-                    "memory" : 512,
+                    "hostname"  : username,
+                    "memory" : ram,
                     "swap" : 512,
                     "storage": "local-lvm",
-
                     # interface
                     # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
-                    # "net0" : net0_str,
+                    "net0" : net0_str,
                     # "pool" : resource_pool,
                     # "ssh_public_keys":ssh_key
                 }
-
-                # proxmox.nodes(id_node).lxc.create(
-                #     vmid=103,
-                #     ostemplate=template,
-                #     password=password,
-                #     cores=core,
-                #     hostname="test123444",
-                #     memory=ram,
-                #     swap=512,
-                #     storage=storage,
-                # )
 
                 proxmox.nodes(id_node).lxc.post(**post_data)
 
@@ -4340,12 +4367,42 @@ def order_by_user(request, id_user):
         return redirect(error_connection)
 
 
-# @pdf_decorator(pdfname='invoice.pdf')
-# def printInvoice(request):
-#     context = {
-#         'nama' : 'Ida Bagus Anom Mudita'
-#     }
-#     return render(request, 'invoice/invoice.html', context)
+@pdf_decorator(pdfname='invoice.pdf')
+def printInvoice(request, id_invoice):
+
+    order = Pesanan.objects.get(id=id_invoice)
+
+    harga_paket = float(order.harga_paket.harga.replace('.', '').replace(',', '.'))  # Ubah string menjadi float
+    total = harga_paket * int(order.perbulan)
+    total_str = '{:,.0f}'.format(total).replace(',', '.')  # Ubah nilai menjadi string dengan format yang diinginkan
+
+    # Generate angka acak antara 100000 dan 999999
+    progress_kode_random = random.randint(100000, 999999)
+
+    # Membuat kode invoice dengan menggabungkan string dan angka acak
+    kode_invoice = f"CEG-{progress_kode_random}"
+
+    # Menggabungkan ke dalam format yang diinginkan
+    tanggal_baru = order.date_created.strftime("%d/%m/%Y")
+
+    todayThis = datetime.date.today()
+    today = todayThis.strftime("%d/%m/%Y")
+
+    if order.status == "0":
+        status = "Belum di proses"
+    else :
+        status = "Sudah di proses"
+
+
+    context = {
+        'order' : order,
+        'total' : total_str,
+        'today' : today,
+        'date_created' : tanggal_baru,
+        'kode_invoice' : kode_invoice,
+        'status' : status,
+    }
+    return render(request, 'invoice/invoice.html', context)
             
 
 # print pdf
@@ -4353,6 +4410,7 @@ def render_to_pdf(template_src, context_dict):
     template = get_template(template_src)
     html = template.render(context_dict)
     result = io.BytesIO()
+
 
     # Create PDF dengan ukuran kertas A4 dan mode landscape
     pdf = pisa.CreatePDF(
@@ -4367,15 +4425,38 @@ def render_to_pdf(template_src, context_dict):
         return HttpResponse(result.getvalue(), content_type='application/pdf')
     return None
 
-@admin_access_required
-def printInvoice(request):
-    context = {
-        'nama': 'Ida Bagus Anom Mudita'
-    }
+# @admin_access_required
+# def printInvoice(request, id_invoice):
+#     order = Pesanan.objects.get(id=id_invoice)
 
-    pdf = render_to_pdf('invoice/invoice.html', context)
-    if pdf:
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
-        return response
-    return HttpResponse("Failed to generate PDF", status=400)
+#     harga_paket = float(order.harga_paket.harga.replace('.', '').replace(',', '.'))  # Ubah string menjadi float
+#     total = harga_paket * int(order.perbulan)
+#     total_str = '{:,.0f}'.format(total).replace(',', '.')  # Ubah nilai menjadi string dengan format yang diinginkan
+
+#     # Generate angka acak antara 100000 dan 999999
+#     progress_kode_random = random.randint(100000, 999999)
+
+#     # Membuat kode invoice dengan menggabungkan string dan angka acak
+#     kode_invoice = f"CEG-{progress_kode_random}"
+
+#     # Menggabungkan ke dalam format yang diinginkan
+#     tanggal_baru = order.date_created.strftime("%d/%m/%Y")
+
+#     todayThis = datetime.date.today()
+#     today = todayThis.strftime("%d/%m/%Y")
+    
+
+#     context = {
+#         'order' : order,
+#         'total' : total_str,
+#         'today' : today,
+#         'date_created' : tanggal_baru,
+#         'kode_invoice' : kode_invoice,
+#     }
+
+#     pdf = render_to_pdf('invoice/invoice.html', context)
+#     if pdf:
+#         response = HttpResponse(pdf, content_type='application/pdf')
+#         response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+#         return response
+#     return HttpResponse("Failed to generate PDF", status=400)

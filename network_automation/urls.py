@@ -209,7 +209,7 @@ urlpatterns = [
     path('delete-order/<str:id_order>', views.deleteOrder, name="delete-order"), 
 
     # print invoice 
-    path('print-invoice', views.printInvoice, name="print-invoice"),
+    path('print-invoice/<str:id_invoice>', views.printInvoice, name="print-invoice"),
 
 
 ]
