@@ -4408,39 +4408,11 @@ def order_all(request):
 
         nodes = proxmox.nodes.get()
 
-        # all required proxmox :
-
-        # templates
-        # templates = proxmox.nodes(id_node).storage('local').content.get()
-
-        # get network proxmox
-        # network_proxmox = proxmox.nodes(id_node).network.get()
-
-        # get network berdasarkan type bridge
-        # network = []
-
-        # for item in network_proxmox:
-        #     if item['type'] == 'bridge':
-        #         # iface :
-        #         iface = item['iface']
-        #         # type :
-        #         type = item['type']
-                
-        #         network.append({
-        #             'iface': iface,
-        #             'type': type
-        #         })
 
         # template
         templates = proxmox.nodes("osd").storage('local').content.get()
 
         os = "centos"  # Anda mendapatkan nilai ini dari database
-        # templates = [
-        #     {'volid': 'local:iso/ubuntu-22.04.3-live-server-amd64.iso', 'format': 'iso', 'ctime': 1696403217, 'content': 'iso', 'size': 2133391360},
-        #     {'format': 'txz', 'volid': 'local:vztmpl/centos-9-stream-default_20221109_amd64.tar.xz', 'size': 104646080, 'content': 'vztmpl', 'ctime': 1703681464},
-        #     {'size': 129824858, 'content': 'vztmpl', 'ctime': 1696402720, 'format': 'tzst', 'volid': 'local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst'},
-        #     {'format': 'tzst', 'volid': 'local:vztmpl/ubuntu-23.04-standard_23.04-1_amd64.tar.zst', 'content': 'vztmpl', 'size': 135930761, 'ctime': 1696402545}
-        # ]
 
         # templates = proxmox.nodes("node1").storage('local').content.get()
 
@@ -4460,7 +4432,7 @@ def order_all(request):
         'vmid': vmid,
         'nodes' : nodes,
         'templates': templates,
-        'volid': volid,
+        # 'volid': volid,
         }
         return render(request, 'users/orderan.html', context )
     else:
@@ -4477,7 +4449,6 @@ def executeOrder(request):
 
         vmid = proxmox.cluster.nextid.get()
 
-
         # nodes = proxmox.nodes.get()
 
         if request.method == "POST":
@@ -4486,29 +4457,6 @@ def executeOrder(request):
             id_order = request.POST.get('id_order')
 
             # nodes = proxmox.nodes.get()
-
-            os = order.os
-            # template
-            templates = proxmox.nodes(id_node).storage('local').content.get()
-
-            # ISO Container Templated
-            iso_container = []
-            for item in templates:
-                if item['format'] == 'tzst' or item['format'] == 'tar.gz' or item['format'] == 'tgz':
-                    # volid :
-                    volid = item['volid']
-                    # format :
-                    format = item['format']
-                    # size :
-                    size = round(item['size'] / 1048576, 2)
-                
-                # disk_usage = round(disk_usage / 1073741824, 2)
-                iso_container.append({
-                    'volid': volid,
-                    'format': format,
-                    'size': size,
-                })
-
 
             if not id_node or not id_order  :
                 messages.error(request, "Make sure all fields are valid")
@@ -4523,6 +4471,16 @@ def executeOrder(request):
                 ram = order.ram
                 storage = order.storage
 
+                os = order.os
+                # template
+                templates = proxmox.nodes(id_node).storage('local').content.get()
+
+                # Mencari volid yang sesuai dengan nilai os dari database
+                volid = None
+                for template in templates:
+                    if 'volid' in template and os in template['volid']:
+                        volid = template['volid']
+                        break
 
                 # create proxmox
                 net_config = {
@@ -4534,11 +4492,11 @@ def executeOrder(request):
                                 }
                 net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
 
-                template = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+                # template = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
 
                 post_data = {
                     "vmid" : vmid,
-                    "ostemplate" : template,
+                    "ostemplate" : volid,
                     "password": password,
                     "cores" : core,
                     "hostname"  : username,
@@ -4564,6 +4522,93 @@ def executeOrder(request):
             except Exception as e:
                 messages.error(request, f"Error adding order: {str(e)}")
                 return redirect('order_all')
+            
+
+
+# execute order
+@admin_access_required
+def executeOrderUser(request, id_user):
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        # orderan 
+        # order = Pesanan.objects.all()
+
+        vmid = proxmox.cluster.nextid.get()
+
+        # nodes = proxmox.nodes.get()
+
+        if request.method == "POST":
+
+            id_node = request.POST.get('id_node')
+            id_order = request.POST.get('id_order')
+
+            # nodes = proxmox.nodes.get()
+
+            if not id_node or not id_order  :
+                messages.error(request, "Make sure all fields are valid")
+                return redirect('order_all')
+        
+            try:
+                # data pesanan by id
+                order = Pesanan.objects.get(id=id_order)
+                password = order.password
+                core = order.core
+                username = order.username
+                ram = order.ram
+                # storage = order.storage
+
+                os = order.os
+                # template
+                templates = proxmox.nodes(id_node).storage('local').content.get()
+
+                # Mencari volid yang sesuai dengan nilai os dari database
+                volid = None
+                for template in templates:
+                    if 'volid' in template and os in template['volid']:
+                        volid = template['volid']
+                        break
+
+                # create proxmox
+                net_config = {
+                                "name": "eth0",  # Nama antarmuka
+                                "bridge": "vmbr1",  # Nama bridge jika diperlukan
+                                "firewall": 1,  # Opsi firewall (1 untuk aktifkan, 0 untuk nonaktifkan)
+                                "ip": "dhcp" ,  # Alamat IPv4 (CIDR, dhcp, atau manual)
+                                # "gw": gateway,  # Gateway IPv4
+                                }
+                net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
+
+                # template = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+
+                post_data = {
+                    "vmid" : vmid,
+                    "ostemplate" : volid,
+                    "password": password,
+                    "cores" : core,
+                    "hostname"  : username,
+                    "memory" : ram,
+                    "swap" : 512,
+                    "storage": "local-lvm",
+                    # interface
+                    # "net0": "name=eth0,bridge=vmbr0",  # Use net0 and specify the interface
+                    "net0" : net0_str,
+                    # "pool" : resource_pool,
+                    # "ssh_public_keys":ssh_key
+                }
+
+                proxmox.nodes(id_node).lxc.post(**post_data)
+
+                # edit data pesanan status menjadi 1
+                order.status = 1
+                order.save()
+
+                messages.success(request, "The order has been executed")
+
+                return redirect('order_by_user', id_user)
+            except Exception as e:
+                messages.error(request, f"Error adding order: {str(e)}")
+                return redirect('order_by_user', id_user)
+
     
 @admin_access_required
 def deleteOrder(request, id_order):
@@ -4580,6 +4625,25 @@ def deleteOrder(request, id_order):
         except Exception as e:
             messages.error(request, f"Error deleted order : {str(e)}")
             return redirect('order_all')
+    else:
+        return redirect(error_connection)
+    
+
+@admin_access_required
+def deleteOrderByUser(request, id_order, id_user):
+    # connect to proxmox
+    proxmox = get_proxmox()
+    if proxmox is not None :
+        try:
+            # delete data user to database
+            order = Pesanan.objects.get(id=id_order)
+            order.delete()
+            time.sleep(1.5)
+            messages.success(request, "Order deleted successfully")
+            return redirect('order_by_user', id_user)
+        except Exception as e:
+            messages.error(request, f"Error deleted order : {str(e)}")
+            return redirect('order_by_user', id_user)
     else:
         return redirect(error_connection)
     
@@ -4603,6 +4667,7 @@ def order_by_user(request, id_user):
         'order': order,
         'vmid': vmid,
         'nodes' : nodes,
+        'id_user': id_user,
         }
         return render(request, 'users/orderan_by_user.html', context )
     else:

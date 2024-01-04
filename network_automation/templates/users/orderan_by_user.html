@@ -54,9 +54,13 @@
                                 <td>{{ row.perbulan }} Month</td>
                                 <td>
                                     <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailOrderan{{ row.id }}">Detail</a>
-                                    <a href="{% url 'print-invoice' %}" class="btn btn-warning ">Invoice</a>
-                                    <a  class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirm{{ row.id }}">Confirm</a>
-                                    <a href="{% url 'delete-order' row.id %}" class="btn btn-danger delete-order">Delete</a>
+                                    <a href="{% url 'print-invoice' row.id %}" class="btn btn-warning ">Invoice</a>
+                                    {% if row.status == "0" %}
+                                        <a  class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirm{{ row.id }}">Confirm</a>
+                                    {% else %}
+                                        <a  class="btn btn-secondary disabled" data-bs-toggle="modal" data-bs-target="#confirm{{ row.id }}">Confirm</a>
+                                    {% endif %}
+                                    <a href="{% url 'delete-order-user' row.id id_user %}" class="btn btn-danger delete-order">Delete</a>
                                 </td>  
                             </tr>
                         {% endfor %} 
@@ -129,7 +133,7 @@
                                 <h2 class="card-heading text-center">Confirm Execute</h2>
                             </div>
                             <div class="card-body">
-                            <form action="{% url 'order_execute' %}" id="addFormConfirm" method="post">
+                            <form action="{% url 'order_execute-user' id_user %}" id="addFormConfirm" method="post">
                                 {% csrf_token %}
 
                                 <input type="text" value="{{ row.id }}" id="id_order" name="id_order" hidden>
@@ -145,7 +149,7 @@
                                     <select name="id_node" class="form-control" id="id_node">
                                         <option value="">Pilih..</option>
                                         {% for row in nodes %}
-                                            <option value="{{row.id}}">{{row.node}}</option>
+                                            <option value="{{row.node}}">{{row.node}}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
