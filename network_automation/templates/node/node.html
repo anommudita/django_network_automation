@@ -36,7 +36,7 @@
 
             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                 {% for name in nodes %}
-                    <li><a href="/nodes/delnode/{{ name.node }}" class="dropdown-item">{{ name.node }}</a></li>
+                    <li><a href="{% url 'delete-nodes' name.node %}" class="dropdown-item">{{ name.node }}</a></li>
                 {% endfor %}
             </ul>
         </div>
