@@ -246,7 +246,7 @@
                             </div>
 
                             <div id="joinClusterForm" style="display: none;">
-                                <form action="/joincluster" id="joinCluster" method="post">
+                                <form action="{% url 'joincluster' %}" id="joinCluster" method="post">
                                     {% csrf_token %}
                                     <!-- Common Fields -->
                                     <!-- Name -->

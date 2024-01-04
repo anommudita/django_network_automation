@@ -887,8 +887,8 @@ def createCluster(request):
         try:
             proxmox.cluster.config.post(**post_data)
             messages.success(request, "Create cluster successfully")
-            # return redirect('home')
-            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
+            return redirect('home')
+            # return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
         except Exception as e:
             messages.error(request, f"Error adding cluster : {str(e)}")
             return redirect('home')
@@ -929,8 +929,8 @@ def joinCluster(request):
         try:
             proxmox.cluster.config.join.post(**post_data)
             messages.success(request, "Join cluster successfully")
-            # return redirect('home')
-            return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
+            return redirect('home')
+            # return HttpResponseRedirect(f"{reverse('home')}?refresh={int(time.time())}")
         except Exception as e:
             messages.error(request, f"Error joining cluster : {str(e)}")
             return redirect('home')
@@ -1598,6 +1598,7 @@ def createPools(request, id_node):
 # install ceph 
 @login_required(login_url='login')
 def deleteNode(request, id_node):
+    server = Server.objects.get(id=1)
     proxmox = get_proxmox()
     # time.sleep(1.5)
     
@@ -1640,8 +1641,8 @@ def deleteNode(request, id_node):
                     node_name = node.get('name')
 
                     host = f"{ip_address}"
-                    username = "root"
-                    password = "12345"
+                    username = server.username
+                    password = server.password
 
                     client = paramiko.SSHClient()
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -1684,8 +1685,8 @@ def deleteNode(request, id_node):
                             node_name = node.get('name')
 
                             host = f"{ip_address}"
-                            username = "root"
-                            password = "12345"
+                            username = server.username
+                            password = server.password
 
                             client = paramiko.SSHClient()
                             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -2883,10 +2884,13 @@ def postRoute(request, id_node):
         
         command = f"iptables -t nat -A POSTROUTING -o {interfaces} -p tcp --dport {dstport} -d {dstip} -j SNAT --to-source {srcip}\n"
         ipforward = "sysctl -w net.ipv4.ip_forward=1"
+        save = "iptables-save > /etc/iptables/rules.v4"
         try:
             client.exec_command(command)
             time.sleep(3)
             client.exec_command(ipforward)
+            time.sleep(3)
+            client.exec_command(save)
             client.close()
             messages.success(request, "Successfully add Post Route")
             # return redirect('home')
@@ -2915,10 +2919,13 @@ def preRoute(request, id_node):
         
         command = f"iptables -t nat -A PREROUTING -i {interfaces} -p tcp --dport {srcport} -j DNAT --to-destination {ip}:{port}\n"
         ipforward = "sysctl -w net.ipv4.ip_forward=1"
+        save = "iptables-save > /etc/iptables/rules.v4"
         try:
             client.exec_command(command)
             time.sleep(3)
             client.exec_command(ipforward)
+            time.sleep(3)
+            client.exec_command(save)
             client.close()
             messages.success(request, "Successfully add Pre Route")
             # return redirect('home')
@@ -2927,11 +2934,131 @@ def preRoute(request, id_node):
             messages.error(request, f"Error adding Pre Route : {str(e)}")
             return redirect('detail-node', id_node)
 
+def add_lxc_container(request, id_node, post_data):
+    try:
+        proxmox = get_proxmox()
+        proxmox.nodes(id_node).lxc.post(**post_data)
+        time.sleep(5)  # Add a delay to allow the container to be created
+
+        messages.success(request, "Container added successfully")
+        return True
+    except Exception as e:
+        messages.error(request, f"Error adding container: {str(e)}")
+        return False
+
+def execute_paramiko_commands(request, id_node, ct_id):
+    try:
+        server = Server.objects.get(id=1)
+        host = server.ip_address
+        username = server.username
+        password = server.password
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, username=username, password=password)
+
+        # Start an interactive shell session
+        shell = client.invoke_shell()
+
+        # Execute the pvecm add command
+        shell.send(f"pct start {ct_id}\n")
+
+        # Wait for the command to execute
+        time.sleep(30)
+
+        # Execute the pvecm add command
+        shell.send(f"pct enter {ct_id}\n")
+
+        # Wait for the command to execute
+        time.sleep(10)
+
+        # Execute the pvecm add command
+        shell.send("adduser log\n")
+
+        # Wait for the command to execute
+        time.sleep(5)  # You may need to adjust the sleep duration
+
+        # Enter the superuser password
+        shell.send("logs123\n")
+
+        # Wait for the command to execute
+        time.sleep(3)  # You may need to adjust the sleep duration
+
+        # Enter the superuser password
+        shell.send("logs123\n")
+
+        # Wait for the "Password:" prompt after entering the superuser password
+        time.sleep(3)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("\n")
+
+        time.sleep(1)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("\n")
+
+        time.sleep(1)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("\n")
+
+        time.sleep(1)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("\n")
+
+        time.sleep(1)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("\n")
+
+        time.sleep(1)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("y\n")
+
+        time.sleep(1)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("usermod -aG adm log\n")
+
+        time.sleep(5)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send("exit\n")
+
+        time.sleep(3)  # You may need to adjust the sleep duration
+
+        # Enter "yes" to confirm
+        shell.send(f"pct shutdown {ct_id}\n")
+
+        time.sleep(10)  # You may need to adjust the sleep duration
+        output = shell.recv(65535).decode()
+
+        # Print the output
+        print(output)
+
+        # Close the SSH connection
+        client.close()
+
+        client.close()
+
+        messages.success(request, "Paramiko commands executed successfully")
+        return True
+    except Exception as e:
+        messages.error(request, f"Error executing Paramiko commands: {str(e)}")
+        return False
+
 # add container 
 # @login_required(login_url='login')
 @admin_access_required
 def addContainer(request, id_node):
     proxmox = get_proxmox()
+    # shell, client = get_shell_paramiko()
+
+    # get data server
+    server = Server.objects.get(id=1)
     if proxmox is not None:
         # id node
         id_node = id_node
@@ -2944,7 +3071,7 @@ def addContainer(request, id_node):
             storage_container = request.POST.get('storage-container')
             storage_disk = request.POST.get('storage_disk')
             template = request.POST.get('container_templated')
-            disk_size = request.POST.get('disk-size')
+            disk_size = request.POST.get('disk_size')
             cores = request.POST.get('cores')
             memory = request.POST.get('memory')
             memory_swap = request.POST.get('memory-swap')
@@ -2983,10 +3110,19 @@ def addContainer(request, id_node):
                                 }
                 net0_str = f"name={net_config['name']},bridge={net_config['bridge']},firewall={net_config['firewall']},ip={net_config['ip']}"
 
-                disk_config = {
-                                "size": disk_size,  # penyimpanan disk dalam GB
-                                }
-                rootfs= f"name={disk_config['size']}"
+                volume = proxmox.nodes(id_node).storage(storage_disk).content.get()
+
+                # disk_config = {
+                #                 "volume": storage_disk,
+                #                 # "acl": 0,
+                #                 # "mountoptions": "rootfs",
+                #                 # "qouta": 0,
+                #                 # "replicated": 0,
+                #                 # "ro": 0,
+                #                 # "shared": 0,
+                #                 "size": disk_size,  # penyimpanan disk dalam GB
+                #                 }
+                # rootfs= f"volume={disk_config['volume']},size={disk_config['size']}"
 
                 post_data = {
                     "vmid" : ct_id,
@@ -2997,7 +3133,7 @@ def addContainer(request, id_node):
                     "memory" : memory,
                     "swap" : memory_swap,
                     "storage": storage_disk,
-                    "rootfs" : rootfs,
+                    # "rootfs" : rootfs,
 
 
                     # interface
@@ -3041,7 +3177,114 @@ def addContainer(request, id_node):
 
             try:
 
-                proxmox.nodes(id_node).lxc.post(**post_data)
+                if dhcp_ipv4 == "1" or static_ipv4 == "1":
+                    success_add_container = add_lxc_container(request, id_node, post_data)
+
+                # if success_add_container:
+                #     # If adding the container was successful, execute Paramiko commands
+                #     success_paramiko_commands = execute_paramiko_commands(request, id_node, ct_id)
+
+                #     if success_paramiko_commands:
+                #         return redirect('detail-node', id_node)
+                #     else:
+                #         return redirect('detail-node', id_node)  # Handle the case where Paramiko commands fail
+                    
+                # proxmox.nodes(id_node).lxc.post(**post_data)
+                # time.sleep(10)
+
+                # host = server.ip_address
+                # username = server.username
+                # password = server.password
+
+                # client = paramiko.SSHClient()
+                # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # client.connect(host, username=username, password=password)
+
+                # # Start an interactive shell session
+                # shell = client.invoke_shell()
+
+                # # Execute the pvecm add command
+                # shell.send(f"pct start {ct_id}\n")
+
+                # # Wait for the command to execute
+                # time.sleep(15)
+
+                # # Execute the pvecm add command
+                # shell.send(f"pct enter {ct_id}\n")
+
+                # # Wait for the command to execute
+                # time.sleep(3)
+
+                # # Execute the pvecm add command
+                # shell.send("adduser log\n")
+
+                # # Wait for the command to execute
+                # time.sleep(3)  # You may need to adjust the sleep duration
+
+                # # Enter the superuser password
+                # shell.send("logs123\n")
+
+                # # Wait for the command to execute
+                # time.sleep(3)  # You may need to adjust the sleep duration
+
+                # # Enter the superuser password
+                # shell.send("logs123\n")
+
+                # # Wait for the "Password:" prompt after entering the superuser password
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("\n")
+
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("\n")
+
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("\n")
+
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("\n")
+
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("\n")
+
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("y\n")
+
+                # time.sleep(1)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("usermod -aG adm log\n")
+
+                # time.sleep(5)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send("exit\n")
+
+                # time.sleep(3)  # You may need to adjust the sleep duration
+
+                # # Enter "yes" to confirm
+                # shell.send(f"pct shutdown {ct_id}\n")
+
+                # time.sleep(10)  # You may need to adjust the sleep duration
+                # output = shell.recv(65535).decode()
+
+                # # Print the output
+                # print(output)
+
+                # # Close the SSH connection
+                # client.close()
+
                 messages.success(request, "Container added successfully")
 
                 return redirect('detail-node', id_node)
@@ -3357,7 +3600,6 @@ def removeVirtualMachine(request, id_node, vmid):
 # halaman detail_container
 def detail_container(request, id_node, vmid):
     proxmox = get_proxmox()
-
     id_ct = vmid
 
     if id_ct and id_node is not None:
@@ -4168,11 +4410,11 @@ def order_all(request):
 
 
         # template
-        templates = proxmox.nodes("node1").storage('local').content.get()
+        templates = proxmox.nodes("osd").storage('local').content.get()
 
         os = "centos"  # Anda mendapatkan nilai ini dari database
 
-        templates = proxmox.nodes("node1").storage('local').content.get()
+        # templates = proxmox.nodes("node1").storage('local').content.get()
 
         # Mencari volid yang sesuai dengan nilai os dari database
         volid = None
@@ -4483,7 +4725,7 @@ def render_to_pdf(template_src, context_dict):
         dest=result,
         default_css=False,
         pagesize=(210, 297),  # Ukuran kertas A4
-        page_orientation='Landscape'  # Mode landscape
+        page_orientation='Portrait'  # Mode landscape
     )
 
     if not pdf.err:
