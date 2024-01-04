@@ -20,7 +20,7 @@
     {% endfor %} -->
     <div class="d-flex pt-3 mb-4">
         {% if ceph == 'N/A' %}
-            <a href="/nodes/install-ceph-cluster" class="btn btn-danger mr-2 mb-3 install-ceph">Install Ceph</a>
+            <a href="{% url 'install-ceph-cluster' %}" class="btn btn-danger mr-2 mb-3 install-ceph">Install Ceph</a>
         {% else %}
             <button type="button" class="btn btn-outline-danger mr-2 mb-3" disabled>Ceph Already Instal</button>
         {% endif %}
@@ -36,7 +36,7 @@
 
             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                 {% for name in nodes %}
-                    <li><a href="/nodes/delnode/{{ name.node }}" class="dropdown-item">{{ name.node }}</a></li>
+                    <li><a href="{% url 'delete-nodes' id_node=name.node  %}" class="dropdown-item">{{ name.node }}</a></li>
                 {% endfor %}
             </ul>
         </div>

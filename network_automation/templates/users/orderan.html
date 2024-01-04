@@ -19,6 +19,9 @@
     </div>
     {% endfor %}
 
+    <!-- {{ templates }} -->
+    {{ volid }}
+
     <div>
         <div class="col-lg-6 col-5 text-right mb-4">
         <a href="{% url 'users_all'%}" class="btn btn-outline-primary fs-4">Users</a>
@@ -54,7 +57,7 @@
                                 <td>{{ row.perbulan }} Month</td>
                                 <td>
                                     <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailOrderan{{ row.id }}">Detail</a>
-                                    <a href="{% url 'print-invoice' %}" class="btn btn-warning ">Invoice</a>
+                                    <a href="{% url 'print-invoice' row.id %}" class="btn btn-warning ">Invoice</a>
 
                                     {% if row.status == "0" %}
                                         <a  class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirm{{ row.id }}">Confirm</a>
@@ -96,6 +99,7 @@
                                                     <h3>{{ row.user.first_name }}</h3>
                                                 </li>
                                                 <li class="list-group-item"> Package : {{ row.harga_paket }}</li>
+                                                <li class="list-group-item"> Username : {{ row.username }}</li>
                                                 <li class="list-group-item"> Core : {{ row.core }} core</li>
                                                 <li class="list-group-item"> RAM : {{ row.ram }} MB</li>
                                                 <li class="list-group-item"> Storage : {{ row.storage }} GB</li>
@@ -138,6 +142,9 @@
                             <div class="card-body">
                             <form action="{% url 'order_execute' %}" id="addFormConfirm" method="post">
                                 {% csrf_token %}
+
+                                <!-- id -->
+                                <input type="text" name="id_order" id="id_order" value="{{ row.id }}" hidden>
 
                                 <!-- Node -->
                                 <label for="id_node">Choose Node : </label>
